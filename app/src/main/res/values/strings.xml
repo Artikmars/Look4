@@ -1,3 +1,19 @@
 <resources>
     <string name="app_name">Look4</string>
+
+    <string name="found_label">Found: 1/1</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="searching_in_progress">Searching …</string>
+    <string name="no_found">Oops…nobody here</string>
+    <string name="search">Search</string>
+    <string name="search_again">Search again</string>
+    <string name="offline_mode">Offline</string>
+    <string name="online_mode">Online</string>
+    <string name="look">Look</string>
+    <string name="contacts">Contacts</string>
+    <string name="sec">sec</string>
+    <string name="countdown_default_value">11</string>
+    <string name="device_is_found">We have found a device! Let me connect to it …</string>
+
 </resources>

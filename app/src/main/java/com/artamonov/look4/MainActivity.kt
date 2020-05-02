@@ -54,13 +54,13 @@ companion object {
             if (offline_text.text == "Online") {
                 Nearby.getConnectionsClient(applicationContext
                 !!).stopAllEndpoints()
-                offline_text.text = "Offline"
+                offline_text.text = resources.getString(R.string.offline_mode)
                 look_text.setTextColor(ContextCompat.getColor(this, R.color.grey))
                 look_text.isClickable = false
             } else {
                 look_text.isEnabled = true
                 look_text.isClickable = true
-                offline_text.text = "Online"
+                offline_text.text = resources.getString(R.string.online_mode)
                 look_text.setTextColor(ContextCompat.getColor(this, R.color.green))
             }
         }

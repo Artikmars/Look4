@@ -9,10 +9,8 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.provider.Settings
-import android.text.SpannableString
-import android.text.format.DateFormat
-import android.text.style.ForegroundColorSpan
 import android.util.Log
 import android.view.View
 import android.widget.Toast
@@ -36,7 +34,6 @@ import com.google.android.gms.nearby.connection.PayloadCallback
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate
 import com.google.android.gms.nearby.connection.Strategy.P2P_CLUSTER
 import kotlinx.android.synthetic.main.activity_look.*
-import kotlinx.android.synthetic.main.activity_main.*
 import java.nio.charset.Charset
 
 class LookActivity : AppCompatActivity() {
@@ -59,6 +56,7 @@ class LookActivity : AppCompatActivity() {
         private var discovererPhoneNumber: String? = null
         private var advertiserName: String? = null
         private lateinit var deviceId: String
+        private var timer: CountDownTimer? = null
 
         private val advOptions = AdvertisingOptions.Builder().setStrategy(STRATEGY).build()
         private val discOptions = DiscoveryOptions.Builder().setStrategy(STRATEGY).build()
@@ -80,7 +78,7 @@ class LookActivity : AppCompatActivity() {
 
         no_button.setOnClickListener {
             Nearby.getConnectionsClient(this).stopAllEndpoints()
-            setYesNoButtonsVisibility(false)
+            shouldDisplayIncomeContactViews(false)
             setSearchButttonVisibility(true)
         }
 
@@ -88,7 +86,7 @@ class LookActivity : AppCompatActivity() {
             when (userRole) {
                 ADVERTISER -> {
                     searchingInProgressText.text = "Congratulations! Here is the phone number: " + discovererPhoneNumber
-                    setYesNoButtonsVisibility(false)
+                    shouldDisplayIncomeContactViews(false)
                     setSearchButttonVisibility(true)
                     val phoneNumber = "+496969696969"
                     Toast.makeText(applicationContext, "Endpoint: $endpointIdSaved", Toast.LENGTH_LONG)
@@ -114,7 +112,7 @@ class LookActivity : AppCompatActivity() {
                                 .show()
                         }
                     }
-                    setYesNoButtonsVisibility(false)
+                    shouldDisplayIncomeContactViews(false)
                     setSearchButttonVisibility(true)
                 }
             }
@@ -173,14 +171,54 @@ class LookActivity : AppCompatActivity() {
     private fun startClient() {
         setSearchButttonVisibility(false)
         searchingInProgressText.visibility = View.VISIBLE
+        searchingInProgressText.isAllCaps = true
+        searchingInProgressText.text = resources.getString(R.string.searching_in_progress)
+
+        startTimer()
+        Nearby.getConnectionsClient(applicationContext).stopDiscovery()
         Nearby.getConnectionsClient(applicationContext).startDiscovery(packageName, endpointDiscoveryCallback, discOptions)
                 .addOnSuccessListener {
                     // logD( "$deviceId started discovering.")
                     userRole = DISCOVERER
                 }.addOnFailureListener { e ->
+                Toast.makeText(
+                    applicationContext,
+                    "Couldn't connect because of: $e",
+                    Toast.LENGTH_LONG
+                ).show()
+                searchingInProgressText.text = resources.getString(R.string.no_found)
+                searchBtn.text = resources.getString(R.string.search_again)
                 // We're unable to start discovering.
                 // logE("We're unable to start discovering.", e)
                 }
+    }
+
+    private fun startTimer() {
+        timer = object : CountDownTimer(10000, 1000) {
+            override fun onTick(millisUntilFinished: Long) {
+                countdown_view.text = (millisUntilFinished / 1000).toString()
+            }
+
+            override fun onFinish() {
+                Nearby.getConnectionsClient(applicationContext).stopDiscovery()
+                setCountDownViewsVisibility(false)
+                searchingInProgressText.text = resources.getString(R.string.no_found)
+                searchBtn.text = resources.getString(R.string.search_again)
+                setSearchButttonVisibility(true)
+            }
+        }
+        setCountDownViewsVisibility(true)
+        timer?.start()
+    }
+
+    private fun setCountDownViewsVisibility(state: Boolean) {
+        if (state) {
+            countdown_view.visibility = View.VISIBLE
+            countdown_label.visibility = View.VISIBLE
+        } else {
+            countdown_view.visibility = View.GONE
+            countdown_label.visibility = View.GONE
+        }
     }
 
     private val endpointDiscoveryCallback: EndpointDiscoveryCallback = object : EndpointDiscoveryCallback() {
@@ -188,7 +226,9 @@ class LookActivity : AppCompatActivity() {
             // An endpoint was found. We request a connection to it.
             // logD( "onEndpointFound: endpointId: $endpointId")
             // endpointIdSaved = endpointId
-            searchingInProgressText.text = "We have found a device! Let me connect to it ..."
+            timer?.cancel()
+            searchingInProgressText.text = getString(R.string.device_is_found)
+            setCountDownViewsVisibility(false)
 
             Nearby.getConnectionsClient(applicationContext).requestConnection(info.endpointName + ".1", endpointId, connectionLifecycleCallback)
                     .addOnSuccessListener {
@@ -204,6 +244,8 @@ class LookActivity : AppCompatActivity() {
                         // must accept before the connection is established.
                     }
                     .addOnFailureListener {
+                        setSearchButttonVisibility(true)
+                        searchingInProgressText.text = resources.getString(R.string.searching_in_progress)
                         Toast.makeText(
                                 applicationContext,
                                 "Connection request to $endpointId failed!",
@@ -303,11 +345,10 @@ class LookActivity : AppCompatActivity() {
                         //  Toast.makeText(applicationContext, "advertiserName: " + advertiserName, Toast.LENGTH_SHORT).show()
                         advertiserName = p1.asBytes()!!.toString(Charset.defaultCharset())
                         searchingInProgressText.text = advertiserName
-                        setYesNoButtonsVisibility(true)
+                        shouldDisplayIncomeContactViews(true)
                     }
                 }
                 ADVERTISER -> {
-                    // endpointIdSaved = p0
                     setSearchButttonVisibility(false)
                     val receivedContact: String = p1.asBytes()!!.toString(Charset.defaultCharset())
                     val textArray = receivedContact.split(";").toTypedArray()
@@ -315,8 +356,9 @@ class LookActivity : AppCompatActivity() {
                     Toast.makeText(applicationContext, textArray[1], Toast.LENGTH_SHORT).show()
                     searchingInProgressText.visibility = View.VISIBLE
                     searchingInProgressText.text = textArray[0]
+                    searchingInProgressText.isAllCaps = false
                     discovererPhoneNumber = textArray[1]
-                    setYesNoButtonsVisibility(true)
+                    shouldDisplayIncomeContactViews(true)
                 }
             }
         }
@@ -325,7 +367,7 @@ class LookActivity : AppCompatActivity() {
         }
     }
 
-    private fun setYesNoButtonsVisibility(isVisible: Boolean) {
+    private fun shouldDisplayIncomeContactViews(isVisible: Boolean) {
         if (isVisible) {
             no_button.visibility = View.VISIBLE
             yes_button.visibility = View.VISIBLE
@@ -347,37 +389,5 @@ class LookActivity : AppCompatActivity() {
             searchBtn.visibility = View.GONE
             searchBtn.visibility = View.GONE
         }
-    }
-
-    protected fun logD(msg: String) {
-        Log.d(LOG_TAG, msg)
-        appendToLogs(toColor(msg, resources.getColor(R.color.colorPrimary)))
-    }
-
-    protected fun logW(msg: String) {
-        Log.w(LOG_TAG, msg)
-        appendToLogs(toColor(msg, resources.getColor(R.color.colorAccent)))
-    }
-
-    protected fun logW(msg: String, e: Throwable?) {
-        Log.w(LOG_TAG, msg, e)
-        appendToLogs(toColor(msg, resources.getColor(R.color.colorAccent)))
-    }
-
-    protected fun logE(msg: String, e: Throwable?) {
-        Log.e(LOG_TAG, msg, e)
-        appendToLogs(toColor(msg, resources.getColor(R.color.colorAccent)))
-    }
-
-    private fun appendToLogs(msg: CharSequence) {
-        mDebugLogView.append("\n")
-        mDebugLogView.append(DateFormat.format("hh:mm", System.currentTimeMillis()).toString() + ": ")
-        mDebugLogView.append(msg)
-    }
-
-    private fun toColor(msg: String, color: Int): CharSequence {
-        val spannable = SpannableString(msg)
-        spannable.setSpan(ForegroundColorSpan(color), 0, msg.length, 0)
-        return spannable
     }
 }
