@@ -6,43 +6,23 @@
     android:layout_height="match_parent"
     tools:context=".LookActivity">
 
-    <Button
-        android:id="@+id/advertButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="48dp"
-        android:layout_marginLeft="48dp"
-        android:text="Advertise"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/number_4" />
-
-    <Button
-        android:id="@+id/discButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="36dp"
-        android:layout_marginRight="36dp"
-        android:text="Discover"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/number_4" />
-
     <TextView
         android:id="@+id/mDebugLogView"
         android:layout_width="375dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="36dp"
         android:focusable="true"
         android:scrollbars="vertical"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/advertButton" />
+        tools:layout_editor_absoluteY="602dp" />
 
     <ImageView
         android:id="@+id/letter_l"
-        android:layout_marginTop="30dp"
         android:layout_width="80dp"
         android:layout_height="80dp"
+        android:layout_marginTop="40dp"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.501"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/ic_l" />
@@ -95,9 +75,9 @@
         android:id="@+id/offline_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="36dp"
-        android:layout_marginLeft="36dp"
-        android:layout_marginTop="60dp"
+        android:layout_marginStart="15dp"
+        android:layout_marginLeft="15dp"
+        android:layout_marginTop="68dp"
         android:text="Offline"
         android:textColor="@color/colorPrimaryDark"
         android:textSize="20sp"
@@ -108,11 +88,13 @@
         android:id="@+id/look_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="36dp"
-        android:layout_marginLeft="36dp"
+        android:layout_marginStart="15dp"
+        android:layout_marginLeft="15dp"
         android:layout_marginTop="68dp"
         android:text="Look"
-        android:textColor="@color/green"
+        android:textColor="@color/grey"
+        android:clickable="false"
+        android:enabled="false"
         android:textSize="20sp"
         app:layout_constraintStart_toEndOf="@+id/letter_0_1"
         app:layout_constraintTop_toBottomOf="@+id/offline_text" />
@@ -121,8 +103,8 @@
         android:id="@+id/contacts_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="36dp"
-        android:layout_marginLeft="36dp"
+        android:layout_marginStart="15dp"
+        android:layout_marginLeft="15dp"
         android:layout_marginTop="76dp"
         android:text="Contacts"
         android:textColor="@color/red"

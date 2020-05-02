@@ -6,9 +6,12 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.*
+import kotlinx.android.synthetic.main.activity_look.*
 import kotlinx.android.synthetic.main.activity_main.*
+import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets.UTF_8
 
 class MainActivity : AppCompatActivity() {
@@ -46,7 +49,22 @@ companion object {
             startActivity(Intent(this, LookActivity::class.java))
         }
 
-        startServer()
+        offline_text.setOnClickListener {
+            if (offline_text.text == "Online") {
+                Nearby.getConnectionsClient(applicationContext
+                !!).stopAllEndpoints()
+                offline_text.text = "Offline"
+                look_text.setTextColor(ContextCompat.getColor(this, R.color.grey))
+                look_text.isClickable = false
+            } else {
+                look_text.isEnabled = true
+                look_text.isClickable = true
+                offline_text.text = "Online"
+                look_text.setTextColor(ContextCompat.getColor(this, R.color.green))
+            }
+        }
+
+       // startServer()
     }
 
 
@@ -69,8 +87,8 @@ companion object {
         override fun onConnectionInitiated(p0: String, p1: ConnectionInfo) {
             Toast.makeText(applicationContext, "Connection with $p0 initiated.", Toast.LENGTH_SHORT)
                 .show()
-           // logD("Connection initiated : $p0 ,$p1")
-            Nearby.getConnectionsClient(applicationContext).acceptConnection(p0, payloadCallback)
+
+           // Nearby.getConnectionsClient(applicationContext).acceptConnection(p0, payloadCallback)
             // Automatically accept the connection on both sides.
 
         }
@@ -85,7 +103,7 @@ companion object {
                         Toast.LENGTH_SHORT
                     ).show()
                 //    logD("Connected to $endpointId successfully")
-                    val myInfo = "Вика, 25 лет"
+                    val myInfo = "Вика"
                     Nearby.getConnectionsClient(applicationContext).sendPayload(
                         endpointId, Payload.fromBytes(myInfo.toByteArray()))
                     Nearby.getConnectionsClient(applicationContext
@@ -137,15 +155,15 @@ companion object {
         }
     }
 
-
-    private val payloadCallback = object : PayloadCallback() {
-        override fun onPayloadReceived(p0: String, p1: Payload) {
-            val receivedBytes = p1.asBytes()
-        }
-
-        override fun onPayloadTransferUpdate(p0: String, p1: PayloadTransferUpdate) {
-        }
-    }
+//
+//    private val payloadCallback = object : PayloadCallback() {
+//        override fun onPayloadReceived(p0: String, p1: Payload) {
+//            val receivedContact: String = p1.asBytes()!!.toString(Charset.defaultCharset())
+//        }
+//
+//        override fun onPayloadTransferUpdate(p0: String, p1: PayloadTransferUpdate) {
+//        }
+//    }
 
 
 }

@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.provider.SearchRecentSuggestions
 import android.provider.Settings
 import android.text.SpannableString
 import android.text.format.DateFormat
@@ -15,6 +16,10 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import com.artamonov.look4.utils.UserRole
+import com.artamonov.look4.utils.UserRole.Companion.ADVERTISER
+import com.artamonov.look4.utils.UserRole.Companion.DISCOVERER
+import com.bumptech.glide.Glide
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.*
 import com.google.android.gms.nearby.connection.Strategy.P2P_CLUSTER
@@ -37,6 +42,10 @@ class LookActivity : AppCompatActivity() {
 
         private val STRATEGY = P2P_CLUSTER
         private const val LOG_TAG = "Look4"
+        private var endpointIdSaved: String? = null
+        private var userRole = UserRole.ADVERTISER
+        private var discovererPhoneNumber: String? = null
+        private var advertiserName: String? = null
 
        // private const val packgName = "com.artamonov.look4"
 
@@ -60,6 +69,60 @@ class LookActivity : AppCompatActivity() {
      //   mDebugLogView.setTextIsSelectable(true)
        // advertButton.setOnClickListener { startServer() }
         searchBtn.setOnClickListener { startClient() }
+
+        Glide
+            .with(profile_image)
+            .load(R.drawable.ic_face_black_18dp)
+            .placeholder(R.drawable.ic_face_black_18dp)
+            .into(profile_image)
+
+        startServer()
+
+        no_button.setOnClickListener {
+            Nearby.getConnectionsClient(this).stopAllEndpoints()
+            setYesNoButtonsVisibility(false)
+            setSearchButttonVisibility(true)
+        }
+
+        yes_button.setOnClickListener {
+            when (userRole) {
+                ADVERTISER -> {
+                    searchingInProgressText.text = "Congratulations! Here is the phone number: " + discovererPhoneNumber
+                    setYesNoButtonsVisibility(false)
+                  //  Nearby.getConnectionsClient(this).stopAllEndpoints()
+                    setSearchButttonVisibility(true)
+                    val phoneNumber = "+496969696969"
+                    Toast.makeText(applicationContext, "Endpoint: $endpointIdSaved", Toast.LENGTH_LONG)
+                        .show()
+                    Log.v(LOG_TAG, "Endpoint: $endpointIdSaved")
+                    endpointIdSaved?.let {
+                        Nearby.getConnectionsClient(applicationContext).sendPayload(
+                            endpointIdSaved!!, Payload.fromBytes(phoneNumber.toByteArray())).addOnFailureListener { e ->
+                            Toast.makeText(applicationContext, "Error: $e", Toast.LENGTH_LONG)
+                                .show()
+                        }
+                    }
+                }
+
+                DISCOVERER -> {
+                    val phoneNumber = "Андрей;+4915256848384"
+                    Toast.makeText(applicationContext, "Endpoint: $endpointIdSaved", Toast.LENGTH_SHORT)
+                        .show()
+                    endpointIdSaved?.let {
+                        Nearby.getConnectionsClient(applicationContext).sendPayload(
+                            endpointIdSaved!!, Payload.fromBytes(phoneNumber.toByteArray())).addOnFailureListener { e ->
+                            Toast.makeText(applicationContext, "Error: $e", Toast.LENGTH_LONG)
+                                .show()
+                        }
+                    }
+                    setYesNoButtonsVisibility(false)
+                    setSearchButttonVisibility(true)
+                }
+            }
+
+        }
+
+
 //        disconnectButton.setOnClickListener {
 //            connClient.apply {
 //             stopAdvertising()
@@ -115,11 +178,12 @@ class LookActivity : AppCompatActivity() {
     }
 
     private fun startClient() {
-        searchBtn.visibility = View.GONE
+        setSearchButttonVisibility(false)
         searchingInProgressText.visibility = View.VISIBLE
         Nearby.getConnectionsClient(applicationContext).startDiscovery(packageName, endpointDiscoveryCallback, discOptions)
                 .addOnSuccessListener {
           //          logD( "$deviceId started discovering.")
+                    userRole = DISCOVERER
                 }.addOnFailureListener { e ->
                     // We're unable to start discovering.
            //         logE("We're unable to start discovering.", e)
@@ -130,8 +194,8 @@ class LookActivity : AppCompatActivity() {
         override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
             // An endpoint was found. We request a connection to it.
         //    logD( "onEndpointFound: endpointId: $endpointId")
+          //  endpointIdSaved = endpointId
             searchingInProgressText.text = "We have found a device! Let me connect to it ..."
-
 
             Nearby.getConnectionsClient(applicationContext).requestConnection(info.endpointName + ".1", endpointId, connectionLifecycleCallback)
                     .addOnSuccessListener {
@@ -185,14 +249,20 @@ class LookActivity : AppCompatActivity() {
            // logD( "onConnectionResult")
             when (result.status.statusCode) {
                 ConnectionsStatusCodes.STATUS_OK ->  {
+                    endpointIdSaved = endpointId
                     Toast.makeText(
                             applicationContext,
                             "Connected to $endpointId successfully",
-                            Toast.LENGTH_SHORT
+                            Toast.LENGTH_LONG
                     ).show()
                  //   logD("Connected to $endpointId successfully")
-                    Nearby.getConnectionsClient(applicationContext
-                    !!).stopAdvertising()
+                    if (userRole == ADVERTISER) {
+                        val myInfo = "Вика"
+                        Nearby.getConnectionsClient(applicationContext).sendPayload(
+                            endpointId, Payload.fromBytes(myInfo.toByteArray()))
+                    }
+//                    Nearby.getConnectionsClient(applicationContext
+//                    !!).stopAdvertising()
                 }
                         // We're connected! Can now start sending and receiving data.
 
@@ -241,15 +311,63 @@ class LookActivity : AppCompatActivity() {
     }
 
 
-
-
-    private val payloadCallback = object : PayloadCallback() {
+     val payloadCallback = object : PayloadCallback() {
         override fun onPayloadReceived(p0: String, p1: Payload) {
-            val receivedText: String = p1.asBytes()!!.toString(Charset.defaultCharset())
-            searchingInProgressText.text = receivedText
+            when (userRole) {
+                DISCOVERER -> {
+                    if (advertiserName != null ) {
+                      //  Toast.makeText(applicationContext, "advertiserName: " + advertiserName, Toast.LENGTH_SHORT).show()
+                        val advertisersPhoneNumber = p1.asBytes()!!.toString(Charset.defaultCharset())
+                        searchingInProgressText.text = advertisersPhoneNumber
+                    } else {
+                      //  Toast.makeText(applicationContext, "advertiserName: " + advertiserName, Toast.LENGTH_SHORT).show()
+                        advertiserName = p1.asBytes()!!.toString(Charset.defaultCharset())
+                        searchingInProgressText.text = advertiserName
+                        setYesNoButtonsVisibility(true)
+                    }
+
+                }
+                ADVERTISER -> {
+//                    endpointIdSaved = p0
+                    setSearchButttonVisibility(false)
+                    val receivedContact: String = p1.asBytes()!!.toString(Charset.defaultCharset())
+                    val textArray = receivedContact.split(";").toTypedArray()
+                    Toast.makeText(applicationContext, textArray[0], Toast.LENGTH_SHORT).show()
+                    Toast.makeText(applicationContext, textArray[1], Toast.LENGTH_SHORT).show()
+                    searchingInProgressText.visibility = View.VISIBLE
+                    searchingInProgressText.text = textArray[0]
+                    discovererPhoneNumber = textArray[1]
+                    setYesNoButtonsVisibility(true)
+                }
+            }
+
         }
 
         override fun onPayloadTransferUpdate(p0: String, p1: PayloadTransferUpdate) {
+        }
+    }
+
+    private fun setYesNoButtonsVisibility(isVisible: Boolean) {
+        if (isVisible) {
+            no_button.visibility = View.VISIBLE
+            yes_button.visibility = View.VISIBLE
+            profile_image.visibility = View.VISIBLE
+            found_view.visibility = View.VISIBLE
+        } else {
+            no_button.visibility = View.GONE
+            yes_button.visibility = View.GONE
+            profile_image.visibility = View.GONE
+            found_view.visibility = View.GONE
+        }
+    }
+
+    private fun setSearchButttonVisibility(isVisible: Boolean) {
+        if (isVisible) {
+            searchBtn.visibility = View.VISIBLE
+            searchBtn.visibility = View.VISIBLE
+        } else {
+            searchBtn.visibility = View.GONE
+            searchBtn.visibility = View.GONE
         }
     }
 
