@@ -1,11 +1,14 @@
 package com.artamonov.look4
 
-import android.Manifest.permission.*
+import android.Manifest.permission.BLUETOOTH
+import android.Manifest.permission.BLUETOOTH_ADMIN
+import android.Manifest.permission.ACCESS_WIFI_STATE
+import android.Manifest.permission.CHANGE_WIFI_STATE
+import android.Manifest.permission.ACCESS_COARSE_LOCATION
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.provider.SearchRecentSuggestions
 import android.provider.Settings
 import android.text.SpannableString
 import android.text.format.DateFormat
@@ -16,58 +19,55 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import com.artamonov.look4.utils.UserRole
 import com.artamonov.look4.utils.UserRole.Companion.ADVERTISER
 import com.artamonov.look4.utils.UserRole.Companion.DISCOVERER
 import com.bumptech.glide.Glide
 import com.google.android.gms.nearby.Nearby
-import com.google.android.gms.nearby.connection.*
+import com.google.android.gms.nearby.connection.AdvertisingOptions
+import com.google.android.gms.nearby.connection.DiscoveryOptions
+import com.google.android.gms.nearby.connection.Payload
+import com.google.android.gms.nearby.connection.EndpointDiscoveryCallback
+import com.google.android.gms.nearby.connection.ConnectionLifecycleCallback
+import com.google.android.gms.nearby.connection.DiscoveredEndpointInfo
+import com.google.android.gms.nearby.connection.ConnectionInfo
+import com.google.android.gms.nearby.connection.ConnectionsStatusCodes
+import com.google.android.gms.nearby.connection.ConnectionResolution
+import com.google.android.gms.nearby.connection.PayloadCallback
+import com.google.android.gms.nearby.connection.PayloadTransferUpdate
 import com.google.android.gms.nearby.connection.Strategy.P2P_CLUSTER
 import kotlinx.android.synthetic.main.activity_look.*
 import kotlinx.android.synthetic.main.activity_main.*
 import java.nio.charset.Charset
 
-
 class LookActivity : AppCompatActivity() {
 
     companion object {
         private val REQUIRED_PERMISSIONS = arrayOf(
-                BLUETOOTH,
-                BLUETOOTH_ADMIN,
-                ACCESS_WIFI_STATE,
-                CHANGE_WIFI_STATE,
-                ACCESS_COARSE_LOCATION
+            BLUETOOTH,
+            BLUETOOTH_ADMIN,
+            ACCESS_WIFI_STATE,
+            CHANGE_WIFI_STATE,
+            ACCESS_COARSE_LOCATION
         )
+
         private const val REQUEST_CODE_REQUIRED_PERMISSIONS = 1
 
         private val STRATEGY = P2P_CLUSTER
         private const val LOG_TAG = "Look4"
         private var endpointIdSaved: String? = null
-        private var userRole = UserRole.ADVERTISER
+        private var userRole = ADVERTISER
         private var discovererPhoneNumber: String? = null
         private var advertiserName: String? = null
-
-       // private const val packgName = "com.artamonov.look4"
-
-//        private val deviceId = "Player " + Random.nextInt(1, 10)
         private lateinit var deviceId: String
 
         private val advOptions = AdvertisingOptions.Builder().setStrategy(STRATEGY).build()
         private val discOptions = DiscoveryOptions.Builder().setStrategy(STRATEGY).build()
-
     }
-
-    //lateinit var connClient: ConnectionsClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_look)
-      //  connClient = Nearby.getConnectionsClient(this)
-
         deviceId = Settings.Secure.getString(applicationContext.contentResolver, Settings.Secure.ANDROID_ID)
-            // mDebugLogView.movementMethod = ScrollingMovementMethod()
-     //   mDebugLogView.setTextIsSelectable(true)
-       // advertButton.setOnClickListener { startServer() }
         searchBtn.setOnClickListener { startClient() }
 
         Glide
@@ -89,7 +89,6 @@ class LookActivity : AppCompatActivity() {
                 ADVERTISER -> {
                     searchingInProgressText.text = "Congratulations! Here is the phone number: " + discovererPhoneNumber
                     setYesNoButtonsVisibility(false)
-                  //  Nearby.getConnectionsClient(this).stopAllEndpoints()
                     setSearchButttonVisibility(true)
                     val phoneNumber = "+496969696969"
                     Toast.makeText(applicationContext, "Endpoint: $endpointIdSaved", Toast.LENGTH_LONG)
@@ -119,9 +118,7 @@ class LookActivity : AppCompatActivity() {
                     setSearchButttonVisibility(true)
                 }
             }
-
         }
-
 
 //        disconnectButton.setOnClickListener {
 //            connClient.apply {
@@ -130,8 +127,6 @@ class LookActivity : AppCompatActivity() {
 //                stopAllEndpoints()
 //           }
 //        }
-
-
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
@@ -162,7 +157,6 @@ class LookActivity : AppCompatActivity() {
         return true
     }
 
-
     private fun startServer() {
         Nearby.getConnectionsClient(this).startAdvertising(
                 deviceId,
@@ -170,11 +164,10 @@ class LookActivity : AppCompatActivity() {
                 connectionLifecycleCallback,
                 advOptions
         ).addOnSuccessListener {
-        //    logD( "$deviceId started advertising.")
+            //    logD( "$deviceId started advertising.")
         }.addOnFailureListener { exception ->
-         //   logE("$deviceId failed to advertise.", exception)
+            //   logE("$deviceId failed to advertise.", exception)
         }
-
     }
 
     private fun startClient() {
@@ -182,19 +175,19 @@ class LookActivity : AppCompatActivity() {
         searchingInProgressText.visibility = View.VISIBLE
         Nearby.getConnectionsClient(applicationContext).startDiscovery(packageName, endpointDiscoveryCallback, discOptions)
                 .addOnSuccessListener {
-          //          logD( "$deviceId started discovering.")
+                    // logD( "$deviceId started discovering.")
                     userRole = DISCOVERER
                 }.addOnFailureListener { e ->
-                    // We're unable to start discovering.
-           //         logE("We're unable to start discovering.", e)
+                // We're unable to start discovering.
+                // logE("We're unable to start discovering.", e)
                 }
     }
 
     private val endpointDiscoveryCallback: EndpointDiscoveryCallback = object : EndpointDiscoveryCallback() {
         override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
             // An endpoint was found. We request a connection to it.
-        //    logD( "onEndpointFound: endpointId: $endpointId")
-          //  endpointIdSaved = endpointId
+            // logD( "onEndpointFound: endpointId: $endpointId")
+            // endpointIdSaved = endpointId
             searchingInProgressText.text = "We have found a device! Let me connect to it ..."
 
             Nearby.getConnectionsClient(applicationContext).requestConnection(info.endpointName + ".1", endpointId, connectionLifecycleCallback)
@@ -204,9 +197,8 @@ class LookActivity : AppCompatActivity() {
                                 "Requested connection to $endpointId !",
                                 Toast.LENGTH_SHORT
                         ).show()
-                //        logD( "Requested connection to $endpointId !")
+                        // logD( "Requested connection to $endpointId !")
                         searchingInProgressText.text = "You are connected!"
-
 
                         // We successfully requested a connection. Now both sides
                         // must accept before the connection is established.
@@ -217,65 +209,58 @@ class LookActivity : AppCompatActivity() {
                                 "Connection request to $endpointId failed!",
                                 Toast.LENGTH_SHORT
                         ).show()
-                //        logW( "Connection request to $endpointId failed!")
+                        // logW( "Connection request to $endpointId failed!")
                         // Nearby Connections failed to request the connection.
-
                     }
         }
 
         override fun onEndpointLost(endpointId: String) {
             Toast.makeText(applicationContext, "Endpoint: $endpointId lost!", Toast.LENGTH_SHORT)
                     .show()
-           // logW("Endpoint: $endpointId lost!")
-
+            // logW("Endpoint: $endpointId lost!")
             // A previously discovered endpoint has gone away.
-
         }
-
     }
-
 
     private val connectionLifecycleCallback: ConnectionLifecycleCallback = object : ConnectionLifecycleCallback() {
         override fun onConnectionInitiated(p0: String, p1: ConnectionInfo) {
             Toast.makeText(applicationContext, "Connection with $p0 initiated.", Toast.LENGTH_SHORT)
                 .show()
-          //  logD("Connection initiated : $p0 ,$p1")
+            //  logD("Connection initiated : $p0 ,$p1")
             Nearby.getConnectionsClient(applicationContext).acceptConnection(p0, payloadCallback)
             // Automatically accept the connection on both sides.
-
         }
 
         override fun onConnectionResult(endpointId: String, result: ConnectionResolution) {
-           // logD( "onConnectionResult")
+            // logD( "onConnectionResult")
             when (result.status.statusCode) {
-                ConnectionsStatusCodes.STATUS_OK ->  {
+                ConnectionsStatusCodes.STATUS_OK -> {
                     endpointIdSaved = endpointId
                     Toast.makeText(
                             applicationContext,
                             "Connected to $endpointId successfully",
                             Toast.LENGTH_LONG
                     ).show()
-                 //   logD("Connected to $endpointId successfully")
+                    //   logD("Connected to $endpointId successfully")
                     if (userRole == ADVERTISER) {
                         val myInfo = "Вика"
                         Nearby.getConnectionsClient(applicationContext).sendPayload(
                             endpointId, Payload.fromBytes(myInfo.toByteArray()))
                     }
-//                    Nearby.getConnectionsClient(applicationContext
-//                    !!).stopAdvertising()
+                    //  Nearby.getConnectionsClient(applicationContex!!).stopAdvertising()
                 }
-                        // We're connected! Can now start sending and receiving data.
 
-                ConnectionsStatusCodes.STATUS_CONNECTION_REJECTED ->  {
+                // We're connected! Can now start sending and receiving data.
+
+                ConnectionsStatusCodes.STATUS_CONNECTION_REJECTED -> {
                     Toast.makeText(
                             applicationContext,
                             "Connection attempt to $endpointId was rejected",
                             Toast.LENGTH_SHORT
                     ).show()
-                 //   logW("Connection attempt to $endpointId was rejected")
+                    //   logW("Connection attempt to $endpointId was rejected")
                 }
                 // The connection was rejected by one or both sides.
-
 
                 ConnectionsStatusCodes.STATUS_ERROR -> {
                     Toast.makeText(
@@ -283,11 +268,9 @@ class LookActivity : AppCompatActivity() {
                             "Connected attempt to $endpointId failed",
                             Toast.LENGTH_SHORT
                     ).show()
-                 //   logW( "Connected attempt to $endpointId failed")
-
+                    //   logW( "Connected attempt to $endpointId failed")
                 }
                 // The connection broke before it was able to be accepted.
-
 
                 else -> {
                     Toast.makeText(
@@ -295,40 +278,36 @@ class LookActivity : AppCompatActivity() {
                             "Unknown status code",
                             Toast.LENGTH_SHORT
                     ).show()
-                //    logW( "Unknown status code")
-
+                    //    logW( "Unknown status code")
                 }
                 // Unknown status code
-
             }
         }
 
         override fun onDisconnected(p0: String) {
-            //logW("onDisconnected")
+            // logW("onDisconnected")
             // We've been disconnected from this endpoint. No more data can be
             // sent or received.
-            }
+        }
     }
 
-
-     val payloadCallback = object : PayloadCallback() {
+    val payloadCallback = object : PayloadCallback() {
         override fun onPayloadReceived(p0: String, p1: Payload) {
             when (userRole) {
                 DISCOVERER -> {
-                    if (advertiserName != null ) {
-                      //  Toast.makeText(applicationContext, "advertiserName: " + advertiserName, Toast.LENGTH_SHORT).show()
+                    if (advertiserName != null) {
+                        //  Toast.makeText(applicationContext, "advertiserName: " + advertiserName, Toast.LENGTH_SHORT).show()
                         val advertisersPhoneNumber = p1.asBytes()!!.toString(Charset.defaultCharset())
                         searchingInProgressText.text = advertisersPhoneNumber
                     } else {
-                      //  Toast.makeText(applicationContext, "advertiserName: " + advertiserName, Toast.LENGTH_SHORT).show()
+                        //  Toast.makeText(applicationContext, "advertiserName: " + advertiserName, Toast.LENGTH_SHORT).show()
                         advertiserName = p1.asBytes()!!.toString(Charset.defaultCharset())
                         searchingInProgressText.text = advertiserName
                         setYesNoButtonsVisibility(true)
                     }
-
                 }
                 ADVERTISER -> {
-//                    endpointIdSaved = p0
+                    // endpointIdSaved = p0
                     setSearchButttonVisibility(false)
                     val receivedContact: String = p1.asBytes()!!.toString(Charset.defaultCharset())
                     val textArray = receivedContact.split(";").toTypedArray()
@@ -340,7 +319,6 @@ class LookActivity : AppCompatActivity() {
                     setYesNoButtonsVisibility(true)
                 }
             }
-
         }
 
         override fun onPayloadTransferUpdate(p0: String, p1: PayloadTransferUpdate) {
@@ -402,5 +380,4 @@ class LookActivity : AppCompatActivity() {
         spannable.setSpan(ForegroundColorSpan(color), 0, msg.length, 0)
         return spannable
     }
-
 }

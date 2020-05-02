@@ -8,11 +8,15 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import com.google.android.gms.nearby.Nearby
-import com.google.android.gms.nearby.connection.*
-import kotlinx.android.synthetic.main.activity_look.*
-import kotlinx.android.synthetic.main.activity_main.*
-import java.nio.charset.Charset
-import java.nio.charset.StandardCharsets.UTF_8
+import com.google.android.gms.nearby.connection.AdvertisingOptions
+import com.google.android.gms.nearby.connection.Payload
+import com.google.android.gms.nearby.connection.ConnectionLifecycleCallback
+import com.google.android.gms.nearby.connection.ConnectionInfo
+import com.google.android.gms.nearby.connection.ConnectionsStatusCodes
+import com.google.android.gms.nearby.connection.ConnectionResolution
+import com.google.android.gms.nearby.connection.Strategy
+import kotlinx.android.synthetic.main.activity_main.look_text
+import kotlinx.android.synthetic.main.activity_main.offline_text
 
 class MainActivity : AppCompatActivity() {
 
@@ -31,14 +35,11 @@ companion object {
     private const val LOG_TAG = "Look4"
 
     // private const val packgName = "com.artamonov.look4"
-
-    //        private val deviceId = "Player " + Random.nextInt(1, 10)
+    // private val deviceId = "Player " + Random.nextInt(1, 10)
     private lateinit var deviceId: String
 
     private val advOptions = AdvertisingOptions.Builder().setStrategy(STRATEGY).build()
-
 }
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,10 +64,8 @@ companion object {
                 look_text.setTextColor(ContextCompat.getColor(this, R.color.green))
             }
         }
-
-       // startServer()
+        // startServer()
     }
-
 
     private fun startServer() {
         Nearby.getConnectionsClient(this).startAdvertising(
@@ -75,34 +74,32 @@ companion object {
             connectionLifecycleCallback,
             advOptions
         ).addOnSuccessListener {
-          //  logD( "${LookActivity.deviceId} started advertising.")
+            //  logD( "${LookActivity.deviceId} started advertising.")
         }.addOnFailureListener { exception ->
-          //  logE("${LookActivity.deviceId} failed to advertise.", exception)
+            //  logE("${LookActivity.deviceId} failed to advertise.", exception)
         }
-
     }
-
 
     private val connectionLifecycleCallback: ConnectionLifecycleCallback = object : ConnectionLifecycleCallback() {
         override fun onConnectionInitiated(p0: String, p1: ConnectionInfo) {
             Toast.makeText(applicationContext, "Connection with $p0 initiated.", Toast.LENGTH_SHORT)
                 .show()
 
-           // Nearby.getConnectionsClient(applicationContext).acceptConnection(p0, payloadCallback)
+            // Nearby.getConnectionsClient(applicationContext).acceptConnection(p0, payloadCallback)
             // Automatically accept the connection on both sides.
-
         }
 
         override fun onConnectionResult(endpointId: String, result: ConnectionResolution) {
-           // logD( "onConnectionResult")
+            // logD( "onConnectionResult")
             when (result.status.statusCode) {
-                ConnectionsStatusCodes.STATUS_OK ->  {
+                ConnectionsStatusCodes.STATUS_OK -> {
                     Toast.makeText(
                         applicationContext,
                         "Connected to $endpointId successfully",
                         Toast.LENGTH_SHORT
                     ).show()
-                //    logD("Connected to $endpointId successfully")
+
+                    //    logD("Connected to $endpointId successfully")
                     val myInfo = "Вика"
                     Nearby.getConnectionsClient(applicationContext).sendPayload(
                         endpointId, Payload.fromBytes(myInfo.toByteArray()))
@@ -111,16 +108,17 @@ companion object {
                 }
                 // We're connected! Can now start sending and receiving data.
 
-                ConnectionsStatusCodes.STATUS_CONNECTION_REJECTED ->  {
+                ConnectionsStatusCodes.STATUS_CONNECTION_REJECTED -> {
                     Toast.makeText(
                         applicationContext,
                         "Connection attempt to $endpointId was rejected",
                         Toast.LENGTH_SHORT
                     ).show()
-                //    logW("Connection attempt to $endpointId was rejected")
-                }
-                // The connection was rejected by one or both sides.
 
+                    //    logW("Connection attempt to $endpointId was rejected")
+                }
+
+                // The connection was rejected by one or both sides.
 
                 ConnectionsStatusCodes.STATUS_ERROR -> {
                     Toast.makeText(
@@ -128,11 +126,9 @@ companion object {
                         "Connected attempt to $endpointId failed",
                         Toast.LENGTH_SHORT
                     ).show()
-                 //   logW( "Connected attempt to $endpointId failed")
-
+                    //   logW( "Connected attempt to $endpointId failed")
                 }
                 // The connection broke before it was able to be accepted.
-
 
                 else -> {
                     Toast.makeText(
@@ -140,16 +136,14 @@ companion object {
                         "Unknown status code",
                         Toast.LENGTH_SHORT
                     ).show()
-                   // logW( "Unknown status code")
-
+                    // logW( "Unknown status code")
                 }
                 // Unknown status code
-
             }
         }
 
         override fun onDisconnected(p0: String) {
-           // logW("onDisconnected")
+            // logW("onDisconnected")
             // We've been disconnected from this endpoint. No more data can be
             // sent or received.
         }
@@ -164,6 +158,4 @@ companion object {
 //        override fun onPayloadTransferUpdate(p0: String, p1: PayloadTransferUpdate) {
 //        }
 //    }
-
-
 }

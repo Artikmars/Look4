@@ -5,7 +5,7 @@ buildscript {
     repositories {
         google()
         jcenter()
-        
+
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.6.2'
@@ -16,6 +16,10 @@ buildscript {
     }
 }
 
+plugins {
+    id "com.diffplug.gradle.spotless" version "3.16.0"
+}
+
 allprojects {
     repositories {
         mavenCentral()
@@ -24,6 +28,32 @@ allprojects {
     }
 }
 
-task clean(type: Delete) {
-    delete rootProject.buildDir
+// Spotless needs the Java plugin. This line can be removed once we
+// port to Kotlin DSL:
+apply plugin: 'java'
+apply plugin: 'groovy'
+
+spotless {
+    format("misc") {
+        target("**/*.gradle", "**/*.md", "**/.gitignore")
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+    freshmark {
+        target("**/*.md")
+        propertiesFile("gradle.properties")
+    }
+    java {
+        target("**/*.java")
+        removeUnusedImports()
+        googleJavaFormat().aosp()
+    }
+    kotlin {
+        target("*/src/**/*.kt")
+        ktlint()
+    }
+    kotlinGradle {
+        target("**/*.gradle.kts")
+        ktlint()
+    }
 }
