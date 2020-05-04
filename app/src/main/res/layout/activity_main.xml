@@ -95,9 +95,7 @@
         android:layout_marginLeft="15dp"
         android:layout_marginTop="68dp"
         android:text="@string/look"
-        android:textColor="@color/grey"
-        android:clickable="false"
-        android:enabled="false"
+        android:textColor="@color/green"
         android:textSize="20sp"
         app:layout_constraintStart_toEndOf="@+id/letter_0_1"
         app:layout_constraintTop_toBottomOf="@+id/offline_text" />

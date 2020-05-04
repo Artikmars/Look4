@@ -2,10 +2,9 @@ package com.artamonov.look4
 
 import android.Manifest
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
-import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.AdvertisingOptions
@@ -50,14 +49,19 @@ companion object {
             startActivity(Intent(this, LookActivity::class.java))
         }
 
+        if (ForegroundService.isAppInForeground) {
+            offline_text.text = resources.getString(R.string.online_mode)
+        }
+
         offline_text.setOnClickListener {
-            if (offline_text.text == "Online") {
-                Nearby.getConnectionsClient(applicationContext
-                !!).stopAllEndpoints()
+            if (offline_text.text == resources.getString(R.string.online_mode)) {
+                stopService()
+                Nearby.getConnectionsClient(applicationContext).stopAllEndpoints()
                 offline_text.text = resources.getString(R.string.offline_mode)
-                look_text.setTextColor(ContextCompat.getColor(this, R.color.grey))
-                look_text.isClickable = false
+                //  look_text.setTextColor(ContextCompat.getColor(this, R.color.grey))
+                // look_text.isClickable = false
             } else {
+                startService()
                 look_text.isEnabled = true
                 look_text.isClickable = true
                 offline_text.text = resources.getString(R.string.online_mode)
@@ -65,6 +69,17 @@ companion object {
             }
         }
         // startServer()
+    }
+
+    private fun startService() {
+        val serviceIntent = Intent(this, ForegroundService::class.java)
+        serviceIntent.putExtra("inputExtra", "Is enabled ...")
+        ContextCompat.startForegroundService(this, serviceIntent)
+    }
+
+    private fun stopService() {
+        val serviceIntent = Intent(this, ForegroundService::class.java)
+        stopService(serviceIntent)
     }
 
     private fun startServer() {
@@ -82,8 +97,8 @@ companion object {
 
     private val connectionLifecycleCallback: ConnectionLifecycleCallback = object : ConnectionLifecycleCallback() {
         override fun onConnectionInitiated(p0: String, p1: ConnectionInfo) {
-            Toast.makeText(applicationContext, "Connection with $p0 initiated.", Toast.LENGTH_SHORT)
-                .show()
+//            Toast.makeText(applicationContext, "Connection with $p0 initiated.", Toast.LENGTH_SHORT)
+//                .show()
 
             // Nearby.getConnectionsClient(applicationContext).acceptConnection(p0, payloadCallback)
             // Automatically accept the connection on both sides.
@@ -93,11 +108,11 @@ companion object {
             // logD( "onConnectionResult")
             when (result.status.statusCode) {
                 ConnectionsStatusCodes.STATUS_OK -> {
-                    Toast.makeText(
-                        applicationContext,
-                        "Connected to $endpointId successfully",
-                        Toast.LENGTH_SHORT
-                    ).show()
+//                    Toast.makeText(
+//                        applicationContext,
+//                        "Connected to $endpointId successfully",
+//                        Toast.LENGTH_SHORT
+//                    ).show()
 
                     //    logD("Connected to $endpointId successfully")
                     val myInfo = "Вика"
@@ -109,11 +124,11 @@ companion object {
                 // We're connected! Can now start sending and receiving data.
 
                 ConnectionsStatusCodes.STATUS_CONNECTION_REJECTED -> {
-                    Toast.makeText(
-                        applicationContext,
-                        "Connection attempt to $endpointId was rejected",
-                        Toast.LENGTH_SHORT
-                    ).show()
+//                    Toast.makeText(
+//                        applicationContext,
+//                        "Connection attempt to $endpointId was rejected",
+//                        Toast.LENGTH_SHORT
+//                    ).show()
 
                     //    logW("Connection attempt to $endpointId was rejected")
                 }
@@ -121,21 +136,21 @@ companion object {
                 // The connection was rejected by one or both sides.
 
                 ConnectionsStatusCodes.STATUS_ERROR -> {
-                    Toast.makeText(
-                        applicationContext,
-                        "Connected attempt to $endpointId failed",
-                        Toast.LENGTH_SHORT
-                    ).show()
+//                    Toast.makeText(
+//                        applicationContext,
+//                        "Connected attempt to $endpointId failed",
+//                        Toast.LENGTH_SHORT
+//                    ).show()
                     //   logW( "Connected attempt to $endpointId failed")
                 }
                 // The connection broke before it was able to be accepted.
 
                 else -> {
-                    Toast.makeText(
-                        applicationContext,
-                        "Unknown status code",
-                        Toast.LENGTH_SHORT
-                    ).show()
+//                    Toast.makeText(
+//                        applicationContext,
+//                        "Unknown status code",
+//                        Toast.LENGTH_SHORT
+//                    ).show()
                     // logW( "Unknown status code")
                 }
                 // Unknown status code
