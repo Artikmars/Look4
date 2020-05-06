@@ -12,6 +12,7 @@ import android.os.Build
 import android.os.IBinder
 import android.provider.Settings
 import androidx.core.app.NotificationCompat
+    import androidx.preference.PreferenceManager
 import com.artamonov.look4.utils.UserRole
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.AdvertisingOptions
@@ -29,12 +30,12 @@ class ForegroundService : Service() {
 
     var endpointIdSaved: String? = null
     var userRole = UserRole.ADVERTISER
-    private var advertiserName: String? = null
     private var discovererPhoneNumber: String? = null
     private var discovererName: String? = null
     lateinit var deviceId: String
     private val STRATEGY = Strategy.P2P_CLUSTER
     val advOptions = AdvertisingOptions.Builder().setStrategy(STRATEGY).build()
+    private lateinit var userName: String
     var notification: Notification? = null
     var notificationManager: NotificationManager? = null
 
@@ -56,6 +57,8 @@ class ForegroundService : Service() {
         //do heavy work on a background thread
         // stopSelf();
         deviceId = Settings.Secure.getString(applicationContext.contentResolver, Settings.Secure.ANDROID_ID)
+        userName = PreferenceManager.getDefaultSharedPreferences(applicationContext).getString(
+            USER_NAME, "Name")!!
         startServer()
         return START_NOT_STICKY
     }
@@ -101,9 +104,8 @@ class ForegroundService : Service() {
 //                        Toast.LENGTH_LONG
 //                    ).show()
 
-                    val myInfo = "Вика"
                     Nearby.getConnectionsClient(applicationContext).sendPayload(
-                        endpointId, Payload.fromBytes(myInfo.toByteArray()))
+                        endpointId, Payload.fromBytes(userName.toByteArray()))
                 }
 
                 // We're connected! Can now start sending and receiving data.

@@ -14,8 +14,7 @@ import com.google.android.gms.nearby.connection.ConnectionInfo
 import com.google.android.gms.nearby.connection.ConnectionsStatusCodes
 import com.google.android.gms.nearby.connection.ConnectionResolution
 import com.google.android.gms.nearby.connection.Strategy
-import kotlinx.android.synthetic.main.activity_main.look_text
-import kotlinx.android.synthetic.main.activity_main.offline_text
+import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -67,6 +66,10 @@ companion object {
                 offline_text.text = resources.getString(R.string.online_mode)
                 look_text.setTextColor(ContextCompat.getColor(this, R.color.green))
             }
+        }
+
+        settings_text.setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
         }
         // startServer()
     }

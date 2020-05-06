@@ -17,6 +17,7 @@ import android.view.View
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.preference.PreferenceManager
 import com.artamonov.look4.utils.UserRole.Companion.ADVERTISER
 import com.artamonov.look4.utils.UserRole.Companion.DISCOVERER
 import com.bumptech.glide.Glide
@@ -59,6 +60,9 @@ class LookActivity : AppCompatActivity() {
         lateinit var deviceId: String
         private var timer: CountDownTimer? = null
 
+        private lateinit var userName: String
+        private lateinit var userPhoneNumber: String
+
         val advOptions = AdvertisingOptions.Builder().setStrategy(STRATEGY).build()
         private val discOptions = DiscoveryOptions.Builder().setStrategy(STRATEGY).build()
     }
@@ -81,6 +85,11 @@ class LookActivity : AppCompatActivity() {
         deviceId = Settings.Secure.getString(applicationContext.contentResolver, Settings.Secure.ANDROID_ID)
         searchBtn.setOnClickListener { startClient() }
 
+        userName = PreferenceManager.getDefaultSharedPreferences(this).getString(
+            USER_NAME, "Name")!!
+        userPhoneNumber = PreferenceManager.getDefaultSharedPreferences(this).getString(
+            USER_PHONE_NUMBER, "Name")!!
+
         Glide
             .with(profile_image)
             .load(R.drawable.ic_face_black_18dp)
@@ -101,13 +110,12 @@ class LookActivity : AppCompatActivity() {
                     searchingInProgressText.text = "Congratulations! Here is the phone number: " + discovererPhoneNumber
                     shouldDisplayIncomeContactViews(false)
                     searchButtonVisibility(true)
-                    val phoneNumber = "+496969696969"
 //                    Toast.makeText(applicationContext, "Endpoint: $endpointIdSaved", Toast.LENGTH_LONG)
 //                        .show()
                     Log.v(LOG_TAG, "Endpoint: $endpointIdSaved")
                     endpointIdSaved?.let {
                         Nearby.getConnectionsClient(applicationContext).sendPayload(
-                            endpointIdSaved!!, Payload.fromBytes(phoneNumber.toByteArray())).addOnFailureListener { e ->
+                            endpointIdSaved!!, Payload.fromBytes(userPhoneNumber.toByteArray())).addOnFailureListener { e ->
 //                            Toast.makeText(applicationContext, "Error: $e", Toast.LENGTH_LONG)
 //                                .show()
                         }
@@ -115,12 +123,11 @@ class LookActivity : AppCompatActivity() {
                 }
 
                 DISCOVERER -> {
-                    val phoneNumber = "Андрей;+4915256848384"
 //                    Toast.makeText(applicationContext, "Endpoint: $endpointIdSaved", Toast.LENGTH_SHORT)
 //                        .show()
                     endpointIdSaved?.let {
                         Nearby.getConnectionsClient(applicationContext).sendPayload(
-                            endpointIdSaved!!, Payload.fromBytes(phoneNumber.toByteArray())).addOnFailureListener { e ->
+                            endpointIdSaved!!, Payload.fromBytes("$userName;$userPhoneNumber".toByteArray())).addOnFailureListener { e ->
 //                            Toast.makeText(applicationContext, "Error: $e", Toast.LENGTH_LONG)
 //                                .show()
                         }
