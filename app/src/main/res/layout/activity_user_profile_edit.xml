@@ -15,8 +15,8 @@
         app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_face_black_18dp"
-        tools:src="@drawable/ic_face_black_18dp" />
+        app:srcCompat="@drawable/ic_plus"
+        tools:src="@drawable/ic_plus" />
 
     <TextView
         android:id="@+id/user_edit_photo_view"

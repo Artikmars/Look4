@@ -14,3 +14,4 @@
 .cxx
 /keystore
 /app/release/output.json
+/app/debug/output.json

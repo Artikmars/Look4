@@ -10,8 +10,8 @@ android {
         applicationId "com.artamonov.look4"
         minSdkVersion 16
         targetSdkVersion 29
-        versionCode 5
-        versionName "0.13"
+        versionCode 6
+        versionName "0.14"
         vectorDrawables.useSupportLibrary = true
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
