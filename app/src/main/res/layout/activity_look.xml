@@ -30,10 +30,8 @@
         android:layout_marginTop="24dp"
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.501"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/found_view"
-        app:srcCompat="@drawable/ic_face_black_18dp"
         tools:src="@drawable/ic_face_black_18dp"
         tools:visibility="visible" />
 

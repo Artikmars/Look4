@@ -1,20 +1,23 @@
 package com.artamonov.look4
 
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
+import android.util.Log
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
+import com.github.dhaval2404.imagepicker.ImagePicker
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_user_profile_edit.*
-import kotlinx.android.synthetic.main.activity_welcome.*
 
 class UserProfileEditActivity : AppCompatActivity() {
 
@@ -32,11 +35,11 @@ class UserProfileEditActivity : AppCompatActivity() {
                 return@setOnClickListener }
             val sharedPref = PreferenceManager.getDefaultSharedPreferences(this)
             val editor = sharedPref.edit()
-            val isSaved = editor
+            val editor2 = editor
                 .putString(USER_NAME, user_edit_name.text.toString())
                 .putString(USER_PHONE_NUMBER, user_edit_phone_number.text.toString())
-                .putString(USER_IMAGE_URI, newImage.toString())
-                .commit()
+                    newImage?.let { editor2.putString(USER_IMAGE_URI, newImage.toString()) }
+                val isSaved = editor2.commit()
             if (isSaved) { finish() }
         }
 
@@ -61,19 +64,54 @@ class UserProfileEditActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == TAKE_IMAGE_REQUEST && resultCode == RESULT_OK) {
-            newImage = data?.data
-            val bitmap = MediaStore.Images.Media.getBitmap(this.contentResolver, newImage)
-            Glide.with(this).load(bitmap).apply(RequestOptions.circleCropTransform()).into(user_edit_add_image)
-        }
-    }
+//        if (requestCode == TAKE_IMAGE_REQUEST && resultCode == RESULT_OK) {
+//            newImage = data?.data
+//            Log.v("Look4", "newImage.path: ${newImage?.path}")
+//            val file = File(newImage?.path!!)
+//            Log.v("Look4", "file.exist : ${file.exists()}")
+//            Log.v("Look4", "file.path : ${file.path}")
+//            Log.v("Look4", "file.absolutePath : ${file.absolutePath}")
+//
+//            val bitmap = MediaStore.Images.Media.getBitmap(this.contentResolver, newImage)
+//          //  val bytes = ByteArrayOutputStream()
+//          //  bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bytes)
+//          //  val path: String = MediaStore.Images.Media.insertImage(contentResolver, bitmap, "Title", null)
+//          //  newImage =  Uri.parse(path)
+//            Log.v("Look4", "bitmap uri : $newImage")
+//            Log.v("Look4", "bitmap uri path : ${newImage?.path}")
+//          //  val inputStream = contentResolver.openInputStream(newImage!!)
+//           // val newFile = File(newImage?.path!!)
+//
+//            Glide.with(this).load(bitmap).apply(RequestOptions.circleCropTransform()).into(user_edit_add_image)
+//        }
 
-    private fun dispatchTakePictureIntent() {
-        Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI).also { takePictureIntent ->
-            takePictureIntent.resolveActivity(packageManager)?.also {
-                startActivityForResult(takePictureIntent, TAKE_IMAGE_REQUEST)
+        when (resultCode) {
+            Activity.RESULT_OK -> {
+                newImage = data?.data
+                Log.v("Look4", "uri : $newImage")
+                Log.v("Look4", "uri.path : ${newImage?.path}")
+                Glide.with(this).load(newImage).apply(RequestOptions.circleCropTransform()).into(user_edit_add_image)
+            }
+            ImagePicker.RESULT_ERROR -> {
+                Toast.makeText(this, ImagePicker.getError(data), Toast.LENGTH_SHORT).show()
+            }
+            else -> {
+                Toast.makeText(this, "Task Cancelled", Toast.LENGTH_SHORT).show()
             }
         }
+        }
+
+    private fun dispatchTakePictureIntent() {
+//        Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI).also { takePictureIntent ->
+//            takePictureIntent.resolveActivity(packageManager)?.also {
+//                startActivityForResult(takePictureIntent, TAKE_IMAGE_REQUEST)
+//            }
+//        }
+        ImagePicker.with(this)
+            .crop()
+            .compress(1024)
+            .maxResultSize(300, 300)
+            .start()
     }
 
     private fun checkForPermissions() {

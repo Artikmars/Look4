@@ -13,7 +13,7 @@
     <string name="look">Look</string>
     <string name="contacts">Contacts</string>
     <string name="sec">sec</string>
-    <string name="countdown_default_value">11</string>
+    <string name="countdown_default_value">25</string>
     <string name="device_is_found">We have found a device! Let me connect to it …</string>
 
 </resources>

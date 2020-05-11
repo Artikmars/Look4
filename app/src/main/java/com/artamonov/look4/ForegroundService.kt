@@ -8,12 +8,16 @@ import android.app.Service
 import android.app.PendingIntent.FLAG_UPDATE_CURRENT
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.IBinder
+import android.os.ParcelFileDescriptor
 import android.provider.Settings
+import android.util.Log
+import android.widget.Toast
 import androidx.core.app.NotificationCompat
-    import androidx.preference.PreferenceManager
-import com.artamonov.look4.utils.UserRole
+import androidx.preference.PreferenceManager
+import com.artamonov.look4.LookActivity.Companion.LOG_TAG
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.AdvertisingOptions
 import com.google.android.gms.nearby.connection.Payload
@@ -24,23 +28,31 @@ import com.google.android.gms.nearby.connection.ConnectionResolution
 import com.google.android.gms.nearby.connection.Strategy
 import com.google.android.gms.nearby.connection.PayloadCallback
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate
+import java.io.File
 import java.nio.charset.Charset
 
 class ForegroundService : Service() {
 
     var endpointIdSaved: String? = null
-    var userRole = UserRole.ADVERTISER
+    private var advertiserPhoneNumber: String? = null
     private var discovererPhoneNumber: String? = null
     private var discovererName: String? = null
+    private var discovererFilePath: String? = null
     lateinit var deviceId: String
     private val STRATEGY = Strategy.P2P_CLUSTER
     val advOptions = AdvertisingOptions.Builder().setStrategy(STRATEGY).build()
-    private lateinit var userName: String
+    private var advertiserName: String? = null
+    private var advertiserFilePath: String? = null
     var notification: Notification? = null
     var notificationManager: NotificationManager? = null
+    private var newFile: File? = null
+    private var file: File? = null
+    private var filePayload: Payload? = null
+    private var bytePayload: Payload? = null
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         val input = intent.getStringExtra("inputExtra")
+        notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         createNotificationChannel()
         val notificationIntent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(
@@ -57,8 +69,10 @@ class ForegroundService : Service() {
         //do heavy work on a background thread
         // stopSelf();
         deviceId = Settings.Secure.getString(applicationContext.contentResolver, Settings.Secure.ANDROID_ID)
-        userName = PreferenceManager.getDefaultSharedPreferences(applicationContext).getString(
-            USER_NAME, "Name")!!
+        advertiserName = PreferenceManager.getDefaultSharedPreferences(applicationContext).getString(
+            USER_NAME, "Name")
+        advertiserFilePath = PreferenceManager.getDefaultSharedPreferences(applicationContext).getString(
+            USER_IMAGE_URI, null)
         startServer()
         return START_NOT_STICKY
     }
@@ -98,14 +112,34 @@ class ForegroundService : Service() {
             when (result.status.statusCode) {
                 ConnectionsStatusCodes.STATUS_OK -> {
                     endpointIdSaved = endpointId
+                    Log.v(LOG_TAG, "in service onConnectionResult: $endpointId")
+                    bytePayload = Payload.fromBytes(advertiserName!!.toByteArray())
+                    Nearby.getConnectionsClient(applicationContext).sendPayload(endpointId, bytePayload!!)
 //                    Toast.makeText(
 //                        applicationContext,
 //                        "Connected to $endpointId successfully",
 //                        Toast.LENGTH_LONG
 //                    ).show()
+                    Toast.makeText(applicationContext, "userImagePath: $advertiserFilePath", Toast.LENGTH_LONG).show()
+                    advertiserFilePath?.let {
+                        val imageUri = Uri.parse(advertiserFilePath)
+                        // val imageUri = URI.create(userImagePath!!)
+                        Log.v("Look4", "imageUri: $imageUri")
+                        Toast.makeText(applicationContext, "imageUri: $imageUri", Toast.LENGTH_LONG).show()
+                        val pfd: ParcelFileDescriptor? = contentResolver.openFileDescriptor(imageUri, "r")
+                        // val file = File(imageUri.path!!)
+                        Log.v("Look4", "imageUri.path: ${imageUri.path}")
+                        //  Log.v("Look4", "file: $file")
 
-                    Nearby.getConnectionsClient(applicationContext).sendPayload(
-                        endpointId, Payload.fromBytes(userName.toByteArray()))
+                        filePayload = Payload.fromFile(pfd!!)
+                        Nearby.getConnectionsClient(applicationContext).sendPayload(endpointId, filePayload!!)
+//                        if (pfd != null) {
+//                            val pFilePayload = Payload.fromFile(pfd)
+//                            Nearby.getConnectionsClient(applicationContext).sendPayload(endpointId, pFilePayload)
+//                        } else {
+//                            Log.v("Look4", "pfd == null: ${imageUri.path}")
+//                        }
+                    }
                 }
 
                 // We're connected! Can now start sending and receiving data.
@@ -147,28 +181,42 @@ class ForegroundService : Service() {
 
     val payloadCallback = object : PayloadCallback() {
         override fun onPayloadReceived(p0: String, p1: Payload) {
-            val receivedContact: String = p1.asBytes()!!.toString(Charset.defaultCharset())
-            val textArray = receivedContact.split(";").toTypedArray()
-            //  Toast.makeText(applicationContext, textArray[0], Toast.LENGTH_SHORT).show()
-            //  Toast.makeText(applicationContext, textArray[1], Toast.LENGTH_SHORT).show()
-            discovererName = textArray[0]
-            discovererPhoneNumber = textArray[1]
-            //createNotificationChannel(CONTACT_REQUEST_CHANNEL_ID)
-            showPendingContactNotification(2)
+            when (p1.type) {
+                Payload.Type.BYTES -> {
+                    val receivedContact: String = p1.asBytes()!!.toString(Charset.defaultCharset())
+                    if (";" in receivedContact) {
+                        val textArray = receivedContact.split(";").toTypedArray()
+                        discovererName = textArray[0]
+                        discovererPhoneNumber = textArray[1]
+                    } else { advertiserPhoneNumber = receivedContact }
+                }
+                Payload.Type.FILE -> {
+                    file = p1.asFile()?.asJavaFile()
+                    file?.renameTo(File(file?.parentFile, "look4.jpg"))
+                    newFile = File(file?.parentFile, "look4.jpg")
+                }
+            }
         }
 
         override fun onPayloadTransferUpdate(p0: String, p1: PayloadTransferUpdate) {
+            if (p1.status == PayloadTransferUpdate.Status.SUCCESS && p1.totalBytes > 1000 && advertiserPhoneNumber == null &&
+                p1.payloadId != bytePayload?.id && p1.payloadId != filePayload?.id) {
+                //  Toast.makeText(applicationContext, "discovererFilePath: $discovererFilePath", Toast.LENGTH_LONG).show(
+                discovererFilePath = newFile?.toString()
+                showPendingContactNotification(2)
+            } else if (p1.status == PayloadTransferUpdate.Status.SUCCESS && advertiserPhoneNumber != null) {
+                showPendingContactNotification(3)
+            }
         }
     }
 
     private fun showPendingContactNotification(notificationId: Int) {
         // Create an explicit intent for an Activity in your app
         val intent = Intent(this, LookActivity::class.java)
-        //.apply {
-        //  flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        //  }
         intent.putExtra("discovererName", discovererName)
         intent.putExtra("discovererPhoneNumber", discovererPhoneNumber)
+        intent.putExtra("discovererFilePath", discovererFilePath)
+        intent.putExtra("advertiserPhoneNumber", advertiserPhoneNumber)
         intent.putExtra("endpointId", endpointIdSaved)
         val pendingIntent: PendingIntent = PendingIntent.getActivity(this, 0, intent, FLAG_UPDATE_CURRENT)
 
@@ -196,7 +244,6 @@ class ForegroundService : Service() {
                 NotificationManager.IMPORTANCE_DEFAULT
             )
             serviceChannel.enableVibration(true)
-            notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager?.createNotificationChannel(serviceChannel)
         }
     }
