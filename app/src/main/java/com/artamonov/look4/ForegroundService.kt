@@ -14,7 +14,6 @@ import android.os.IBinder
 import android.os.ParcelFileDescriptor
 import android.provider.Settings
 import android.util.Log
-import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.preference.PreferenceManager
 import com.artamonov.look4.LookActivity.Companion.LOG_TAG
@@ -55,12 +54,9 @@ class ForegroundService : Service() {
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         createNotificationChannel()
         val notificationIntent = Intent(this, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(
-            this,
-            0, notificationIntent, 0
-        )
-        notification =
-            NotificationCompat.Builder(this, CHANNEL_ID)
+        val pendingIntent = PendingIntent.getActivity(this, 0,
+            notificationIntent, 0)
+        notification = NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("Advertising")
                 .setSmallIcon(R.drawable.ic_o_1)
                 .setContentText(input)
@@ -95,16 +91,11 @@ class ForegroundService : Service() {
         ).addOnSuccessListener {
             startForeground(1, notification)
             isAppInForeground = true
-        }.addOnFailureListener { exception ->
-//            Toast.makeText(applicationContext, "Couldn't advertise because of: $exception", Toast.LENGTH_SHORT)
-//                .show()
         }
     }
 
     private val connectionLifecycleCallback: ConnectionLifecycleCallback = object : ConnectionLifecycleCallback() {
         override fun onConnectionInitiated(p0: String, p1: ConnectionInfo) {
-//            Toast.makeText(applicationContext, "Connection with $p0 initiated.", Toast.LENGTH_SHORT)
-//                .show()
             Nearby.getConnectionsClient(applicationContext).acceptConnection(p0, payloadCallback)
         }
 
@@ -115,17 +106,13 @@ class ForegroundService : Service() {
                     Log.v(LOG_TAG, "in service onConnectionResult: $endpointId")
                     bytePayload = Payload.fromBytes(advertiserName!!.toByteArray())
                     Nearby.getConnectionsClient(applicationContext).sendPayload(endpointId, bytePayload!!)
-//                    Toast.makeText(
-//                        applicationContext,
-//                        "Connected to $endpointId successfully",
-//                        Toast.LENGTH_LONG
-//                    ).show()
-                    Toast.makeText(applicationContext, "userImagePath: $advertiserFilePath", Toast.LENGTH_LONG).show()
+
+                    // Toast.makeText(applicationContext, "userImagePath: $advertiserFilePath", Toast.LENGTH_LONG).show()
                     advertiserFilePath?.let {
                         val imageUri = Uri.parse(advertiserFilePath)
                         // val imageUri = URI.create(userImagePath!!)
                         Log.v("Look4", "imageUri: $imageUri")
-                        Toast.makeText(applicationContext, "imageUri: $imageUri", Toast.LENGTH_LONG).show()
+                        //Toast.makeText(applicationContext, "imageUri: $imageUri", Toast.LENGTH_LONG).show()
                         val pfd: ParcelFileDescriptor? = contentResolver.openFileDescriptor(imageUri, "r")
                         // val file = File(imageUri.path!!)
                         Log.v("Look4", "imageUri.path: ${imageUri.path}")
@@ -133,12 +120,6 @@ class ForegroundService : Service() {
 
                         filePayload = Payload.fromFile(pfd!!)
                         Nearby.getConnectionsClient(applicationContext).sendPayload(endpointId, filePayload!!)
-//                        if (pfd != null) {
-//                            val pFilePayload = Payload.fromFile(pfd)
-//                            Nearby.getConnectionsClient(applicationContext).sendPayload(endpointId, pFilePayload)
-//                        } else {
-//                            Log.v("Look4", "pfd == null: ${imageUri.path}")
-//                        }
                     }
                 }
 

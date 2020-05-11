@@ -1,24 +1,23 @@
 package com.artamonov.look4
 
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.provider.MediaStore
-import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
+import com.github.dhaval2404.imagepicker.ImagePicker
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_welcome.*
 
 const val USER_NAME = "USER_NAME"
 const val USER_PHONE_NUMBER = "USER_PHONE_NUMBER"
 const val USER_IMAGE_URI = "USER_IMAGE_URI"
-const val TAKE_IMAGE_REQUEST = 503
 const val PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 5545
 var selectedImage: Uri? = null
 
-class WelcomeActivity : AppCompatActivity() {
+class WelcomeActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,19 +47,26 @@ class WelcomeActivity : AppCompatActivity() {
     }
 
     private fun dispatchTakePictureIntent() {
-        Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI).also { takePictureIntent ->
-            takePictureIntent.resolveActivity(packageManager)?.also {
-                startActivityForResult(takePictureIntent, TAKE_IMAGE_REQUEST)
-            }
-        }
+        ImagePicker.with(this)
+            .crop()
+            .compress(1024)
+            .maxResultSize(300, 300)
+            .start()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == TAKE_IMAGE_REQUEST && resultCode == RESULT_OK) {
-            selectedImage = data?.data
-            val bitmap = MediaStore.Images.Media.getBitmap(this.contentResolver, selectedImage)
-            Glide.with(this).load(bitmap).apply(RequestOptions.circleCropTransform()).into(welcome_add_image)
+        when (resultCode) {
+            Activity.RESULT_OK -> {
+                selectedImage = data?.data
+                Glide.with(this).load(selectedImage).apply(RequestOptions.circleCropTransform()).into(welcome_add_image)
+            }
+            ImagePicker.RESULT_ERROR -> {
+                showSnackbarError("Error while processing your photo")
+            }
+            else -> {
+                //   Toast.makeText(this, "Task Cancelled", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 

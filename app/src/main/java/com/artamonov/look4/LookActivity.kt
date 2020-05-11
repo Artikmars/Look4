@@ -18,9 +18,7 @@ import android.os.ParcelFileDescriptor
 import android.provider.Settings
 import android.util.Log
 import android.view.View
-import android.widget.Toast
 import androidx.annotation.RequiresApi
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
@@ -43,7 +41,7 @@ import kotlinx.android.synthetic.main.activity_look.*
 import java.io.File
 import java.nio.charset.Charset
 
-class LookActivity : AppCompatActivity() {
+class LookActivity : BaseActivity() {
 
     companion object {
         private val REQUIRED_PERMISSIONS = arrayOf(
@@ -87,7 +85,7 @@ class LookActivity : AppCompatActivity() {
             searchingInProgressText.visibility = View.VISIBLE
             searchingInProgressText.text = discovererName
             searchButtonVisibility(false)
-            Toast.makeText(applicationContext, "discovererFilePath: $discovererFilePath in onNewIntent()", Toast.LENGTH_LONG).show()
+            // Toast.makeText(applicationContext, "discovererFilePath: $discovererFilePath in onNewIntent()", Toast.LENGTH_LONG).show()
             profile_image.setImageDrawable(Drawable.createFromPath(discovererFilePath))
         } else if (advertiserPhoneNumber != null) {
             searchingInProgressText.text = advertiserPhoneNumber
@@ -126,21 +124,25 @@ class LookActivity : AppCompatActivity() {
                     Log.v(LOG_TAG, "Endpoint: $endpointIdSaved")
                     endpointIdSaved?.let {
                         Nearby.getConnectionsClient(applicationContext).sendPayload(
-                            endpointIdSaved!!, Payload.fromBytes(userPhoneNumber.toByteArray()))
+                            endpointIdSaved!!, Payload.fromBytes(userPhoneNumber.toByteArray())).addOnFailureListener { e ->
+                            showSnackbarError(e.toString()) }
                     }
                 }
                 DISCOVERER -> {
 //                    Toast.makeText(applicationContext, "Endpoint: $endpointIdSaved", Toast.LENGTH_SHORT)
 //                        .show()
-                    //  val file = File(Uri.parse(userImagePath).path!!)
                     Nearby.getConnectionsClient(applicationContext).stopDiscovery()
                     val pfd: ParcelFileDescriptor? = contentResolver.openFileDescriptor(Uri.parse(userImagePath), "r")
                     val pFilePayload = Payload.fromFile(pfd!!)
                     endpointIdSaved?.let {
                         Log.v(LOG_TAG, "Endpoint: $endpointIdSaved")
                         Nearby.getConnectionsClient(applicationContext).sendPayload(endpointIdSaved!!,
-                            Payload.fromBytes("$userName;$userPhoneNumber".toByteArray()))
-                        Nearby.getConnectionsClient(applicationContext).sendPayload(endpointIdSaved!!, pFilePayload)
+                            Payload.fromBytes("$userName;$userPhoneNumber".toByteArray())).addOnFailureListener {
+                            e -> showSnackbarError(e.toString())
+                    }
+                        Nearby.getConnectionsClient(applicationContext).sendPayload(endpointIdSaved!!, pFilePayload).addOnFailureListener {
+                                e -> showSnackbarError(e.toString())
+                        }
                     }
                     shouldDisplayIncomeContactViews(false)
                     searchButtonVisibility(true)
@@ -209,8 +211,9 @@ class LookActivity : AppCompatActivity() {
                     // logD( "$deviceId started discovering.")
                     userRole = DISCOVERER
                 }.addOnFailureListener { e ->
-                Toast.makeText(applicationContext,
-                    "Couldn't connect because of: $e", Toast.LENGTH_LONG).show()
+//                Toast.makeText(applicationContext,
+//                    "Couldn't connect because of: $e", Toast.LENGTH_LONG).show()
+                showSnackbarError(e.toString())
                 searchingInProgressText.text = resources.getString(R.string.no_found)
                 searchBtn.text = resources.getString(R.string.search_again)
                 // We're unable to start discovering.
@@ -253,7 +256,7 @@ class LookActivity : AppCompatActivity() {
             // endpointIdSaved = endpointId
             Log.v(LOG_TAG, "in endpointDiscoveryCallbackEndpoint: $endpointId")
 
-            Nearby.getConnectionsClient(applicationContext).requestConnection(info.endpointName + ".1", endpointId, connectionLifecycleCallback)
+            Nearby.getConnectionsClient(applicationContext).requestConnection(userName, endpointId, connectionLifecycleCallback)
                     .addOnSuccessListener {
 //                        Toast.makeText(
 //                                applicationContext,
@@ -267,27 +270,17 @@ class LookActivity : AppCompatActivity() {
                         // We successfully requested a connection. Now both sides
                         // must accept before the connection is established.
                     }
-                .addOnFailureListener {
-                    Nearby.getConnectionsClient(applicationContext).stopDiscovery()
-                    searchButtonVisibility(true)
-                    timer?.cancel()
-                    setCountDownViewsVisibility(false)
-                    searchingInProgressText.text = resources.getString(R.string.no_found)
-                    searchBtn.text = resources.getString(R.string.search_again)
-                    searchButtonVisibility(true)
-//                        Toast.makeText(
-//                                applicationContext,
-//                                "Connection request to $endpointId failed!",
-//                                Toast.LENGTH_SHORT
-//                        ).show()
-                        // logW( "Connection request to $endpointId failed!")
+                .addOnFailureListener { e ->
+                    handleFailedResponse()
+                    showSnackbarError(e.toString())
+                    Nearby.getConnectionsClient(applicationContext).stopAllEndpoints()
+                    // logW( "Connection request to $endpointId failed!")
                         // Nearby Connections failed to request the connection.
                     }
         }
 
         override fun onEndpointLost(endpointId: String) {
-            Toast.makeText(applicationContext, "Endpoint: $endpointId lost!", Toast.LENGTH_SHORT)
-                    .show()
+            showSnackbarError("Endpoint: $endpointId lost!")
             // logW("Endpoint: $endpointId lost!")
             // A previously discovered endpoint has gone away.
         }
@@ -298,7 +291,8 @@ class LookActivity : AppCompatActivity() {
 //            Toast.makeText(applicationContext, "Connection with $p0 initiated.", Toast.LENGTH_SHORT)
 //                .show()
             //  logD("Connection initiated : $p0 ,$p1")
-            Nearby.getConnectionsClient(applicationContext).acceptConnection(p0, payloadCallback)
+            Nearby.getConnectionsClient(applicationContext).acceptConnection(p0, payloadCallback).addOnFailureListener { e ->
+                showSnackbarError(e.toString()) }
             // Automatically accept the connection on both sides.
         }
 
@@ -308,69 +302,29 @@ class LookActivity : AppCompatActivity() {
                 ConnectionsStatusCodes.STATUS_OK -> {
                     endpointIdSaved = endpointId
                     Log.v(LOG_TAG, "Connection initiated - endpoint: $endpointIdSaved")
-
-//                    Toast.makeText(
-//                            applicationContext,
-//                            "Connected to $endpointId successfully",
-//                            Toast.LENGTH_LONG
-//                    ).show()
-                    //   logD("Connected to $endpointId successfully")
-                    if (userRole == ADVERTISER) {
-                        val myInfo = "Вика"
-                        Nearby.getConnectionsClient(applicationContext).sendPayload(
-                            endpointId, Payload.fromBytes(myInfo.toByteArray()))
-                    }
                 }
 
                 // We're connected! Can now start sending and receiving data.
 
                 ConnectionsStatusCodes.STATUS_CONNECTION_REJECTED -> {
-                    Nearby.getConnectionsClient(applicationContext).stopDiscovery()
-                    searchButtonVisibility(true)
-                    timer?.cancel()
-                    setCountDownViewsVisibility(false)
-                    searchingInProgressText.text = resources.getString(R.string.no_found)
-                    searchBtn.text = resources.getString(R.string.search_again)
-                    searchButtonVisibility(true)
-                    Toast.makeText(
-                            applicationContext,
-                            "Connection attempt to $endpointId was rejected",
-                            Toast.LENGTH_SHORT
-                    ).show()
+                    handleFailedResponse()
+                    showSnackbarError("Connection attempt to $endpointId was rejected")
+
                     //   logW("Connection attempt to $endpointId was rejected")
                 }
                 // The connection was rejected by one or both sides.
 
                 ConnectionsStatusCodes.STATUS_ERROR -> {
-                    Nearby.getConnectionsClient(applicationContext).stopDiscovery()
-                    searchButtonVisibility(true)
-                    timer?.cancel()
-                    setCountDownViewsVisibility(false)
-                    searchingInProgressText.text = resources.getString(R.string.no_found)
-                    searchBtn.text = resources.getString(R.string.search_again)
-                    searchButtonVisibility(true)
-                    Toast.makeText(
-                            applicationContext,
-                            "Connected attempt to $endpointId failed",
-                            Toast.LENGTH_SHORT
-                    ).show()
+                    handleFailedResponse()
+                    showSnackbarError("Connected attempt to $endpointId failed")
+
                     //   logW( "Connected attempt to $endpointId failed")
                 }
                 // The connection broke before it was able to be accepted.
 
                 else -> {
-                    Nearby.getConnectionsClient(applicationContext).stopDiscovery()
-                    searchButtonVisibility(true)
-                    timer?.cancel()
-                    setCountDownViewsVisibility(false)
-                    searchingInProgressText.text = resources.getString(R.string.no_found)
-                    searchBtn.text = resources.getString(R.string.search_again)
-                    searchButtonVisibility(true)
-                    Toast.makeText(
-                            applicationContext,
-                            "Unknown status code",
-                            Toast.LENGTH_SHORT
-                    ).show()
+                    handleFailedResponse()
+                    showSnackbarError("Unknown status code")
                     //    logW( "Unknown status code")
                 }
                 // Unknown status code
@@ -381,11 +335,7 @@ class LookActivity : AppCompatActivity() {
             // logW("onDisconnected")
             // We've been disconnected from this endpoint. No more data can be
             // sent or received.
-            Toast.makeText(
-                applicationContext,
-                "Disconnected",
-                Toast.LENGTH_SHORT
-            ).show()
+            showSnackbarError("Disconnected")
         }
     }
 
@@ -464,5 +414,15 @@ class LookActivity : AppCompatActivity() {
 
     private fun isMobileNumber(string: String?): Boolean {
         return string?.startsWith("+") ?: false
+    }
+
+    private fun handleFailedResponse() {
+        Nearby.getConnectionsClient(applicationContext).stopDiscovery()
+        searchButtonVisibility(true)
+        timer?.cancel()
+        setCountDownViewsVisibility(false)
+        searchingInProgressText.text = resources.getString(R.string.no_found)
+        searchBtn.text = resources.getString(R.string.search_again)
+        searchButtonVisibility(true)
     }
 }
