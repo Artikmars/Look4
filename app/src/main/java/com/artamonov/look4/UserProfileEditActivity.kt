@@ -96,7 +96,7 @@ class UserProfileEditActivity : AppCompatActivity() {
                 Toast.makeText(this, ImagePicker.getError(data), Toast.LENGTH_SHORT).show()
             }
             else -> {
-                Toast.makeText(this, "Task Cancelled", Toast.LENGTH_SHORT).show()
+                //   Toast.makeText(this, "Task Cancelled", Toast.LENGTH_SHORT).show()
             }
         }
         }
@@ -108,7 +108,7 @@ class UserProfileEditActivity : AppCompatActivity() {
 //            }
 //        }
         ImagePicker.with(this)
-            .crop()
+            .cropSquare()
             .compress(1024)
             .maxResultSize(300, 300)
             .start()

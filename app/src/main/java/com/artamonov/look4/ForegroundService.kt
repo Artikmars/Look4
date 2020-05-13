@@ -8,6 +8,7 @@ import android.app.Service
 import android.app.PendingIntent.FLAG_UPDATE_CURRENT
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Build
 import android.os.IBinder
@@ -17,6 +18,8 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.preference.PreferenceManager
 import com.artamonov.look4.LookActivity.Companion.LOG_TAG
+import com.artamonov.look4.utils.UserRole
+import com.artamonov.look4.utils.UserRole.Companion.ADVERTISER
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.AdvertisingOptions
 import com.google.android.gms.nearby.connection.Payload
@@ -24,10 +27,11 @@ import com.google.android.gms.nearby.connection.ConnectionLifecycleCallback
 import com.google.android.gms.nearby.connection.ConnectionInfo
 import com.google.android.gms.nearby.connection.ConnectionsStatusCodes
 import com.google.android.gms.nearby.connection.ConnectionResolution
-import com.google.android.gms.nearby.connection.Strategy
 import com.google.android.gms.nearby.connection.PayloadCallback
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate
+import com.google.android.gms.nearby.connection.Strategy.P2P_POINT_TO_POINT
 import java.io.File
+import java.lang.reflect.Type
 import java.nio.charset.Charset
 
 class ForegroundService : Service() {
@@ -38,7 +42,7 @@ class ForegroundService : Service() {
     private var discovererName: String? = null
     private var discovererFilePath: String? = null
     lateinit var deviceId: String
-    private val STRATEGY = Strategy.P2P_CLUSTER
+    private val STRATEGY = P2P_POINT_TO_POINT
     val advOptions = AdvertisingOptions.Builder().setStrategy(STRATEGY).build()
     private var advertiserName: String? = null
     private var advertiserFilePath: String? = null
@@ -91,6 +95,7 @@ class ForegroundService : Service() {
         ).addOnSuccessListener {
             startForeground(1, notification)
             isAppInForeground = true
+            updateUserRole(ADVERTISER)
         }
     }
 
@@ -228,6 +233,17 @@ class ForegroundService : Service() {
             notificationManager?.createNotificationChannel(serviceChannel)
         }
     }
+
+    private fun updateUserRole(userRole: @UserRole.AnnotationUserRole String) {
+        val currentUserRole = PreferenceManager.getDefaultSharedPreferences(applicationContext).getString(
+            LookActivity.USER_ROLE, "null")
+        if (currentUserRole != userRole) {
+            val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this)
+            val editor: SharedPreferences.Editor = sharedPrefs.edit()
+            editor.putString(LookActivity.USER_ROLE, userRole)
+            editor.apply()
+        }
+        }
 
     companion object {
         const val CHANNEL_ID = "ForegroundServiceChannel"

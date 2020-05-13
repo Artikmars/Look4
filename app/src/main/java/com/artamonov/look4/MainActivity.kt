@@ -6,9 +6,7 @@ import android.provider.Settings
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.google.android.gms.nearby.Nearby
-import kotlinx.android.synthetic.main.activity_main.look_text
-import kotlinx.android.synthetic.main.activity_main.offline_text
-import kotlinx.android.synthetic.main.activity_main.settings_text
+import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -24,11 +22,8 @@ companion object {
         deviceId = Settings.Secure.getString(applicationContext.contentResolver, Settings.Secure.ANDROID_ID)
 
         look_text.setOnClickListener {
+            stopService()
             startActivity(Intent(this, LookActivity::class.java))
-        }
-
-        if (ForegroundService.isAppInForeground) {
-            offline_text.text = resources.getString(R.string.online_mode)
         }
 
         offline_text.setOnClickListener {
@@ -45,8 +40,19 @@ companion object {
             }
         }
 
+        contacts_text.setOnClickListener {
+            startActivity(Intent(this, ContactsActivity::class.java))
+        }
+
         settings_text.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (ForegroundService.isAppInForeground) {
+            offline_text.text = resources.getString(R.string.online_mode)
         }
     }
 

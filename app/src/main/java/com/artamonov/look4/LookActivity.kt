@@ -8,6 +8,7 @@ import android.Manifest.permission.ACCESS_COARSE_LOCATION
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.net.Uri
@@ -22,6 +23,8 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
+import com.artamonov.look4.data.database.User
+import com.artamonov.look4.utils.UserRole
 import com.artamonov.look4.utils.UserRole.Companion.ADVERTISER
 import com.artamonov.look4.utils.UserRole.Companion.DISCOVERER
 import com.bumptech.glide.Glide
@@ -36,9 +39,12 @@ import com.google.android.gms.nearby.connection.ConnectionsStatusCodes
 import com.google.android.gms.nearby.connection.ConnectionResolution
 import com.google.android.gms.nearby.connection.PayloadCallback
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate
-import com.google.android.gms.nearby.connection.Strategy.P2P_CLUSTER
+import com.google.android.gms.nearby.connection.Strategy.P2P_POINT_TO_POINT
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import kotlinx.android.synthetic.main.activity_look.*
 import java.io.File
+import java.lang.reflect.Type
 import java.nio.charset.Charset
 
 class LookActivity : BaseActivity() {
@@ -52,11 +58,11 @@ class LookActivity : BaseActivity() {
             ACCESS_COARSE_LOCATION)
 
         private const val REQUEST_CODE_REQUIRED_PERMISSIONS = 1
-
-        private val STRATEGY = P2P_CLUSTER
+        const val CONTACT_LIST = "CONTACT_LIST"
+        const val USER_ROLE = "USER_ROLE"
+        private val STRATEGY = P2P_POINT_TO_POINT
         const val LOG_TAG = "Look4"
         var endpointIdSaved: String? = null
-        var userRole = ADVERTISER
         private var discovererPhoneNumber: String? = null
         private var discovererName: String? = null
         private var discovererFilePath: String? = null
@@ -114,8 +120,9 @@ class LookActivity : BaseActivity() {
         }
 
         yes_button.setOnClickListener {
-            when (userRole) {
+            when (getUserRole()) {
                 ADVERTISER -> {
+                    savePhoneNumberToDB(discovererPhoneNumber, ADVERTISER)
                     searchingInProgressText.text = "Congratulations! Here is the phone number: $discovererPhoneNumber"
                     shouldDisplayIncomeContactViews(false)
                     searchButtonVisibility(true)
@@ -209,7 +216,7 @@ class LookActivity : BaseActivity() {
         Nearby.getConnectionsClient(applicationContext).startDiscovery(packageName, endpointDiscoveryCallback, discOptions)
                 .addOnSuccessListener {
                     // logD( "$deviceId started discovering.")
-                    userRole = DISCOVERER
+                    updateUserRole(DISCOVERER)
                 }.addOnFailureListener { e ->
 //                Toast.makeText(applicationContext,
 //                    "Couldn't connect because of: $e", Toast.LENGTH_LONG).show()
@@ -341,15 +348,18 @@ class LookActivity : BaseActivity() {
 
     val payloadCallback = object : PayloadCallback() {
         override fun onPayloadReceived(p0: String, p1: Payload) {
-            when (userRole) {
+            when (getUserRole()) {
                 DISCOVERER -> {
                         when (p1.type) {
                             Payload.Type.BYTES -> {
-                                advertiserName = p1.asBytes()?.toString(Charset.defaultCharset())
+                                val byteString = p1.asBytes()?.toString(Charset.defaultCharset())
                                 Log.v("Look4", "advertiserName: $advertiserName")
-                                if (isMobileNumber(advertiserName)) {
-                                    searchingInProgressText.text = advertiserName
+                                if (isMobileNumber(byteString)) {
+                                    savePhoneNumberToDB(byteString, DISCOVERER)
+                                    searchingInProgressText.text = byteString
                                     shouldDisplayIncomeContactViews(false)
+                                } else {
+                                    advertiserName = byteString
                                 }
                             }
                             Payload.Type.FILE -> {
@@ -390,6 +400,38 @@ class LookActivity : BaseActivity() {
         }
     }
 
+    private fun savePhoneNumberToDB(phoneNumber: String?, userRole: String) {
+        val json = PreferenceManager.getDefaultSharedPreferences(applicationContext).getString(CONTACT_LIST, "null")
+        val type: Type = object : TypeToken<List<User?>?>() {}.type
+        var contactList: ArrayList<User>? = Gson().fromJson(json, type)
+        when (userRole) {
+            DISCOVERER -> {
+                if (phoneNumber != null && advertiserName != null) {
+                    val user = User(System.currentTimeMillis(), phoneNumber, advertiserName!!, null, null)
+                    if (contactList == null) { contactList = arrayListOf() }
+                    contactList.add(user)
+                    val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this)
+                    val editor: SharedPreferences.Editor = sharedPrefs.edit()
+                    val jsonOut = Gson().toJson(contactList)
+                    editor.putString(CONTACT_LIST, jsonOut)
+                    editor.apply()
+                }
+            }
+            ADVERTISER -> {
+                if (phoneNumber != null && discovererName != null) {
+                    val user = User(System.currentTimeMillis(), phoneNumber, discovererName!!, null, null)
+                    if (contactList == null) { contactList = arrayListOf() }
+                    contactList.add(user)
+                    val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this)
+                    val editor: SharedPreferences.Editor = sharedPrefs.edit()
+                    val jsonOut = Gson().toJson(contactList)
+                    editor.putString(CONTACT_LIST, jsonOut)
+                    editor.apply()
+                }
+            }
+        }
+    }
+
     private fun shouldDisplayIncomeContactViews(isVisible: Boolean) {
         if (isVisible) {
             no_button.visibility = View.VISIBLE
@@ -424,5 +466,21 @@ class LookActivity : BaseActivity() {
         searchingInProgressText.text = resources.getString(R.string.no_found)
         searchBtn.text = resources.getString(R.string.search_again)
         searchButtonVisibility(true)
+    }
+
+    private fun updateUserRole(userRole: @UserRole.AnnotationUserRole String) {
+        val currentUserRole = PreferenceManager.getDefaultSharedPreferences(applicationContext).getString(
+            LookActivity.USER_ROLE, "null")
+        if (currentUserRole != userRole) {
+            val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this)
+            val editor: SharedPreferences.Editor = sharedPrefs.edit()
+            editor.putString(LookActivity.USER_ROLE, userRole)
+            editor.apply()
+        }
+    }
+
+    private fun getUserRole(): String? {
+        return PreferenceManager.getDefaultSharedPreferences(applicationContext).getString(
+            USER_ROLE, "null")
     }
 }

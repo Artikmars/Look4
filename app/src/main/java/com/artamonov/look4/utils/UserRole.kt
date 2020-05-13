@@ -9,6 +9,7 @@ class UserRole {
         const val DISCOVERER = "DISCOVERER"
     }
 
+    @Target(AnnotationTarget.TYPE)
     @StringDef(ADVERTISER, DISCOVERER)
     @kotlin.annotation.Retention(AnnotationRetention.SOURCE)
     annotation class AnnotationUserRole

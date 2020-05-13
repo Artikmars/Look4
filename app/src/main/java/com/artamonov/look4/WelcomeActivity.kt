@@ -48,7 +48,7 @@ class WelcomeActivity : BaseActivity() {
 
     private fun dispatchTakePictureIntent() {
         ImagePicker.with(this)
-            .crop()
+            .cropSquare()
             .compress(1024)
             .maxResultSize(300, 300)
             .start()
