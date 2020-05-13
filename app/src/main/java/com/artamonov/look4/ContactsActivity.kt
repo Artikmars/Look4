@@ -2,6 +2,8 @@ package com.artamonov.look4
 
 import android.content.SharedPreferences
 import android.os.Bundle
+import android.view.View.GONE
+import android.view.View.VISIBLE
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.DividerItemDecoration
@@ -26,6 +28,8 @@ class ContactsActivity : AppCompatActivity() {
         if (getContactList() != null) {
             initAdapter()
         }
+
+        setNoContactsViewVisibility(getContactList() == null)
     }
 
     private fun initAdapter() {
@@ -71,5 +75,13 @@ class ContactsActivity : AppCompatActivity() {
         val json = Gson().toJson(contactList)
         editor.putString(CONTACT_LIST, json)
         return editor.commit()
+    }
+
+    private fun setNoContactsViewVisibility(state: Boolean) {
+        if (state) {
+            contacts_placeholder.visibility = VISIBLE
+        } else {
+            contacts_placeholder.visibility = GONE
+        }
     }
 }
