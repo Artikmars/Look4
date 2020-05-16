@@ -1,4 +1,4 @@
-package com.artamonov.look4
+package com.artamonov.look4.base
 
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.snackbar.Snackbar

@@ -12,16 +12,18 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.preference.PreferenceManager
+import com.artamonov.look4.data.prefs.PreferenceHelper
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.github.dhaval2404.imagepicker.ImagePicker
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_user_profile_edit.*
+import org.koin.android.ext.android.inject
 
 class UserProfileEditActivity : AppCompatActivity() {
 
     var newImage: Uri? = null
+    private val preferenceHelper: PreferenceHelper by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,13 +35,9 @@ class UserProfileEditActivity : AppCompatActivity() {
             if (!fieldsAreValid()) {
                 Snackbar.make(findViewById(android.R.id.content), "Please, don't leave fields blank", Snackbar.LENGTH_SHORT).show()
                 return@setOnClickListener }
-            val sharedPref = PreferenceManager.getDefaultSharedPreferences(this)
-            val editor = sharedPref.edit()
-            val editor2 = editor
-                .putString(USER_NAME, user_edit_name.text.toString())
-                .putString(USER_PHONE_NUMBER, user_edit_phone_number.text.toString())
-                    newImage?.let { editor2.putString(USER_IMAGE_URI, newImage.toString()) }
-                val isSaved = editor2.commit()
+            val isSaved =
+                preferenceHelper.updateUserProfile(name = user_edit_name.text.toString(), phoneNumber =
+                user_edit_phone_number.text.toString(), imagePath = newImage?.toString())
             if (isSaved) { finish() }
         }
 
@@ -48,10 +46,9 @@ class UserProfileEditActivity : AppCompatActivity() {
     }
 
     private fun populateData() {
-        user_edit_name.setText(PreferenceManager.getDefaultSharedPreferences(this).getString(USER_NAME, null))
-        user_edit_phone_number.setText(PreferenceManager.getDefaultSharedPreferences(this).getString(
-            USER_PHONE_NUMBER, null))
-        val imageString = PreferenceManager.getDefaultSharedPreferences(this).getString(USER_IMAGE_URI, null)
+        user_edit_name.setText(preferenceHelper.getUserProfile()?.name)
+        user_edit_phone_number.setText(preferenceHelper.getUserProfile()?.phoneNumber)
+        val imageString = preferenceHelper.getUserProfile()?.imagePath
         imageString?.let {
             val bitmap = MediaStore.Images.Media.getBitmap(this.contentResolver, Uri.parse(imageString))
             Glide.with(this).load(bitmap).apply(RequestOptions.circleCropTransform()).into(user_edit_add_image)

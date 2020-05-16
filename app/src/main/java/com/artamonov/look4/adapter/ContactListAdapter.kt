@@ -1,8 +1,12 @@
 package com.artamonov.look4.adapter
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import com.artamonov.look4.AdapterDataSource
 import com.artamonov.look4.R
@@ -44,6 +48,14 @@ class ContactListAdapter(
 
             view.contact_name.text = contactItem?.name
             view.contact_phone_number.text = contactItem?.phoneNumber
+
+            view.contact_phone_number.setOnClickListener { v ->
+                val myClipboard = v.context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+
+                val myClip = ClipData.newPlainText("label", view.contact_phone_number.text.toString())
+                myClipboard.setPrimaryClip(myClip)
+                Toast.makeText(v.context, "Copied to clipboard.", Toast.LENGTH_SHORT).show()
+            }
 
             view.contact_delete_icon.setOnClickListener {
                 listener.onItemClick(adapterPosition)

@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.provider.Settings
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import com.artamonov.look4.service.ForegroundService
 import com.google.android.gms.nearby.Nearby
 import kotlinx.android.synthetic.main.activity_main.*
 

@@ -1,4 +1,4 @@
-package com.artamonov.look4
+package com.artamonov.look4.service
 
 import android.app.Notification
 import android.app.NotificationManager
@@ -8,7 +8,6 @@ import android.app.Service
 import android.app.PendingIntent.FLAG_UPDATE_CURRENT
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Build
 import android.os.IBinder
@@ -16,9 +15,11 @@ import android.os.ParcelFileDescriptor
 import android.provider.Settings
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import androidx.preference.PreferenceManager
+import com.artamonov.look4.LookActivity
 import com.artamonov.look4.LookActivity.Companion.LOG_TAG
-import com.artamonov.look4.utils.UserRole
+import com.artamonov.look4.MainActivity
+import com.artamonov.look4.R
+import com.artamonov.look4.data.prefs.PreferenceHelper
 import com.artamonov.look4.utils.UserRole.Companion.ADVERTISER
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.AdvertisingOptions
@@ -30,8 +31,8 @@ import com.google.android.gms.nearby.connection.ConnectionResolution
 import com.google.android.gms.nearby.connection.PayloadCallback
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate
 import com.google.android.gms.nearby.connection.Strategy.P2P_POINT_TO_POINT
+import org.koin.android.ext.android.inject
 import java.io.File
-import java.lang.reflect.Type
 import java.nio.charset.Charset
 
 class ForegroundService : Service() {
@@ -44,14 +45,13 @@ class ForegroundService : Service() {
     lateinit var deviceId: String
     private val STRATEGY = P2P_POINT_TO_POINT
     val advOptions = AdvertisingOptions.Builder().setStrategy(STRATEGY).build()
-    private var advertiserName: String? = null
-    private var advertiserFilePath: String? = null
     var notification: Notification? = null
     var notificationManager: NotificationManager? = null
     private var newFile: File? = null
     private var file: File? = null
     private var filePayload: Payload? = null
     private var bytePayload: Payload? = null
+    private val preferenceHelper: PreferenceHelper by inject()
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         val input = intent.getStringExtra("inputExtra")
@@ -60,7 +60,9 @@ class ForegroundService : Service() {
         val notificationIntent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(this, 0,
             notificationIntent, 0)
-        notification = NotificationCompat.Builder(this, CHANNEL_ID)
+        notification = NotificationCompat.Builder(this,
+            CHANNEL_ID
+        )
                 .setContentTitle("Advertising")
                 .setSmallIcon(R.drawable.ic_o_1)
                 .setContentText(input)
@@ -69,10 +71,7 @@ class ForegroundService : Service() {
         //do heavy work on a background thread
         // stopSelf();
         deviceId = Settings.Secure.getString(applicationContext.contentResolver, Settings.Secure.ANDROID_ID)
-        advertiserName = PreferenceManager.getDefaultSharedPreferences(applicationContext).getString(
-            USER_NAME, "Name")
-        advertiserFilePath = PreferenceManager.getDefaultSharedPreferences(applicationContext).getString(
-            USER_IMAGE_URI, null)
+
         startServer()
         return START_NOT_STICKY
     }
@@ -95,7 +94,7 @@ class ForegroundService : Service() {
         ).addOnSuccessListener {
             startForeground(1, notification)
             isAppInForeground = true
-            updateUserRole(ADVERTISER)
+            preferenceHelper.updateRole(ADVERTISER)
         }
     }
 
@@ -109,12 +108,12 @@ class ForegroundService : Service() {
                 ConnectionsStatusCodes.STATUS_OK -> {
                     endpointIdSaved = endpointId
                     Log.v(LOG_TAG, "in service onConnectionResult: $endpointId")
-                    bytePayload = Payload.fromBytes(advertiserName!!.toByteArray())
+                    bytePayload = Payload.fromBytes(preferenceHelper.getUserProfile()?.name!!.toByteArray())
                     Nearby.getConnectionsClient(applicationContext).sendPayload(endpointId, bytePayload!!)
 
                     // Toast.makeText(applicationContext, "userImagePath: $advertiserFilePath", Toast.LENGTH_LONG).show()
-                    advertiserFilePath?.let {
-                        val imageUri = Uri.parse(advertiserFilePath)
+                    preferenceHelper.getUserProfile()?.imagePath?.let {
+                        val imageUri = Uri.parse(preferenceHelper.getUserProfile()?.imagePath)
                         // val imageUri = URI.create(userImagePath!!)
                         Log.v("Look4", "imageUri: $imageUri")
                         //Toast.makeText(applicationContext, "imageUri: $imageUri", Toast.LENGTH_LONG).show()
@@ -206,7 +205,9 @@ class ForegroundService : Service() {
         intent.putExtra("endpointId", endpointIdSaved)
         val pendingIntent: PendingIntent = PendingIntent.getActivity(this, 0, intent, FLAG_UPDATE_CURRENT)
 
-        val builder = NotificationCompat.Builder(this, CHANNEL_ID)
+        val builder = NotificationCompat.Builder(this,
+            CHANNEL_ID
+        )
             .setContentTitle("Look4")
             .setSmallIcon(R.drawable.ic_o_2)
             .setContentText("You have received a contact request")
@@ -233,17 +234,6 @@ class ForegroundService : Service() {
             notificationManager?.createNotificationChannel(serviceChannel)
         }
     }
-
-    private fun updateUserRole(userRole: @UserRole.AnnotationUserRole String) {
-        val currentUserRole = PreferenceManager.getDefaultSharedPreferences(applicationContext).getString(
-            LookActivity.USER_ROLE, "null")
-        if (currentUserRole != userRole) {
-            val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this)
-            val editor: SharedPreferences.Editor = sharedPrefs.edit()
-            editor.putString(LookActivity.USER_ROLE, userRole)
-            editor.apply()
-        }
-        }
 
     companion object {
         const val CHANNEL_ID = "ForegroundServiceChannel"

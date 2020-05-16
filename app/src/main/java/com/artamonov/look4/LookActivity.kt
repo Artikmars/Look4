@@ -8,7 +8,6 @@ import android.Manifest.permission.ACCESS_COARSE_LOCATION
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.net.Uri
@@ -22,9 +21,9 @@ import android.view.View
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.preference.PreferenceManager
+import com.artamonov.look4.base.BaseActivity
 import com.artamonov.look4.data.database.User
-import com.artamonov.look4.utils.UserRole
+import com.artamonov.look4.data.prefs.PreferenceHelper
 import com.artamonov.look4.utils.UserRole.Companion.ADVERTISER
 import com.artamonov.look4.utils.UserRole.Companion.DISCOVERER
 import com.bumptech.glide.Glide
@@ -40,14 +39,15 @@ import com.google.android.gms.nearby.connection.ConnectionResolution
 import com.google.android.gms.nearby.connection.PayloadCallback
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate
 import com.google.android.gms.nearby.connection.Strategy.P2P_POINT_TO_POINT
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import kotlinx.android.synthetic.main.activity_look.*
+import org.koin.android.ext.android.inject
+
 import java.io.File
-import java.lang.reflect.Type
 import java.nio.charset.Charset
 
 class LookActivity : BaseActivity() {
+
+    private val preferenceHelper: PreferenceHelper by inject()
 
     companion object {
         private val REQUIRED_PERMISSIONS = arrayOf(
@@ -58,8 +58,6 @@ class LookActivity : BaseActivity() {
             ACCESS_COARSE_LOCATION)
 
         private const val REQUEST_CODE_REQUIRED_PERMISSIONS = 1
-        const val CONTACT_LIST = "CONTACT_LIST"
-        const val USER_ROLE = "USER_ROLE"
         private val STRATEGY = P2P_POINT_TO_POINT
         const val LOG_TAG = "Look4"
         var endpointIdSaved: String? = null
@@ -72,9 +70,6 @@ class LookActivity : BaseActivity() {
         private var timer: CountDownTimer? = null
         private var file: File? = null
         private var newFile: File? = null
-        private lateinit var userName: String
-        private lateinit var userPhoneNumber: String
-        private lateinit var userImagePath: String
 
         private val discOptions = DiscoveryOptions.Builder().setStrategy(STRATEGY).build()
     }
@@ -106,13 +101,6 @@ class LookActivity : BaseActivity() {
         deviceId = Settings.Secure.getString(applicationContext.contentResolver, Settings.Secure.ANDROID_ID)
         searchBtn.setOnClickListener { startClient() }
 
-        userName = PreferenceManager.getDefaultSharedPreferences(this).getString(
-            USER_NAME, null)!!
-        userPhoneNumber = PreferenceManager.getDefaultSharedPreferences(this).getString(
-            USER_PHONE_NUMBER, null)!!
-        userImagePath = PreferenceManager.getDefaultSharedPreferences(this).getString(
-            USER_IMAGE_URI, null)!!
-
         no_button.setOnClickListener {
             Nearby.getConnectionsClient(this).stopAllEndpoints()
             shouldDisplayIncomeContactViews(false)
@@ -120,7 +108,7 @@ class LookActivity : BaseActivity() {
         }
 
         yes_button.setOnClickListener {
-            when (getUserRole()) {
+            when (preferenceHelper.getUserProfile()?.role) {
                 ADVERTISER -> {
                     savePhoneNumberToDB(discovererPhoneNumber, ADVERTISER)
                     searchingInProgressText.text = "Congratulations! Here is the phone number: $discovererPhoneNumber"
@@ -131,7 +119,7 @@ class LookActivity : BaseActivity() {
                     Log.v(LOG_TAG, "Endpoint: $endpointIdSaved")
                     endpointIdSaved?.let {
                         Nearby.getConnectionsClient(applicationContext).sendPayload(
-                            endpointIdSaved!!, Payload.fromBytes(userPhoneNumber.toByteArray())).addOnFailureListener { e ->
+                            endpointIdSaved!!, Payload.fromBytes(preferenceHelper.getUserProfile()?.phoneNumber!!.toByteArray())).addOnFailureListener { e ->
                             showSnackbarError(e.toString()) }
                     }
                 }
@@ -139,12 +127,12 @@ class LookActivity : BaseActivity() {
 //                    Toast.makeText(applicationContext, "Endpoint: $endpointIdSaved", Toast.LENGTH_SHORT)
 //                        .show()
                     Nearby.getConnectionsClient(applicationContext).stopDiscovery()
-                    val pfd: ParcelFileDescriptor? = contentResolver.openFileDescriptor(Uri.parse(userImagePath), "r")
+                    val pfd: ParcelFileDescriptor? = contentResolver.openFileDescriptor(Uri.parse(preferenceHelper.getUserProfile()?.imagePath!!), "r")
                     val pFilePayload = Payload.fromFile(pfd!!)
                     endpointIdSaved?.let {
                         Log.v(LOG_TAG, "Endpoint: $endpointIdSaved")
                         Nearby.getConnectionsClient(applicationContext).sendPayload(endpointIdSaved!!,
-                            Payload.fromBytes("$userName;$userPhoneNumber".toByteArray())).addOnFailureListener {
+                            Payload.fromBytes("${getUserProfile()?.name};${getUserProfile()?.phoneNumber}".toByteArray())).addOnFailureListener {
                             e -> showSnackbarError(e.toString())
                     }
                         Nearby.getConnectionsClient(applicationContext).sendPayload(endpointIdSaved!!, pFilePayload).addOnFailureListener {
@@ -166,6 +154,10 @@ class LookActivity : BaseActivity() {
 //                stopAllEndpoints()
 //           }
 //        }
+    }
+
+    private fun getUserProfile(): User? {
+        return preferenceHelper.getUserProfile()
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
@@ -216,7 +208,7 @@ class LookActivity : BaseActivity() {
         Nearby.getConnectionsClient(applicationContext).startDiscovery(packageName, endpointDiscoveryCallback, discOptions)
                 .addOnSuccessListener {
                     // logD( "$deviceId started discovering.")
-                    updateUserRole(DISCOVERER)
+                    preferenceHelper.updateRole(DISCOVERER)
                 }.addOnFailureListener { e ->
 //                Toast.makeText(applicationContext,
 //                    "Couldn't connect because of: $e", Toast.LENGTH_LONG).show()
@@ -263,7 +255,7 @@ class LookActivity : BaseActivity() {
             // endpointIdSaved = endpointId
             Log.v(LOG_TAG, "in endpointDiscoveryCallbackEndpoint: $endpointId")
 
-            Nearby.getConnectionsClient(applicationContext).requestConnection(userName, endpointId, connectionLifecycleCallback)
+            Nearby.getConnectionsClient(applicationContext).requestConnection(getUserProfile()?.name!!, endpointId, connectionLifecycleCallback)
                     .addOnSuccessListener {
 //                        Toast.makeText(
 //                                applicationContext,
@@ -348,7 +340,7 @@ class LookActivity : BaseActivity() {
 
     val payloadCallback = object : PayloadCallback() {
         override fun onPayloadReceived(p0: String, p1: Payload) {
-            when (getUserRole()) {
+            when (preferenceHelper.getUserProfile()?.role) {
                 DISCOVERER -> {
                         when (p1.type) {
                             Payload.Type.BYTES -> {
@@ -401,32 +393,15 @@ class LookActivity : BaseActivity() {
     }
 
     private fun savePhoneNumberToDB(phoneNumber: String?, userRole: String) {
-        val json = PreferenceManager.getDefaultSharedPreferences(applicationContext).getString(CONTACT_LIST, "null")
-        val type: Type = object : TypeToken<List<User?>?>() {}.type
-        var contactList: ArrayList<User>? = Gson().fromJson(json, type)
         when (userRole) {
             DISCOVERER -> {
                 if (phoneNumber != null && advertiserName != null) {
-                    val user = User(System.currentTimeMillis(), phoneNumber, advertiserName!!, null, null)
-                    if (contactList == null) { contactList = arrayListOf() }
-                    contactList.add(user)
-                    val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this)
-                    val editor: SharedPreferences.Editor = sharedPrefs.edit()
-                    val jsonOut = Gson().toJson(contactList)
-                    editor.putString(CONTACT_LIST, jsonOut)
-                    editor.apply()
+                    preferenceHelper.saveContact(name = advertiserName!!, phoneNumber = phoneNumber)
                 }
             }
             ADVERTISER -> {
                 if (phoneNumber != null && discovererName != null) {
-                    val user = User(System.currentTimeMillis(), phoneNumber, discovererName!!, null, null)
-                    if (contactList == null) { contactList = arrayListOf() }
-                    contactList.add(user)
-                    val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this)
-                    val editor: SharedPreferences.Editor = sharedPrefs.edit()
-                    val jsonOut = Gson().toJson(contactList)
-                    editor.putString(CONTACT_LIST, jsonOut)
-                    editor.apply()
+                    preferenceHelper.saveContact(name = discovererName!!, phoneNumber = phoneNumber)
                 }
             }
         }
@@ -466,21 +441,5 @@ class LookActivity : BaseActivity() {
         searchingInProgressText.text = resources.getString(R.string.no_found)
         searchBtn.text = resources.getString(R.string.search_again)
         searchButtonVisibility(true)
-    }
-
-    private fun updateUserRole(userRole: @UserRole.AnnotationUserRole String) {
-        val currentUserRole = PreferenceManager.getDefaultSharedPreferences(applicationContext).getString(
-            LookActivity.USER_ROLE, "null")
-        if (currentUserRole != userRole) {
-            val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this)
-            val editor: SharedPreferences.Editor = sharedPrefs.edit()
-            editor.putString(LookActivity.USER_ROLE, userRole)
-            editor.apply()
-        }
-    }
-
-    private fun getUserRole(): String? {
-        return PreferenceManager.getDefaultSharedPreferences(applicationContext).getString(
-            USER_ROLE, "null")
     }
 }
