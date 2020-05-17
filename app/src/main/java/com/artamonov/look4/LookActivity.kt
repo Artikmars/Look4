@@ -100,6 +100,7 @@ class LookActivity : BaseActivity() {
         checkForPermissions()
         deviceId = Settings.Secure.getString(applicationContext.contentResolver, Settings.Secure.ANDROID_ID)
         searchBtn.setOnClickListener { startClient() }
+        look_back.setOnClickListener { onBackPressed() }
 
         no_button.setOnClickListener {
             Nearby.getConnectionsClient(this).stopAllEndpoints()
@@ -111,7 +112,7 @@ class LookActivity : BaseActivity() {
             when (preferenceHelper.getUserProfile()?.role) {
                 ADVERTISER -> {
                     savePhoneNumberToDB(discovererPhoneNumber, ADVERTISER)
-                    searchingInProgressText.text = "Congratulations! Here is the phone number: $discovererPhoneNumber"
+                    searchingInProgressText.text = resources.getString(R.string.look_you_received_phone_number, discovererPhoneNumber)
                     shouldDisplayIncomeContactViews(false)
                     searchButtonVisibility(true)
 //                    Toast.makeText(applicationContext, "Endpoint: $endpointIdSaved", Toast.LENGTH_LONG)
@@ -201,7 +202,7 @@ class LookActivity : BaseActivity() {
         searchButtonVisibility(false)
         searchingInProgressText.visibility = View.VISIBLE
         searchingInProgressText.isAllCaps = true
-        searchingInProgressText.text = resources.getString(R.string.searching_in_progress)
+        searchingInProgressText.text = resources.getString(R.string.look_searching_in_progress)
 
         startTimer()
         Nearby.getConnectionsClient(applicationContext).stopDiscovery()
@@ -213,8 +214,8 @@ class LookActivity : BaseActivity() {
 //                Toast.makeText(applicationContext,
 //                    "Couldn't connect because of: $e", Toast.LENGTH_LONG).show()
                 showSnackbarError(e.toString())
-                searchingInProgressText.text = resources.getString(R.string.no_found)
-                searchBtn.text = resources.getString(R.string.search_again)
+                searchingInProgressText.text = resources.getString(R.string.look_no_found)
+                searchBtn.text = resources.getString(R.string.look_search_again)
                 // We're unable to start discovering.
                 // logE("We're unable to start discovering.", e)
                 }
@@ -229,8 +230,8 @@ class LookActivity : BaseActivity() {
             override fun onFinish() {
                 Nearby.getConnectionsClient(applicationContext).stopDiscovery()
                 setCountDownViewsVisibility(false)
-                searchingInProgressText.text = resources.getString(R.string.no_found)
-                searchBtn.text = resources.getString(R.string.search_again)
+                searchingInProgressText.text = resources.getString(R.string.look_no_found)
+                searchBtn.text = resources.getString(R.string.look_search_again)
                 searchButtonVisibility(true)
             }
         }
@@ -438,8 +439,8 @@ class LookActivity : BaseActivity() {
         searchButtonVisibility(true)
         timer?.cancel()
         setCountDownViewsVisibility(false)
-        searchingInProgressText.text = resources.getString(R.string.no_found)
-        searchBtn.text = resources.getString(R.string.search_again)
+        searchingInProgressText.text = resources.getString(R.string.look_no_found)
+        searchBtn.text = resources.getString(R.string.look_search_again)
         searchButtonVisibility(true)
     }
 }

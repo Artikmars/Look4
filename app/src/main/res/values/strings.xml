@@ -1,19 +1,40 @@
 <resources>
     <string name="app_name">Look4</string>
 
-    <string name="found_label">Found: 1/1</string>
-    <string name="yes">Yes</string>
-    <string name="no">No</string>
-    <string name="searching_in_progress">Searching …</string>
-    <string name="no_found">Oops…nobody here</string>
-    <string name="search">Search</string>
-    <string name="search_again">Search again</string>
-    <string name="offline_mode">Offline</string>
-    <string name="online_mode">Online</string>
-    <string name="look">Look</string>
-    <string name="contacts">Contacts</string>
-    <string name="sec">sec</string>
-    <string name="countdown_default_value">25</string>
-    <string name="device_is_found">We have found a device! Let me connect to it …</string>
+    <string name="welcome_phone_number_warning">Your phone number is not valid</string>
+
+    <string name="main_offline_mode">Offline</string>
+    <string name="main_online_mode">Online</string>
+
+    <string name="settings_title">Settings</string>
+
+    <string name="contacts_title">Contacts</string>
+
+    <string name="look_title">Look</string>
+    <string name="look_found_label">Found: 1/1</string>
+    <string name="look_yes">Yes</string>
+    <string name="look_no">No</string>
+    <string name="look_searching_in_progress">Searching …</string>
+    <string name="look_no_found">Oops…nobody here \n </string>
+    <string name="look_search">Search</string>
+    <string name="look_search_again">Search again</string>
+    <string name="look_sec">sec</string>
+    <string name="look_countdown_default_value">25</string>
+    <string name="look_you_received_phone_number">Congratulations! Here is the phone number: %1$s</string>
+
+    <string name="profile_edit_title">Edit profile</string>
+    <string name="settings_remove_ad">Remove Ad</string>
+    <string name="settings_about_us">About Us</string>
+    <string name="settings_privacy_policy">Privacy Policy</string>
+    <string name="contacts_placeholder">You have no contacts yet.</string>
+    <string name="profile_edit_photo">Photo</string>
+    <string name="profile_edit_enter_your_name">Enter your name</string>
+    <string name="profile_edit_enter_your_phone_number">Enter your phone number</string>
+    <string name="profile_edit_save">Save</string>
+    <string name="welcome_submit">Submit</string>
+    <string name="about_us_description">Igor Artamonov - idea, concept, design, publishing and marketing \n
+        Email: artamonov.igor@gmail.com \n\n Andrii Artamonov - Android Developer \n LinkedIn: https://www.linkedin.com/in/andrii-artamonov/ \n
+        Email: artamonov06@gmail.com \n\n © 2020 Igor Artamonov, Andrii Artamonov, Look4</string>
+
 
 </resources>

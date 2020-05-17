@@ -44,7 +44,7 @@ class ForegroundService : Service() {
     private var discovererFilePath: String? = null
     lateinit var deviceId: String
     private val STRATEGY = P2P_POINT_TO_POINT
-    val advOptions = AdvertisingOptions.Builder().setStrategy(STRATEGY).build()
+    private val advOptions: AdvertisingOptions = AdvertisingOptions.Builder().setStrategy(STRATEGY).build()
     var notification: Notification? = null
     var notificationManager: NotificationManager? = null
     private var newFile: File? = null

@@ -21,6 +21,8 @@ class ContactsActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_contacts)
 
+        contacts_back.setOnClickListener { onBackPressed() }
+
         if (!getContactList().isNullOrEmpty()) { initAdapter() }
         setNoContactsViewVisibility(getContactList().isNullOrEmpty())
     }

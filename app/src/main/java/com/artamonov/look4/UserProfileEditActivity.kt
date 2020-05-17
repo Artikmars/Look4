@@ -13,6 +13,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.artamonov.look4.data.prefs.PreferenceHelper
+import com.artamonov.look4.utils.PostTextChangeWatcher
+import com.artamonov.look4.utils.isValidPhoneNumber
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.github.dhaval2404.imagepicker.ImagePicker
@@ -23,6 +25,7 @@ import org.koin.android.ext.android.inject
 class UserProfileEditActivity : AppCompatActivity() {
 
     var newImage: Uri? = null
+    private var enteredPhoneNumber: String? = null
     private val preferenceHelper: PreferenceHelper by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,6 +33,10 @@ class UserProfileEditActivity : AppCompatActivity() {
         setContentView(R.layout.activity_user_profile_edit)
 
         checkForPermissions()
+
+        user_edit_phone_number.addTextChangedListener(PostTextChangeWatcher { phoneNumberChanged(it) })
+
+        profile_edit_back.setOnClickListener { onBackPressed() }
 
         user_edit_submit_button.setOnClickListener {
             if (!fieldsAreValid()) {
@@ -149,6 +156,31 @@ class UserProfileEditActivity : AppCompatActivity() {
             else -> {
                 // Ignore all other requests.
             }
+        }
+    }
+
+    private fun phoneNumberChanged(newText: String?) {
+        enteredPhoneNumber = newText?.trim()
+        validatePhoneNumber()
+    }
+
+    private fun isPhoneNumberValid(phoneNumber: String?): Boolean {
+        return phoneNumber?.isValidPhoneNumber() ?: false
+    }
+
+    private fun validatePhoneNumber() {
+        return if (isPhoneNumberValid(enteredPhoneNumber)) {
+            showPhoneNumberWarning(false)
+        } else {
+            showPhoneNumberWarning(true)
+        }
+    }
+
+    private fun showPhoneNumberWarning(state: Boolean) {
+        if (state) {
+            user_edit_phone_number_layout.error = resources.getString(R.string.welcome_phone_number_warning)
+        } else {
+            user_edit_phone_number_layout.error = null
         }
     }
 }

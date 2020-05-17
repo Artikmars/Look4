@@ -6,6 +6,8 @@ import android.net.Uri
 import android.os.Bundle
 import com.artamonov.look4.base.BaseActivity
 import com.artamonov.look4.data.prefs.PreferenceHelper
+import com.artamonov.look4.utils.PostTextChangeWatcher
+import com.artamonov.look4.utils.isValidPhoneNumber
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.github.dhaval2404.imagepicker.ImagePicker
@@ -15,6 +17,7 @@ import org.koin.android.ext.android.inject
 
 const val PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 5545
 var selectedImage: Uri? = null
+var enteredPhoneNumber: String? = null
 
 class WelcomeActivity : BaseActivity() {
 
@@ -23,6 +26,9 @@ class WelcomeActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_welcome)
+        this.supportActionBar?.hide()
+
+        etPhoneNumber.addTextChangedListener(PostTextChangeWatcher { phoneNumberChanged(it) })
 
         submit_button.setOnClickListener {
             if (fieldsAreValid()) {
@@ -39,6 +45,31 @@ class WelcomeActivity : BaseActivity() {
 
         if (preferenceHelper.userAvailable()) {
             startMainActivity()
+        }
+    }
+
+    private fun phoneNumberChanged(newText: String?) {
+        enteredPhoneNumber = newText?.trim()
+        validatePhoneNumber()
+    }
+
+    private fun isPhoneNumberValid(phoneNumber: String?): Boolean {
+        return phoneNumber?.isValidPhoneNumber() ?: false
+    }
+
+    private fun validatePhoneNumber() {
+        return if (isPhoneNumberValid(enteredPhoneNumber)) {
+            showPhoneNumberWarning(false)
+        } else {
+            showPhoneNumberWarning(true)
+        }
+    }
+
+    private fun showPhoneNumberWarning(state: Boolean) {
+        if (state) {
+            etPhoneNumberLayout.error = resources.getString(R.string.welcome_phone_number_warning)
+        } else {
+            etPhoneNumberLayout.error = null
         }
     }
 
@@ -72,6 +103,7 @@ class WelcomeActivity : BaseActivity() {
     }
 
     private fun fieldsAreValid(): Boolean {
-        return !etName.text?.trim().isNullOrEmpty() && !etPhoneNumber.text?.trim().isNullOrEmpty() && selectedImage != null
+        return !etName.text?.trim().isNullOrEmpty() && enteredPhoneNumber?.isValidPhoneNumber()
+                ?: false && selectedImage != null
     }
 }

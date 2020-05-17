@@ -6,6 +6,8 @@ import android.provider.Settings
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.artamonov.look4.service.ForegroundService
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.nearby.Nearby
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -20,7 +22,11 @@ companion object {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        this.supportActionBar?.hide()
+
         deviceId = Settings.Secure.getString(applicationContext.contentResolver, Settings.Secure.ANDROID_ID)
+
+        setAdView()
 
         look_text.setOnClickListener {
             stopService()
@@ -28,15 +34,15 @@ companion object {
         }
 
         offline_text.setOnClickListener {
-            if (offline_text.text == resources.getString(R.string.online_mode)) {
+            if (offline_text.text == resources.getString(R.string.main_online_mode)) {
                 stopService()
                 Nearby.getConnectionsClient(applicationContext).stopAllEndpoints()
-                offline_text.text = resources.getString(R.string.offline_mode)
+                offline_text.text = resources.getString(R.string.main_offline_mode)
             } else {
                 startService()
                 look_text.isEnabled = true
                 look_text.isClickable = true
-                offline_text.text = resources.getString(R.string.online_mode)
+                offline_text.text = resources.getString(R.string.main_online_mode)
                 look_text.setTextColor(ContextCompat.getColor(this, R.color.green))
             }
         }
@@ -50,10 +56,16 @@ companion object {
         }
     }
 
+    private fun setAdView() {
+        MobileAds.initialize(this) {}
+        val adRequest = AdRequest.Builder().build()
+        adView.loadAd(adRequest)
+    }
+
     override fun onResume() {
         super.onResume()
         if (ForegroundService.isAppInForeground) {
-            offline_text.text = resources.getString(R.string.online_mode)
+            offline_text.text = resources.getString(R.string.main_online_mode)
         }
     }
 

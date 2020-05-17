@@ -4,10 +4,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ContactsActivity">
+    tools:context=".AboutUsActivity">
 
     <androidx.appcompat.widget.Toolbar
-        android:id="@+id/contacts_toolbar"
+        android:id="@+id/about_us_toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         app:layout_constraintTop_toTopOf="parent"
@@ -22,7 +22,7 @@
             android:layout_height="wrap_content">
 
             <ImageView
-                android:id="@+id/contacts_back"
+                android:id="@+id/about_us_back"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="10dp"
@@ -33,10 +33,10 @@
                 app:srcCompat="@drawable/ic_arrow_back_black_24dp" />
 
             <TextView
-                android:id="@+id/contacts_title"
+                android:id="@+id/about_us_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/contacts_title"
+                android:text="@string/settings_about_us"
                 android:textColor="@color/black"
                 android:textSize="20sp"
                 android:textStyle="bold"
@@ -48,28 +48,19 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.appcompat.widget.Toolbar>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/contacts_list"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/contacts_toolbar"/>
 
     <TextView
-        android:id="@+id/contacts_placeholder"
-        android:layout_width="wrap_content"
+        android:id="@+id/about_us_description"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:visibility="visible"
-        android:text="@string/contacts_placeholder"
-        android:textAllCaps="true"
-        android:textColor="@color/black"
+        android:text="@string/about_us_description"
+        android:layout_marginStart="20sp"
+        android:layout_marginTop="20sp"
         android:textSize="20sp"
-        app:layout_constraintTop_toTopOf="parent"
+        android:clickable="true"
+        android:textColor="@color/black"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        />
+        app:layout_constraintTop_toBottomOf="@id/about_us_toolbar"
+        android:focusable="true" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
