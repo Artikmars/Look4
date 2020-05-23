@@ -4,6 +4,9 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
 import com.artamonov.look4.data.database.User
+import com.artamonov.look4.utils.UserGender
+import com.artamonov.look4.utils.UserGender.Companion.FEMALE
+import com.artamonov.look4.utils.UserGender.Companion.MALE
 import com.artamonov.look4.utils.UserRole
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
@@ -41,17 +44,27 @@ class PreferenceHelper(private var context: Context) : KoinComponent {
         return Gson().fromJson(prefs.getString(CONTACT_LIST, null), type)
     }
 
-    fun updateUserProfile(name: String?, phoneNumber: String?, imagePath: String?): Boolean {
+    fun updateUserProfile(name: String?, phoneNumber: String?, gender: @UserGender.AnnotationUserGender String?, imagePath: String?): Boolean {
         val profile = getUserProfile()
         name?.let { profile?.name = name }
         phoneNumber?.let { profile?.phoneNumber = phoneNumber }
         imagePath?.let { profile?.imagePath = imagePath }
+        gender?.let { profile?.gender = gender }
         return getSharedEditor().putString(USER_PROFILE, Gson().toJson(profile)).commit()
     }
 
-    fun createUserProfile(name: String, phoneNumber: String, imagePath: String): Boolean {
-        val profile = User(creationDate = System.currentTimeMillis(), name = name,
-            phoneNumber = phoneNumber, imagePath = imagePath)
+    fun createUserProfile(name: String, phoneNumber: String, imagePath: String, gender: @UserGender.AnnotationUserGender String): Boolean {
+        lateinit var profile: User
+        when (gender) {
+            MALE -> {
+                profile = User(creationDate = System.currentTimeMillis(), name = name,
+            phoneNumber = phoneNumber, gender = gender, lookGender = FEMALE, imagePath = imagePath) }
+            FEMALE -> {
+                profile = User(creationDate = System.currentTimeMillis(), name = name,
+                phoneNumber = phoneNumber, gender = gender, lookGender = MALE, imagePath = imagePath
+                ) }
+        }
+
         return getSharedEditor().putString(USER_PROFILE, Gson().toJson(profile)).commit()
     }
 
@@ -66,6 +79,12 @@ class PreferenceHelper(private var context: Context) : KoinComponent {
     fun updateRole(role: @UserRole.AnnotationUserRole String): Boolean {
         val user = getUserProfile()
         user?.role = role
+        return getSharedEditor().putString(USER_PROFILE, Gson().toJson(user)).commit()
+    }
+
+    fun updateLookGender(lookGender: @UserRole.AnnotationUserRole String): Boolean {
+        val user = getUserProfile()
+        user?.lookGender = lookGender
         return getSharedEditor().putString(USER_PROFILE, Gson().toJson(user)).commit()
     }
 

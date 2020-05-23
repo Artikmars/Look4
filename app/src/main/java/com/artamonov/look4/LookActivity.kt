@@ -24,6 +24,10 @@ import androidx.core.content.ContextCompat
 import com.artamonov.look4.base.BaseActivity
 import com.artamonov.look4.data.database.User
 import com.artamonov.look4.data.prefs.PreferenceHelper
+import com.artamonov.look4.utils.UserGender
+import com.artamonov.look4.utils.UserGender.Companion.ALL
+import com.artamonov.look4.utils.UserGender.Companion.FEMALE
+import com.artamonov.look4.utils.UserGender.Companion.MALE
 import com.artamonov.look4.utils.UserRole.Companion.ADVERTISER
 import com.artamonov.look4.utils.UserRole.Companion.DISCOVERER
 import com.bumptech.glide.Glide
@@ -66,6 +70,7 @@ class LookActivity : BaseActivity() {
         private var discovererFilePath: String? = null
         private var advertiserName: String? = null
         private var advertiserPhoneNumber: String? = null
+        private var isGenderValid: Boolean = true
         lateinit var deviceId: String
         private var timer: CountDownTimer? = null
         private var file: File? = null
@@ -133,7 +138,7 @@ class LookActivity : BaseActivity() {
                     endpointIdSaved?.let {
                         Log.v(LOG_TAG, "Endpoint: $endpointIdSaved")
                         Nearby.getConnectionsClient(applicationContext).sendPayload(endpointIdSaved!!,
-                            Payload.fromBytes("${getUserProfile()?.name};${getUserProfile()?.phoneNumber}".toByteArray())).addOnFailureListener {
+                            Payload.fromBytes("${getUserProfile()?.name};${getUserProfile()?.phoneNumber};${getUserProfile()?.gender}".toByteArray())).addOnFailureListener {
                             e -> showSnackbarError(e.toString())
                     }
                         Nearby.getConnectionsClient(applicationContext).sendPayload(endpointIdSaved!!, pFilePayload).addOnFailureListener {
@@ -346,13 +351,15 @@ class LookActivity : BaseActivity() {
                         when (p1.type) {
                             Payload.Type.BYTES -> {
                                 val byteString = p1.asBytes()?.toString(Charset.defaultCharset())
-                                Log.v("Look4", "advertiserName: $advertiserName")
-                                if (isMobileNumber(byteString)) {
-                                    savePhoneNumberToDB(byteString, DISCOVERER)
-                                    searchingInProgressText.text = byteString
+                                val textArray = byteString?.split(";")?.toTypedArray()
+                                if (!isGenderValid(textArray?.get(1))) { return }
+
+                                if (isMobileNumber(textArray?.get(0))) {
+                                    savePhoneNumberToDB(textArray?.get(0), DISCOVERER)
+                                    searchingInProgressText.text = textArray?.get(0)
                                     shouldDisplayIncomeContactViews(false)
                                 } else {
-                                    advertiserName = byteString
+                                    advertiserName = textArray?.get(0)
                                 }
                             }
                             Payload.Type.FILE -> {
@@ -366,12 +373,12 @@ class LookActivity : BaseActivity() {
                 }
                 ADVERTISER -> {
                     searchButtonVisibility(false)
-                    val receivedContact: String = p1.asBytes()!!.toString(Charset.defaultCharset())
-                    val textArray = receivedContact.split(";").toTypedArray()
+                    val receivedContact = p1.asBytes()?.toString(Charset.defaultCharset())
+                    val textArray = receivedContact?.split(";")?.toTypedArray()
                     searchingInProgressText.visibility = View.VISIBLE
-                    searchingInProgressText.text = textArray[0]
+                    searchingInProgressText.text = textArray?.get(0)
                     searchingInProgressText.isAllCaps = false
-                    discovererPhoneNumber = textArray[1]
+                    discovererPhoneNumber = textArray?.get(1)
                     shouldDisplayIncomeContactViews(true)
                 }
             }
@@ -379,7 +386,7 @@ class LookActivity : BaseActivity() {
 
         override fun onPayloadTransferUpdate(p0: String, p1: PayloadTransferUpdate) {
             if (p1.status == PayloadTransferUpdate.Status.SUCCESS && p1.totalBytes > 1000) {
-                if (profile_image.drawable == null) {
+                if (profile_image.drawable == null && isGenderValid) {
                     timer?.cancel()
                     setCountDownViewsVisibility(false)
                     advertiserName?.let { searchingInProgressText.text = advertiserName }
@@ -391,6 +398,25 @@ class LookActivity : BaseActivity() {
                 }
             }
         }
+    }
+
+    private fun isGenderValid(advertiserGender: @UserGender.AnnotationUserGender String?): Boolean {
+        when (preferenceHelper.getUserProfile()?.lookGender) {
+            MALE -> {
+                isGenderValid = advertiserGender == MALE
+                return isGenderValid
+            }
+            FEMALE -> {
+                isGenderValid = advertiserGender == FEMALE
+                return isGenderValid
+            }
+            ALL -> {
+                isGenderValid = true
+                return isGenderValid
+            }
+        }
+        isGenderValid = true
+        return isGenderValid
     }
 
     private fun savePhoneNumberToDB(phoneNumber: String?, userRole: String) {

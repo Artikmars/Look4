@@ -7,6 +7,9 @@ import android.os.Bundle
 import com.artamonov.look4.base.BaseActivity
 import com.artamonov.look4.data.prefs.PreferenceHelper
 import com.artamonov.look4.utils.PostTextChangeWatcher
+import com.artamonov.look4.utils.UserGender
+import com.artamonov.look4.utils.UserGender.Companion.FEMALE
+import com.artamonov.look4.utils.UserGender.Companion.MALE
 import com.artamonov.look4.utils.isValidPhoneNumber
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
@@ -33,7 +36,7 @@ class WelcomeActivity : BaseActivity() {
         submit_button.setOnClickListener {
             if (fieldsAreValid()) {
                 val isSaved = preferenceHelper.createUserProfile(name = etName.text.toString(), phoneNumber =
-                etPhoneNumber.text.toString(), imagePath = selectedImage.toString())
+                etPhoneNumber.text.toString(), imagePath = selectedImage.toString(), gender = getChosenGender())
                 if (isSaved) { startMainActivity() }
             } else {
                 Snackbar.make(findViewById(android.R.id.content), "Please, don't leave fields blank", Snackbar.LENGTH_SHORT).show()
@@ -46,6 +49,18 @@ class WelcomeActivity : BaseActivity() {
         if (preferenceHelper.userAvailable()) {
             startMainActivity()
         }
+    }
+
+    private fun getChosenGender(): @UserGender.AnnotationUserGender String {
+        when (welcome_radioGroup.checkedRadioButtonId) {
+            R.id.welcome_radioFemale -> {
+                return FEMALE
+            }
+            R.id.welcome_radioMale -> {
+                return MALE
+            }
+        }
+        return MALE
     }
 
     private fun phoneNumberChanged(newText: String?) {

@@ -14,6 +14,9 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.artamonov.look4.data.prefs.PreferenceHelper
 import com.artamonov.look4.utils.PostTextChangeWatcher
+import com.artamonov.look4.utils.UserGender
+import com.artamonov.look4.utils.UserGender.Companion.FEMALE
+import com.artamonov.look4.utils.UserGender.Companion.MALE
 import com.artamonov.look4.utils.isValidPhoneNumber
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
@@ -44,12 +47,33 @@ class UserProfileEditActivity : AppCompatActivity() {
                 return@setOnClickListener }
             val isSaved =
                 preferenceHelper.updateUserProfile(name = user_edit_name.text.toString(), phoneNumber =
-                user_edit_phone_number.text.toString(), imagePath = newImage?.toString())
+                user_edit_phone_number.text.toString(), imagePath = newImage?.toString(), gender = getChosenGender())
             if (isSaved) { finish() }
         }
 
         user_edit_add_image.setOnClickListener {
             dispatchTakePictureIntent() }
+
+        setRadioButtonState()
+    }
+
+    private fun setRadioButtonState() {
+        when (preferenceHelper.getUserProfile()?.gender) {
+            MALE -> radioMale.isChecked = true
+            FEMALE -> radioFemale.isChecked = true
+        }
+    }
+
+    private fun getChosenGender(): @UserGender.AnnotationUserGender String? {
+        when (radioGroup.checkedRadioButtonId) {
+            R.id.radioFemale -> {
+                return FEMALE
+            }
+            R.id.radioMale -> {
+                return MALE
+            }
+        }
+        return null
     }
 
     private fun populateData() {

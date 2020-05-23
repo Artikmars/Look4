@@ -52,7 +52,7 @@
             android:layout_marginTop="15dp"
             android:background="@color/white"
             android:hint="@string/profile_edit_enter_your_name"
-            android:inputType="textPersonName"
+            android:inputType="textPersonName|textCapWords"
             android:maxLines="1"
             android:paddingStart="12dp"
             android:paddingTop="5dp"
@@ -91,6 +91,36 @@
 
     </com.google.android.material.textfield.TextInputLayout>
 
+    <RadioGroup
+        android:id="@+id/welcome_radioGroup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/etPhoneNumberLayout">
+
+        <RadioButton
+            android:id="@+id/welcome_radioFemale"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:padding="10dp"
+            android:text="@string/main_gender_female" />
+
+        <RadioButton
+            android:id="@+id/welcome_radioMale"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:padding="10dp"
+            android:layout_weight="1"
+            android:text="@string/main_gender_male" />
+
+    </RadioGroup>
+
+
     <com.google.android.material.button.MaterialButton
         android:id="@+id/submit_button"
         android:layout_width="125dp"
@@ -103,7 +133,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/etPhoneNumberLayout"
+        app:layout_constraintTop_toBottomOf="@+id/welcome_radioGroup"
         app:layout_constraintVertical_bias="0.063"
         app:strokeColor="@color/green"
         app:strokeWidth="2dp" />

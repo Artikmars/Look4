@@ -20,6 +20,7 @@ import com.artamonov.look4.LookActivity.Companion.LOG_TAG
 import com.artamonov.look4.MainActivity
 import com.artamonov.look4.R
 import com.artamonov.look4.data.prefs.PreferenceHelper
+import com.artamonov.look4.utils.UserGender
 import com.artamonov.look4.utils.UserRole.Companion.ADVERTISER
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.AdvertisingOptions
@@ -44,6 +45,7 @@ class ForegroundService : Service() {
     private var discovererFilePath: String? = null
     lateinit var deviceId: String
     private val STRATEGY = P2P_POINT_TO_POINT
+    private var isGenderValid: Boolean = true
     private val advOptions: AdvertisingOptions = AdvertisingOptions.Builder().setStrategy(STRATEGY).build()
     var notification: Notification? = null
     var notificationManager: NotificationManager? = null
@@ -108,7 +110,9 @@ class ForegroundService : Service() {
                 ConnectionsStatusCodes.STATUS_OK -> {
                     endpointIdSaved = endpointId
                     Log.v(LOG_TAG, "in service onConnectionResult: $endpointId")
-                    bytePayload = Payload.fromBytes(preferenceHelper.getUserProfile()?.name!!.toByteArray())
+                    //  bytePayload = Payload.fromBytes(preferenceHelper.getUserProfile()?.name!!.toByteArray())
+                    bytePayload = Payload.fromBytes((preferenceHelper.getUserProfile()?.name +
+                            ";" + preferenceHelper.getUserProfile()?.gender).toByteArray())
                     Nearby.getConnectionsClient(applicationContext).sendPayload(endpointId, bytePayload!!)
 
                     // Toast.makeText(applicationContext, "userImagePath: $advertiserFilePath", Toast.LENGTH_LONG).show()
@@ -173,6 +177,7 @@ class ForegroundService : Service() {
                         val textArray = receivedContact.split(";").toTypedArray()
                         discovererName = textArray[0]
                         discovererPhoneNumber = textArray[1]
+                        isGenderValid(textArray[2])
                     } else { advertiserPhoneNumber = receivedContact }
                 }
                 Payload.Type.FILE -> {
@@ -184,6 +189,7 @@ class ForegroundService : Service() {
         }
 
         override fun onPayloadTransferUpdate(p0: String, p1: PayloadTransferUpdate) {
+            if (!isGenderValid) { return }
             if (p1.status == PayloadTransferUpdate.Status.SUCCESS && p1.totalBytes > 1000 && advertiserPhoneNumber == null &&
                 p1.payloadId != bytePayload?.id && p1.payloadId != filePayload?.id) {
                 //  Toast.makeText(applicationContext, "discovererFilePath: $discovererFilePath", Toast.LENGTH_LONG).show(
@@ -233,6 +239,25 @@ class ForegroundService : Service() {
             serviceChannel.enableVibration(true)
             notificationManager?.createNotificationChannel(serviceChannel)
         }
+    }
+
+    private fun isGenderValid(advertiserGender: @UserGender.AnnotationUserGender String?): Boolean {
+        when (preferenceHelper.getUserProfile()?.lookGender) {
+            UserGender.MALE -> {
+                isGenderValid = advertiserGender == UserGender.MALE
+                return isGenderValid
+            }
+            UserGender.FEMALE -> {
+                isGenderValid = advertiserGender == UserGender.FEMALE
+                return isGenderValid
+            }
+            UserGender.ALL -> {
+                isGenderValid = true
+                return isGenderValid
+            }
+        }
+        isGenderValid = true
+        return isGenderValid
     }
 
     companion object {
