@@ -10,6 +10,7 @@
     <string name="main_all">All</string>
     <string name="main_gender_female">Female</string>
     <string name="main_gender_male">Male</string>
+    <string name="main_version">v. %1$s</string>
 
     <string name="settings_title">Settings</string>
 
@@ -20,12 +21,14 @@
     <string name="look_yes">Yes</string>
     <string name="look_no">No</string>
     <string name="look_searching_in_progress">Searching …</string>
-    <string name="look_no_found">Oops…nobody here \n </string>
+    <string name="look_no_found">Oops… \nnobody \nhere </string>
+    <string name="look_talk_in_person">Try to talk \n in person \n or</string>
     <string name="look_search">Search</string>
     <string name="look_search_again">Search again</string>
     <string name="look_sec">sec</string>
     <string name="look_countdown_default_value">25</string>
-    <string name="look_you_received_phone_number">Congratulations! Here is the phone number: %1$s</string>
+    <string name="look_you_received_phone_number">Your new contact has been saved!</string>
+    <string name="look_view">View</string>
 
     <string name="profile_edit_title">Edit profile</string>
     <string name="settings_remove_ad">Remove Ad</string>

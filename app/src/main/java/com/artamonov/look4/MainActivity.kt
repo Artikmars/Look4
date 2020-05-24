@@ -19,6 +19,7 @@ import com.bumptech.glide.Glide
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.nearby.Nearby
+import com.google.android.gms.nearby.connection.ConnectionsClient
 import kotlinx.android.synthetic.main.activity_main.*
 import org.koin.android.ext.android.inject
 
@@ -28,6 +29,7 @@ companion object {
     private lateinit var deviceId: String
 }
     private val preferenceHelper: PreferenceHelper by inject()
+    private var connectionClient: ConnectionsClient? = null
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,9 +37,13 @@ companion object {
         setContentView(R.layout.activity_main)
         this.supportActionBar?.hide()
 
+        connectionClient = Nearby.getConnectionsClient(this)
+
         deviceId = Settings.Secure.getString(applicationContext.contentResolver, Settings.Secure.ANDROID_ID)
 
         setAdView()
+
+        if (BuildConfig.DEBUG) { current_version_text.text = getString(R.string.main_version, BuildConfig.VERSION_NAME) }
 
         look_text.setOnClickListener {
             stopService()
@@ -47,7 +53,7 @@ companion object {
         offline_text.setOnClickListener {
             if (offline_text.text == getString(R.string.main_online_mode)) {
                 stopService()
-                Nearby.getConnectionsClient(applicationContext).stopAllEndpoints()
+                connectionClient?.stopAllEndpoints()
                 offline_text.text = getString(R.string.main_offline_mode)
                 letter_0_1.clearAnimation()
             } else {

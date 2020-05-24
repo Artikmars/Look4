@@ -14,6 +14,7 @@ import android.os.IBinder
 import android.os.ParcelFileDescriptor
 import android.provider.Settings
 import android.util.Log
+import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import com.artamonov.look4.LookActivity
 import com.artamonov.look4.LookActivity.Companion.LOG_TAG
@@ -29,6 +30,7 @@ import com.google.android.gms.nearby.connection.ConnectionLifecycleCallback
 import com.google.android.gms.nearby.connection.ConnectionInfo
 import com.google.android.gms.nearby.connection.ConnectionsStatusCodes
 import com.google.android.gms.nearby.connection.ConnectionResolution
+import com.google.android.gms.nearby.connection.ConnectionsClient
 import com.google.android.gms.nearby.connection.PayloadCallback
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate
 import com.google.android.gms.nearby.connection.Strategy.P2P_POINT_TO_POINT
@@ -54,17 +56,17 @@ class ForegroundService : Service() {
     private var filePayload: Payload? = null
     private var bytePayload: Payload? = null
     private val preferenceHelper: PreferenceHelper by inject()
+    private var connectionClient: ConnectionsClient? = null
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
+        connectionClient = Nearby.getConnectionsClient(applicationContext)
         val input = intent.getStringExtra("inputExtra")
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         createNotificationChannel()
         val notificationIntent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(this, 0,
             notificationIntent, 0)
-        notification = NotificationCompat.Builder(this,
-            CHANNEL_ID
-        )
+        notification = NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("Advertising")
                 .setSmallIcon(R.drawable.ic_o_1)
                 .setContentText(input)
@@ -83,26 +85,33 @@ class ForegroundService : Service() {
     }
 
     override fun onDestroy() {
+        connectionClient?.stopAllEndpoints()
         isAppInForeground = false
         super.onDestroy()
     }
 
     private fun startServer() {
-        Nearby.getConnectionsClient(this).startAdvertising(
+        connectionClient?.startAdvertising(
             deviceId,
             packageName,
             connectionLifecycleCallback,
             advOptions
-        ).addOnSuccessListener {
+        )?.addOnSuccessListener {
             startForeground(1, notification)
             isAppInForeground = true
             preferenceHelper.updateRole(ADVERTISER)
+        }
+            ?.addOnFailureListener { e ->
+            isAppInForeground = false
+            Toast.makeText(this, "$e", Toast.LENGTH_LONG).show()
+            stopForeground(true)
+            stopSelf()
         }
     }
 
     private val connectionLifecycleCallback: ConnectionLifecycleCallback = object : ConnectionLifecycleCallback() {
         override fun onConnectionInitiated(p0: String, p1: ConnectionInfo) {
-            Nearby.getConnectionsClient(applicationContext).acceptConnection(p0, payloadCallback)
+            connectionClient?.acceptConnection(p0, payloadCallback)
         }
 
         override fun onConnectionResult(endpointId: String, result: ConnectionResolution) {
@@ -113,7 +122,7 @@ class ForegroundService : Service() {
                     //  bytePayload = Payload.fromBytes(preferenceHelper.getUserProfile()?.name!!.toByteArray())
                     bytePayload = Payload.fromBytes((preferenceHelper.getUserProfile()?.name +
                             ";" + preferenceHelper.getUserProfile()?.gender).toByteArray())
-                    Nearby.getConnectionsClient(applicationContext).sendPayload(endpointId, bytePayload!!)
+                    connectionClient?.sendPayload(endpointId, bytePayload!!)
 
                     // Toast.makeText(applicationContext, "userImagePath: $advertiserFilePath", Toast.LENGTH_LONG).show()
                     preferenceHelper.getUserProfile()?.imagePath?.let {
@@ -127,7 +136,7 @@ class ForegroundService : Service() {
                         //  Log.v("Look4", "file: $file")
 
                         filePayload = Payload.fromFile(pfd!!)
-                        Nearby.getConnectionsClient(applicationContext).sendPayload(endpointId, filePayload!!)
+                        connectionClient?.sendPayload(endpointId, filePayload!!)
                     }
                 }
 

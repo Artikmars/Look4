@@ -5,6 +5,7 @@ import android.Manifest.permission.BLUETOOTH_ADMIN
 import android.Manifest.permission.ACCESS_WIFI_STATE
 import android.Manifest.permission.CHANGE_WIFI_STATE
 import android.Manifest.permission.ACCESS_COARSE_LOCATION
+import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.content.Context
 import android.content.Intent
@@ -18,6 +19,7 @@ import android.os.ParcelFileDescriptor
 import android.provider.Settings
 import android.util.Log
 import android.view.View
+import android.view.View.GONE
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -30,6 +32,7 @@ import com.artamonov.look4.utils.UserGender.Companion.FEMALE
 import com.artamonov.look4.utils.UserGender.Companion.MALE
 import com.artamonov.look4.utils.UserRole.Companion.ADVERTISER
 import com.artamonov.look4.utils.UserRole.Companion.DISCOVERER
+import com.artamonov.look4.utils.isValidPhoneNumber
 import com.bumptech.glide.Glide
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.DiscoveryOptions
@@ -40,12 +43,13 @@ import com.google.android.gms.nearby.connection.DiscoveredEndpointInfo
 import com.google.android.gms.nearby.connection.ConnectionInfo
 import com.google.android.gms.nearby.connection.ConnectionsStatusCodes
 import com.google.android.gms.nearby.connection.ConnectionResolution
+import com.google.android.gms.nearby.connection.ConnectionsClient
 import com.google.android.gms.nearby.connection.PayloadCallback
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate
 import com.google.android.gms.nearby.connection.Strategy.P2P_POINT_TO_POINT
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_look.*
 import org.koin.android.ext.android.inject
-
 import java.io.File
 import java.nio.charset.Charset
 
@@ -59,7 +63,8 @@ class LookActivity : BaseActivity() {
             BLUETOOTH_ADMIN,
             ACCESS_WIFI_STATE,
             CHANGE_WIFI_STATE,
-            ACCESS_COARSE_LOCATION)
+            ACCESS_COARSE_LOCATION,
+            ACCESS_FINE_LOCATION)
 
         private const val REQUEST_CODE_REQUIRED_PERMISSIONS = 1
         private val STRATEGY = P2P_POINT_TO_POINT
@@ -75,6 +80,8 @@ class LookActivity : BaseActivity() {
         private var timer: CountDownTimer? = null
         private var file: File? = null
         private var newFile: File? = null
+
+        private var connectionClient: ConnectionsClient? = null
 
         private val discOptions = DiscoveryOptions.Builder().setStrategy(STRATEGY).build()
     }
@@ -103,12 +110,13 @@ class LookActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_look)
         checkForPermissions()
+        connectionClient = Nearby.getConnectionsClient(this)
         deviceId = Settings.Secure.getString(applicationContext.contentResolver, Settings.Secure.ANDROID_ID)
         searchBtn.setOnClickListener { startClient() }
         look_back.setOnClickListener { onBackPressed() }
 
         no_button.setOnClickListener {
-            Nearby.getConnectionsClient(this).stopAllEndpoints()
+            connectionClient?.stopAllEndpoints()
             shouldDisplayIncomeContactViews(false)
             searchButtonVisibility(true)
         }
@@ -117,36 +125,40 @@ class LookActivity : BaseActivity() {
             when (preferenceHelper.getUserProfile()?.role) {
                 ADVERTISER -> {
                     savePhoneNumberToDB(discovererPhoneNumber, ADVERTISER)
-                    searchingInProgressText.text = resources.getString(R.string.look_you_received_phone_number, discovererPhoneNumber)
                     shouldDisplayIncomeContactViews(false)
                     searchButtonVisibility(true)
+
+                    showSnackbarWithAction()
 //                    Toast.makeText(applicationContext, "Endpoint: $endpointIdSaved", Toast.LENGTH_LONG)
 //                        .show()
                     Log.v(LOG_TAG, "Endpoint: $endpointIdSaved")
                     endpointIdSaved?.let {
-                        Nearby.getConnectionsClient(applicationContext).sendPayload(
-                            endpointIdSaved!!, Payload.fromBytes(preferenceHelper.getUserProfile()?.phoneNumber!!.toByteArray())).addOnFailureListener { e ->
-                            showSnackbarError(e.toString()) }
+                        connectionClient?.sendPayload(
+                            endpointIdSaved!!, Payload.fromBytes(preferenceHelper.getUserProfile()?.phoneNumber!!.toByteArray()))?.addOnFailureListener { e ->
+                            showSnackbarError(e.toString())
+                            connectionClient ?.disconnectFromEndpoint(
+                                endpointIdSaved!!) }
                     }
                 }
                 DISCOVERER -> {
 //                    Toast.makeText(applicationContext, "Endpoint: $endpointIdSaved", Toast.LENGTH_SHORT)
 //                        .show()
-                    Nearby.getConnectionsClient(applicationContext).stopDiscovery()
+                    connectionClient?.stopDiscovery()
                     val pfd: ParcelFileDescriptor? = contentResolver.openFileDescriptor(Uri.parse(preferenceHelper.getUserProfile()?.imagePath!!), "r")
                     val pFilePayload = Payload.fromFile(pfd!!)
                     endpointIdSaved?.let {
                         Log.v(LOG_TAG, "Endpoint: $endpointIdSaved")
-                        Nearby.getConnectionsClient(applicationContext).sendPayload(endpointIdSaved!!,
-                            Payload.fromBytes("${getUserProfile()?.name};${getUserProfile()?.phoneNumber};${getUserProfile()?.gender}".toByteArray())).addOnFailureListener {
+                        connectionClient?.sendPayload(endpointIdSaved!!,
+                            Payload.fromBytes("${getUserProfile()?.name};${getUserProfile()?.phoneNumber};${getUserProfile()?.gender}".toByteArray()))?.addOnFailureListener {
                             e -> showSnackbarError(e.toString())
                     }
-                        Nearby.getConnectionsClient(applicationContext).sendPayload(endpointIdSaved!!, pFilePayload).addOnFailureListener {
+                        connectionClient?.sendPayload(endpointIdSaved!!, pFilePayload)?.addOnFailureListener {
                                 e -> showSnackbarError(e.toString())
                         }
                     }
                     shouldDisplayIncomeContactViews(false)
                     searchButtonVisibility(true)
+                    searchingInProgressText.visibility = GONE
                 }
             }
         }
@@ -160,6 +172,16 @@ class LookActivity : BaseActivity() {
 //                stopAllEndpoints()
 //           }
 //        }
+    }
+
+    private fun showSnackbarWithAction() {
+        val snackbar = Snackbar.make(findViewById(android.R.id.content),
+            getString(R.string.look_you_received_phone_number), Snackbar.LENGTH_LONG)
+            .setAction(getString(R.string.look_view)) {
+                startActivity(Intent(this, ContactsActivity::class.java))
+            }
+
+        snackbar.show()
     }
 
     private fun getUserProfile(): User? {
@@ -183,12 +205,6 @@ class LookActivity : BaseActivity() {
         }
     }
 
-    override fun onStop() {
-        Nearby.getConnectionsClient(this).stopAdvertising()
-        Nearby.getConnectionsClient(this).stopAllEndpoints()
-        super.onStop()
-    }
-
     /** Returns true if the app was granted all the permissions. Otherwise, returns false.  */
     private fun hasPermissions(context: Context, vararg permissions: String): Boolean {
         for (permission in permissions) {
@@ -208,18 +224,21 @@ class LookActivity : BaseActivity() {
         searchingInProgressText.visibility = View.VISIBLE
         searchingInProgressText.isAllCaps = true
         searchingInProgressText.text = resources.getString(R.string.look_searching_in_progress)
+        talk_in_person_text.visibility = GONE
+        look_divider.visibility = GONE
 
         startTimer()
-        Nearby.getConnectionsClient(applicationContext).stopDiscovery()
-        Nearby.getConnectionsClient(applicationContext).startDiscovery(packageName, endpointDiscoveryCallback, discOptions)
-                .addOnSuccessListener {
+        connectionClient?.startDiscovery(packageName, endpointDiscoveryCallback, discOptions)
+        ?.addOnSuccessListener {
                     // logD( "$deviceId started discovering.")
                     preferenceHelper.updateRole(DISCOVERER)
-                }.addOnFailureListener { e ->
+                }?.addOnFailureListener { e ->
 //                Toast.makeText(applicationContext,
 //                    "Couldn't connect because of: $e", Toast.LENGTH_LONG).show()
                 showSnackbarError(e.toString())
                 searchingInProgressText.text = resources.getString(R.string.look_no_found)
+                talk_in_person_text.visibility = View.VISIBLE
+                look_divider.visibility = View.VISIBLE
                 searchBtn.text = resources.getString(R.string.look_search_again)
                 // We're unable to start discovering.
                 // logE("We're unable to start discovering.", e)
@@ -233,9 +252,11 @@ class LookActivity : BaseActivity() {
             }
 
             override fun onFinish() {
-                Nearby.getConnectionsClient(applicationContext).stopDiscovery()
+                connectionClient?.stopAllEndpoints()
                 setCountDownViewsVisibility(false)
                 searchingInProgressText.text = resources.getString(R.string.look_no_found)
+                talk_in_person_text.visibility = View.VISIBLE
+                look_divider.visibility = View.VISIBLE
                 searchBtn.text = resources.getString(R.string.look_search_again)
                 searchButtonVisibility(true)
             }
@@ -261,8 +282,8 @@ class LookActivity : BaseActivity() {
             // endpointIdSaved = endpointId
             Log.v(LOG_TAG, "in endpointDiscoveryCallbackEndpoint: $endpointId")
 
-            Nearby.getConnectionsClient(applicationContext).requestConnection(getUserProfile()?.name!!, endpointId, connectionLifecycleCallback)
-                    .addOnSuccessListener {
+            connectionClient?.requestConnection(getUserProfile()?.name!!, endpointId, connectionLifecycleCallback)
+                    ?.addOnSuccessListener {
 //                        Toast.makeText(
 //                                applicationContext,
 //                                "Requested connection to $endpointId !",
@@ -275,10 +296,10 @@ class LookActivity : BaseActivity() {
                         // We successfully requested a connection. Now both sides
                         // must accept before the connection is established.
                     }
-                .addOnFailureListener { e ->
+                ?.addOnFailureListener { e ->
                     handleFailedResponse()
                     showSnackbarError(e.toString())
-                    Nearby.getConnectionsClient(applicationContext).stopAllEndpoints()
+                    connectionClient?.stopAllEndpoints()
                     // logW( "Connection request to $endpointId failed!")
                         // Nearby Connections failed to request the connection.
                     }
@@ -296,7 +317,7 @@ class LookActivity : BaseActivity() {
 //            Toast.makeText(applicationContext, "Connection with $p0 initiated.", Toast.LENGTH_SHORT)
 //                .show()
             //  logD("Connection initiated : $p0 ,$p1")
-            Nearby.getConnectionsClient(applicationContext).acceptConnection(p0, payloadCallback).addOnFailureListener { e ->
+            connectionClient?.acceptConnection(p0, payloadCallback)?.addOnFailureListener { e ->
                 showSnackbarError(e.toString()) }
             // Automatically accept the connection on both sides.
         }
@@ -352,11 +373,15 @@ class LookActivity : BaseActivity() {
                             Payload.Type.BYTES -> {
                                 val byteString = p1.asBytes()?.toString(Charset.defaultCharset())
                                 val textArray = byteString?.split(";")?.toTypedArray()
-                                if (!isGenderValid(textArray?.get(1))) { return }
+
+                                when (textArray?.size) {
+                                    0, 1 -> isGenderValid = true
+                                    2 -> if (!isGenderValid(textArray[1])) { return }
+                                }
 
                                 if (isMobileNumber(textArray?.get(0))) {
                                     savePhoneNumberToDB(textArray?.get(0), DISCOVERER)
-                                    searchingInProgressText.text = textArray?.get(0)
+                                    showSnackbarWithAction()
                                     shouldDisplayIncomeContactViews(false)
                                 } else {
                                     advertiserName = textArray?.get(0)
@@ -375,9 +400,6 @@ class LookActivity : BaseActivity() {
                     searchButtonVisibility(false)
                     val receivedContact = p1.asBytes()?.toString(Charset.defaultCharset())
                     val textArray = receivedContact?.split(";")?.toTypedArray()
-                    searchingInProgressText.visibility = View.VISIBLE
-                    searchingInProgressText.text = textArray?.get(0)
-                    searchingInProgressText.isAllCaps = false
                     discovererPhoneNumber = textArray?.get(1)
                     shouldDisplayIncomeContactViews(true)
                 }
@@ -457,11 +479,11 @@ class LookActivity : BaseActivity() {
     }
 
     private fun isMobileNumber(string: String?): Boolean {
-        return string?.startsWith("+") ?: false
+        return string?.isValidPhoneNumber() ?: false
     }
 
     private fun handleFailedResponse() {
-        Nearby.getConnectionsClient(applicationContext).stopDiscovery()
+        connectionClient?.stopAllEndpoints()
         searchButtonVisibility(true)
         timer?.cancel()
         setCountDownViewsVisibility(false)
