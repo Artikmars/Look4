@@ -67,7 +67,7 @@ class ForegroundService : Service() {
         val pendingIntent = PendingIntent.getActivity(this, 0,
             notificationIntent, 0)
         notification = NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("Advertising")
+                .setContentTitle("Online")
                 .setSmallIcon(R.drawable.ic_o_1)
                 .setContentText(input)
                 .setContentIntent(pendingIntent)

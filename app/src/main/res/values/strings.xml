@@ -5,6 +5,8 @@
 
     <string name="main_offline_mode">Offline</string>
     <string name="main_online_mode">Online</string>
+    <string name="main_advertising_has_started">Advertising has started</string>
+    <string name="main_advertising_has_stopped">Advertising has stopped</string>
     <string name="main_man">Man</string>
     <string name="main_woman">Woman</string>
     <string name="main_all">All</string>

@@ -20,6 +20,7 @@ import android.provider.Settings
 import android.util.Log
 import android.view.View
 import android.view.View.GONE
+import android.view.View.VISIBLE
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -34,6 +35,7 @@ import com.artamonov.look4.utils.UserRole.Companion.ADVERTISER
 import com.artamonov.look4.utils.UserRole.Companion.DISCOVERER
 import com.artamonov.look4.utils.isValidPhoneNumber
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.DiscoveryOptions
 import com.google.android.gms.nearby.connection.Payload
@@ -340,6 +342,14 @@ class LookActivity : BaseActivity() {
                 }
                 // The connection was rejected by one or both sides.
 
+                ConnectionsStatusCodes.STATUS_ENDPOINT_IO_ERROR -> {
+                    connectionClient?.disconnectFromEndpoint(endpointId)
+                    handleFailedResponse()
+                    showSnackbarError("Connection attempt to $endpointId was failed")
+
+                    //   logW("Connection attempt to $endpointId was rejected")
+                }
+
                 ConnectionsStatusCodes.STATUS_ERROR -> {
                     handleFailedResponse()
                     showSnackbarError("Connected attempt to $endpointId failed")
@@ -416,7 +426,10 @@ class LookActivity : BaseActivity() {
                     shouldDisplayIncomeContactViews(true)
                     Log.v("Look4", "onPayloadTransferUpdate - newFile.path: ${newFile?.path}")
                     Log.v("Look4", "onPayloadTransferUpdate newFile.exists(): ${newFile?.exists()}")
-                    Glide.with(applicationContext).load(newFile).into(profile_image)
+                    Glide.with(applicationContext)
+                        .load(newFile).diskCacheStrategy(DiskCacheStrategy.NONE)
+                        .skipMemoryCache(true)
+                        .into(profile_image)
                 }
             }
         }
@@ -458,23 +471,23 @@ class LookActivity : BaseActivity() {
 
     private fun shouldDisplayIncomeContactViews(isVisible: Boolean) {
         if (isVisible) {
-            no_button.visibility = View.VISIBLE
-            yes_button.visibility = View.VISIBLE
-            profile_image.visibility = View.VISIBLE
-            found_view.visibility = View.VISIBLE
+            no_button.visibility = VISIBLE
+            yes_button.visibility = VISIBLE
+            profile_image.visibility = VISIBLE
+            found_view.visibility = VISIBLE
         } else {
-            no_button.visibility = View.GONE
-            yes_button.visibility = View.GONE
-            profile_image.visibility = View.GONE
-            found_view.visibility = View.GONE
+            no_button.visibility = GONE
+            yes_button.visibility = GONE
+            profile_image.visibility = GONE
+            found_view.visibility = GONE
         }
     }
 
     private fun searchButtonVisibility(isVisible: Boolean) {
         if (isVisible) {
-            searchBtn.visibility = View.VISIBLE
+            searchBtn.visibility = VISIBLE
         } else {
-            searchBtn.visibility = View.GONE
+            searchBtn.visibility = GONE
         }
     }
 

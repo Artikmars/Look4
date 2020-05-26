@@ -8,13 +8,14 @@ import android.view.View
 import android.view.animation.Animation
 import android.view.animation.RotateAnimation
 import androidx.annotation.RequiresApi
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import com.artamonov.look4.base.BaseActivity
 import com.artamonov.look4.data.prefs.PreferenceHelper
 import com.artamonov.look4.service.ForegroundService
 import com.artamonov.look4.utils.UserGender.Companion.ALL
 import com.artamonov.look4.utils.UserGender.Companion.FEMALE
 import com.artamonov.look4.utils.UserGender.Companion.MALE
+import com.artamonov.look4.utils.setSafeOnClickListener
 import com.bumptech.glide.Glide
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.MobileAds
@@ -23,7 +24,7 @@ import com.google.android.gms.nearby.connection.ConnectionsClient
 import kotlinx.android.synthetic.main.activity_main.*
 import org.koin.android.ext.android.inject
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : BaseActivity() {
 
 companion object {
     private lateinit var deviceId: String
@@ -50,14 +51,16 @@ companion object {
             startActivity(Intent(this, LookActivity::class.java))
         }
 
-        offline_text.setOnClickListener {
+        offline_text.setSafeOnClickListener {
             if (offline_text.text == getString(R.string.main_online_mode)) {
                 stopService()
+                showSnackbarError(R.string.main_advertising_has_stopped)
                 connectionClient?.stopAllEndpoints()
                 offline_text.text = getString(R.string.main_offline_mode)
                 letter_0_1.clearAnimation()
             } else {
                 startService()
+                showSnackbarError(R.string.main_advertising_has_started)
                 animateDot()
                 look_text.isEnabled = true
                 look_text.isClickable = true
@@ -151,12 +154,13 @@ companion object {
 
     private fun startService() {
         val serviceIntent = Intent(this, ForegroundService::class.java)
-        serviceIntent.putExtra("inputExtra", "Is enabled ...")
+        serviceIntent.putExtra("inputExtra", "Advertising ...")
         ContextCompat.startForegroundService(this, serviceIntent)
     }
 
     private fun stopService() {
-        val serviceIntent = Intent(this, ForegroundService::class.java)
-        stopService(serviceIntent)
+        if (ForegroundService.isAppInForeground) {
+            stopService(Intent(this, ForegroundService::class.java))
+        }
     }
 }
