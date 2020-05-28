@@ -46,5 +46,9 @@
         Email: artamonov.igor@gmail.com \n\n Andrii Artamonov - Android Developer \n LinkedIn: https://www.linkedin.com/in/andrii-artamonov/ \n
         Email: artamonov06@gmail.com \n\n © 2020 Igor Artamonov, Andrii Artamonov, Look4</string>
 
+    <string name="error_general">An error occurred. Please, try again</string>
+    <string name="error_blank_fields">Please, do not leave fields blank</string>
+
+
 
 </resources>

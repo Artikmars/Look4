@@ -8,12 +8,13 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
+import android.view.View.GONE
+import android.view.View.VISIBLE
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
 import com.artamonov.look4.PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE
 import com.artamonov.look4.R
 import com.artamonov.look4.data.database.User
@@ -28,39 +29,54 @@ import kotlinx.android.synthetic.main.activity_user_profile_edit.*
 class UserProfileEditActivity : AppCompatActivity() {
 
     var newImage: Uri? = null
-    private var userProfileEditViewModel: UserProfileEditViewModel? = null
+    private var userProfileEditViewModel = UserProfileEditViewModel()
     private var userProfile: User? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_user_profile_edit)
 
-        userProfileEditViewModel = ViewModelProviders.of(this).get(UserProfileEditViewModel::class.java)
-        userProfileEditViewModel?.getUser()?.observe(this, Observer { user ->
+        userProfileEditViewModel.state.observe(this, Observer { state ->
+            when (state) {
+                UserEditProfileState.LoadingState -> {
+                    user_edit_progress_bar.visibility = VISIBLE
+                }
+                UserEditProfileState.SucceededState -> {
+                    finish()
+                }
+                UserEditProfileState.PhoneValidationErrorState -> {
+                    user_edit_progress_bar.visibility = GONE
+                    Snackbar.make(findViewById(android.R.id.content), getString(R.string.error_blank_fields),
+                        Snackbar.LENGTH_SHORT).show()
+                }
+                UserEditProfileState.ProfileWasNotUpdatedErrorState -> {
+                    user_edit_progress_bar.visibility = GONE
+                    Snackbar.make(findViewById(android.R.id.content), getString(R.string.error_general),
+                        Snackbar.LENGTH_SHORT).show()
+                }
+            }
+        })
+
+        userProfileEditViewModel.userProfileLiveData.observe(this, Observer { user ->
             userProfile = user
             checkForPermissions()
         })
 
         user_edit_phone_number.addTextChangedListener(PostTextChangeWatcher {
-            userProfileEditViewModel?.phoneNumberChanged(it) })
+            userProfileEditViewModel.phoneNumberChanged(it) })
 
         profile_edit_back.setOnClickListener { onBackPressed() }
 
         user_edit_submit_button.setOnClickListener {
-            if (!fieldsAreValid()) {
-                Snackbar.make(findViewById(android.R.id.content), "Please, don't leave fields blank", Snackbar.LENGTH_SHORT).show()
-                return@setOnClickListener }
-            val isSaved =
-                userProfileEditViewModel?.updateUserProfile(name = user_edit_name.text.toString(), phoneNumber =
-                user_edit_phone_number.text.toString(), imagePath = newImage?.toString(),
-                    gender = userProfileEditViewModel?.getChosenGender(radioGroup.checkedRadioButtonId))
-            if (isSaved == true) { finish() }
+            userProfileEditViewModel.submitProfile(name = user_edit_name.text.toString(), phoneNumber =
+            user_edit_phone_number.text.toString(), imagePath = newImage?.toString(),
+                radioButtonId = radioGroup.checkedRadioButtonId)
         }
 
         user_edit_add_image.setOnClickListener {
             dispatchTakePictureIntent() }
 
-        userProfileEditViewModel?.getPhoneNumberLayoutErrorState()?.observe(this, Observer { state ->
+        userProfileEditViewModel.phoneNumberLayoutErrorLiveData.observe(this, Observer { state ->
             if (state == true) { user_edit_phone_number_layout.error =
                 resources.getString(R.string.welcome_phone_number_warning)
             } else { user_edit_phone_number_layout.error = null }
@@ -83,10 +99,6 @@ class UserProfileEditActivity : AppCompatActivity() {
             UserGender.MALE -> radioMale.isChecked = true
             UserGender.FEMALE -> radioFemale.isChecked = true
         }
-    }
-
-    private fun fieldsAreValid(): Boolean {
-        return !user_edit_name.text?.trim().isNullOrEmpty() && !user_edit_phone_number.text?.trim().isNullOrEmpty()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -154,14 +166,6 @@ class UserProfileEditActivity : AppCompatActivity() {
             else -> {
                 // Ignore all other requests.
             }
-        }
-    }
-
-    fun showPhoneNumberWarning(state: Boolean) {
-        if (state) {
-            user_edit_phone_number_layout.error = resources.getString(R.string.welcome_phone_number_warning)
-        } else {
-            user_edit_phone_number_layout.error = null
         }
     }
 }

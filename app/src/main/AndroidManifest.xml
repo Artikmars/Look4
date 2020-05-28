@@ -43,7 +43,7 @@
             android:exported="true" />
 
         <activity
-            android:name=".MainActivity"
+            android:name=".main.MainActivity"
             android:screenOrientation="portrait" />
         <activity
             android:name=".LookActivity"

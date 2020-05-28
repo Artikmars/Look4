@@ -18,7 +18,7 @@ import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import com.artamonov.look4.LookActivity
 import com.artamonov.look4.LookActivity.Companion.LOG_TAG
-import com.artamonov.look4.MainActivity
+import com.artamonov.look4.main.MainActivity
 import com.artamonov.look4.R
 import com.artamonov.look4.data.prefs.PreferenceHelper
 import com.artamonov.look4.utils.UserGender
@@ -34,7 +34,6 @@ import com.google.android.gms.nearby.connection.ConnectionsClient
 import com.google.android.gms.nearby.connection.PayloadCallback
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate
 import com.google.android.gms.nearby.connection.Strategy.P2P_POINT_TO_POINT
-import org.koin.android.ext.android.inject
 import java.io.File
 import java.nio.charset.Charset
 
@@ -55,7 +54,6 @@ class ForegroundService : Service() {
     private var file: File? = null
     private var filePayload: Payload? = null
     private var bytePayload: Payload? = null
-    private val preferenceHelper: PreferenceHelper by inject()
     private var connectionClient: ConnectionsClient? = null
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
@@ -99,7 +97,7 @@ class ForegroundService : Service() {
         )?.addOnSuccessListener {
             startForeground(1, notification)
             isAppInForeground = true
-            preferenceHelper.updateRole(ADVERTISER)
+            PreferenceHelper.updateRole(ADVERTISER)
         }
             ?.addOnFailureListener { e ->
             isAppInForeground = false
@@ -120,13 +118,13 @@ class ForegroundService : Service() {
                     endpointIdSaved = endpointId
                     Log.v(LOG_TAG, "in service onConnectionResult: $endpointId")
                     //  bytePayload = Payload.fromBytes(preferenceHelper.getUserProfile()?.name!!.toByteArray())
-                    bytePayload = Payload.fromBytes((preferenceHelper.getUserProfile()?.name +
-                            ";" + preferenceHelper.getUserProfile()?.gender).toByteArray())
+                    bytePayload = Payload.fromBytes((PreferenceHelper.getUserProfile()?.name +
+                            ";" + PreferenceHelper.getUserProfile()?.gender).toByteArray())
                     connectionClient?.sendPayload(endpointId, bytePayload!!)
 
                     // Toast.makeText(applicationContext, "userImagePath: $advertiserFilePath", Toast.LENGTH_LONG).show()
-                    preferenceHelper.getUserProfile()?.imagePath?.let {
-                        val imageUri = Uri.parse(preferenceHelper.getUserProfile()?.imagePath)
+                    PreferenceHelper.getUserProfile()?.imagePath?.let {
+                        val imageUri = Uri.parse(PreferenceHelper.getUserProfile()?.imagePath)
                         // val imageUri = URI.create(userImagePath!!)
                         Log.v("Look4", "imageUri: $imageUri")
                         //Toast.makeText(applicationContext, "imageUri: $imageUri", Toast.LENGTH_LONG).show()
@@ -251,7 +249,7 @@ class ForegroundService : Service() {
     }
 
     private fun isGenderValid(advertiserGender: @UserGender.AnnotationUserGender String?): Boolean {
-        when (preferenceHelper.getUserProfile()?.lookGender) {
+        when (PreferenceHelper.getUserProfile()?.lookGender) {
             UserGender.MALE -> {
                 isGenderValid = advertiserGender == UserGender.MALE
                 return isGenderValid

@@ -1,33 +1,58 @@
 package com.artamonov.look4.userprofiledit
 
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.artamonov.look4.R
 import com.artamonov.look4.base.BaseViewModel
 import com.artamonov.look4.data.database.User
 import com.artamonov.look4.data.prefs.PreferenceHelper
 import com.artamonov.look4.utils.UserGender
+import com.artamonov.look4.utils.default
 import com.artamonov.look4.utils.isValidPhoneNumber
+import com.artamonov.look4.utils.set
+
+sealed class UserEditProfileState {
+    object DefaultState : UserEditProfileState()
+    object LoadingState : UserEditProfileState()
+    object SucceededState : UserEditProfileState()
+    object PhoneValidationErrorState : UserEditProfileState()
+    object ProfileWasNotUpdatedErrorState : UserEditProfileState()
+}
 
 class UserProfileEditViewModel : BaseViewModel() {
 
-    private var userProfileLiveData: MutableLiveData<User> = MutableLiveData()
-    private var phoneNumberLayoutErrorLiveData: MutableLiveData<Boolean> = MutableLiveData()
-    private var enteredPhoneNumber: String? = null
+    val state = MutableLiveData<UserEditProfileState>().default(initialValue = UserEditProfileState.DefaultState)
+
+    var userProfileLiveData: MutableLiveData<User> = MutableLiveData()
+    var phoneNumberLayoutErrorLiveData: MutableLiveData<Boolean> = MutableLiveData()
+    var enteredPhoneNumber: String? = null
 
     init {
         loadUserFromDB()
     }
 
-    fun getUser(): LiveData<User> {
-        return userProfileLiveData
+    private fun fieldsAreValid(name: String?, phoneNumber: String?): Boolean {
+        return !name?.trim().isNullOrEmpty() && !phoneNumber?.trim().isNullOrEmpty()
     }
 
-    fun getPhoneNumberLayoutErrorState(): LiveData<Boolean> {
-        return phoneNumberLayoutErrorLiveData
+    fun submitProfile(
+        name: String?,
+        phoneNumber: String?,
+        radioButtonId: Int,
+        imagePath: String?
+    ) {
+        state.set(newValue = UserEditProfileState.LoadingState)
+        if (!fieldsAreValid(name, phoneNumber)) {
+            state.set(newValue = UserEditProfileState.PhoneValidationErrorState)
+            return
+        }
+        val gender = getChosenGender(radioButtonId)
+        val isUpdated = updateUserProfile(name, phoneNumber, gender, imagePath)
+
+        if (isUpdated) state.set(newValue = UserEditProfileState.SucceededState) else
+            state.set(newValue = UserEditProfileState.ProfileWasNotUpdatedErrorState)
     }
 
-    fun updateUserProfile(
+    private fun updateUserProfile(
         name: String?,
         phoneNumber: String?,
         gender: @UserGender.AnnotationUserGender String?,
@@ -44,7 +69,7 @@ class UserProfileEditViewModel : BaseViewModel() {
         userProfileLiveData.postValue(PreferenceHelper.getUserProfile())
     }
 
-    fun getChosenGender(id: Int): @UserGender.AnnotationUserGender String? {
+    private fun getChosenGender(id: Int): @UserGender.AnnotationUserGender String? {
         when (id) {
             R.id.radioFemale -> {
                 return UserGender.FEMALE

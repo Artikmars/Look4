@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Bundle
 import com.artamonov.look4.base.BaseActivity
 import com.artamonov.look4.data.prefs.PreferenceHelper
+import com.artamonov.look4.main.MainActivity
 import com.artamonov.look4.utils.PostTextChangeWatcher
 import com.artamonov.look4.utils.UserGender
 import com.artamonov.look4.utils.UserGender.Companion.FEMALE
