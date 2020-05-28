@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
 import com.artamonov.look4.data.database.User
+import com.artamonov.look4.data.prefs.PreferenceHelper.Consts.CONTACT_LIST
+import com.artamonov.look4.data.prefs.PreferenceHelper.Consts.USER_PROFILE
 import com.artamonov.look4.utils.UserGender
 import com.artamonov.look4.utils.UserGender.Companion.FEMALE
 import com.artamonov.look4.utils.UserGender.Companion.MALE
@@ -11,18 +13,23 @@ import com.artamonov.look4.utils.UserRole
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import com.google.gson.reflect.TypeToken
-import org.koin.core.KoinComponent
 import java.lang.reflect.Type
 
-class PreferenceHelper(private var context: Context) : KoinComponent {
+object PreferenceHelper {
 
-    companion object {
+    object Consts {
         const val CONTACT_LIST = "CONTACT_LIST"
         const val USER_PROFILE = "USER_PROFILE"
     }
 
-    private val prefs: SharedPreferences by lazy {
-        PreferenceManager.getDefaultSharedPreferences(context)
+    private lateinit var prefs: SharedPreferences
+
+//    private val prefs: SharedPreferences by lazy {
+//        PreferenceManager.getDefaultSharedPreferences(this)
+//    }
+
+    fun init(context: Context) {
+        prefs = PreferenceManager.getDefaultSharedPreferences(context)
     }
 
     private fun getSharedEditor(): SharedPreferences.Editor {

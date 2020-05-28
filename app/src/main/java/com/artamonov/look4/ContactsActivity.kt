@@ -10,12 +10,10 @@ import com.artamonov.look4.base.BaseActivity
 import com.artamonov.look4.data.database.User
 import com.artamonov.look4.data.prefs.PreferenceHelper
 import kotlinx.android.synthetic.main.activity_contacts.*
-import org.koin.android.ext.android.inject
 
 class ContactsActivity : BaseActivity() {
 
     private var adapter: ContactListAdapter? = null
-    private val preferenceHelper: PreferenceHelper by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,7 +43,7 @@ class ContactsActivity : BaseActivity() {
                 }
                 }, object : ContactListAdapter.OnItemClickListener {
                 override fun onItemClick(position: Int) {
-                    if (preferenceHelper.deleteContactItemFromDB(position)) {
+                    if (PreferenceHelper.deleteContactItemFromDB(position)) {
                         adapter?.notifyDataSetChanged()
                         setNoContactsViewVisibility(getContactList().isNullOrEmpty())
                     }
@@ -57,7 +55,7 @@ class ContactsActivity : BaseActivity() {
     }
 
     private fun getContactList(): ArrayList<User>? {
-        return preferenceHelper.getContactList()
+        return PreferenceHelper.getContactList()
     }
 
     private fun setNoContactsViewVisibility(state: Boolean) {

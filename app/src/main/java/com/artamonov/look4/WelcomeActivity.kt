@@ -16,15 +16,12 @@ import com.bumptech.glide.request.RequestOptions
 import com.github.dhaval2404.imagepicker.ImagePicker
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_welcome.*
-import org.koin.android.ext.android.inject
 
 const val PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 5545
 var selectedImage: Uri? = null
 var enteredPhoneNumber: String? = null
 
 class WelcomeActivity : BaseActivity() {
-
-    private val preferenceHelper: PreferenceHelper by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,7 +32,7 @@ class WelcomeActivity : BaseActivity() {
 
         submit_button.setOnClickListener {
             if (fieldsAreValid()) {
-                val isSaved = preferenceHelper.createUserProfile(name = etName.text.toString(), phoneNumber =
+                val isSaved = PreferenceHelper.createUserProfile(name = etName.text.toString(), phoneNumber =
                 etPhoneNumber.text.toString(), imagePath = selectedImage.toString(), gender = getChosenGender())
                 if (isSaved) { startMainActivity() }
             } else {
@@ -46,7 +43,7 @@ class WelcomeActivity : BaseActivity() {
         welcome_add_image.setOnClickListener {
             dispatchTakePictureIntent() }
 
-        if (preferenceHelper.userAvailable()) {
+        if (PreferenceHelper.userAvailable()) {
             startMainActivity()
         }
     }

@@ -27,8 +27,8 @@
         <activity android:name=".WebViewActivity"/>
         <activity android:name=".AboutUsActivity" />
         <activity android:name=".ContactsActivity" />
-        <activity android:name=".UserProfileEditActivity" />
-        <activity android:name=".SettingsActivity" />
+        <activity android:name=".userprofiledit.UserProfileEditActivity" />
+        <activity android:name=".settings.SettingsActivity" />
         <activity android:name=".WelcomeActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

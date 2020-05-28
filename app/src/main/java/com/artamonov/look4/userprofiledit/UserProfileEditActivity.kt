@@ -1,4 +1,4 @@
-package com.artamonov.look4
+package com.artamonov.look4.userprofiledit
 
 import android.Manifest
 import android.app.Activity
@@ -12,32 +12,37 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.artamonov.look4.data.prefs.PreferenceHelper
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProviders
+import com.artamonov.look4.PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE
+import com.artamonov.look4.R
+import com.artamonov.look4.data.database.User
 import com.artamonov.look4.utils.PostTextChangeWatcher
 import com.artamonov.look4.utils.UserGender
-import com.artamonov.look4.utils.UserGender.Companion.FEMALE
-import com.artamonov.look4.utils.UserGender.Companion.MALE
-import com.artamonov.look4.utils.isValidPhoneNumber
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.github.dhaval2404.imagepicker.ImagePicker
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_user_profile_edit.*
-import org.koin.android.ext.android.inject
 
 class UserProfileEditActivity : AppCompatActivity() {
 
     var newImage: Uri? = null
-    private var enteredPhoneNumber: String? = null
-    private val preferenceHelper: PreferenceHelper by inject()
+    private var userProfileEditViewModel: UserProfileEditViewModel? = null
+    private var userProfile: User? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_user_profile_edit)
 
-        checkForPermissions()
+        userProfileEditViewModel = ViewModelProviders.of(this).get(UserProfileEditViewModel::class.java)
+        userProfileEditViewModel?.getUser()?.observe(this, Observer { user ->
+            userProfile = user
+            checkForPermissions()
+        })
 
-        user_edit_phone_number.addTextChangedListener(PostTextChangeWatcher { phoneNumberChanged(it) })
+        user_edit_phone_number.addTextChangedListener(PostTextChangeWatcher {
+            userProfileEditViewModel?.phoneNumberChanged(it) })
 
         profile_edit_back.setOnClickListener { onBackPressed() }
 
@@ -46,43 +51,37 @@ class UserProfileEditActivity : AppCompatActivity() {
                 Snackbar.make(findViewById(android.R.id.content), "Please, don't leave fields blank", Snackbar.LENGTH_SHORT).show()
                 return@setOnClickListener }
             val isSaved =
-                preferenceHelper.updateUserProfile(name = user_edit_name.text.toString(), phoneNumber =
-                user_edit_phone_number.text.toString(), imagePath = newImage?.toString(), gender = getChosenGender())
-            if (isSaved) { finish() }
+                userProfileEditViewModel?.updateUserProfile(name = user_edit_name.text.toString(), phoneNumber =
+                user_edit_phone_number.text.toString(), imagePath = newImage?.toString(),
+                    gender = userProfileEditViewModel?.getChosenGender(radioGroup.checkedRadioButtonId))
+            if (isSaved == true) { finish() }
         }
 
         user_edit_add_image.setOnClickListener {
             dispatchTakePictureIntent() }
 
-        setRadioButtonState()
-    }
-
-    private fun setRadioButtonState() {
-        when (preferenceHelper.getUserProfile()?.gender) {
-            MALE -> radioMale.isChecked = true
-            FEMALE -> radioFemale.isChecked = true
-        }
-    }
-
-    private fun getChosenGender(): @UserGender.AnnotationUserGender String? {
-        when (radioGroup.checkedRadioButtonId) {
-            R.id.radioFemale -> {
-                return FEMALE
-            }
-            R.id.radioMale -> {
-                return MALE
-            }
-        }
-        return null
+        userProfileEditViewModel?.getPhoneNumberLayoutErrorState()?.observe(this, Observer { state ->
+            if (state == true) { user_edit_phone_number_layout.error =
+                resources.getString(R.string.welcome_phone_number_warning)
+            } else { user_edit_phone_number_layout.error = null }
+        })
     }
 
     private fun populateData() {
-        user_edit_name.setText(preferenceHelper.getUserProfile()?.name)
-        user_edit_phone_number.setText(preferenceHelper.getUserProfile()?.phoneNumber)
-        val imageString = preferenceHelper.getUserProfile()?.imagePath
+        user_edit_name.setText(userProfile?.name)
+        user_edit_phone_number.setText(userProfile?.phoneNumber)
+        setRadioButtonState()
+        val imageString = userProfile?.imagePath
         imageString?.let {
             val bitmap = MediaStore.Images.Media.getBitmap(this.contentResolver, Uri.parse(imageString))
             Glide.with(this).load(bitmap).apply(RequestOptions.circleCropTransform()).into(user_edit_add_image)
+        }
+    }
+
+    private fun setRadioButtonState() {
+        when (userProfile?.gender) {
+            UserGender.MALE -> radioMale.isChecked = true
+            UserGender.FEMALE -> radioFemale.isChecked = true
         }
     }
 
@@ -92,27 +91,6 @@ class UserProfileEditActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-//        if (requestCode == TAKE_IMAGE_REQUEST && resultCode == RESULT_OK) {
-//            newImage = data?.data
-//            Log.v("Look4", "newImage.path: ${newImage?.path}")
-//            val file = File(newImage?.path!!)
-//            Log.v("Look4", "file.exist : ${file.exists()}")
-//            Log.v("Look4", "file.path : ${file.path}")
-//            Log.v("Look4", "file.absolutePath : ${file.absolutePath}")
-//
-//            val bitmap = MediaStore.Images.Media.getBitmap(this.contentResolver, newImage)
-//          //  val bytes = ByteArrayOutputStream()
-//          //  bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bytes)
-//          //  val path: String = MediaStore.Images.Media.insertImage(contentResolver, bitmap, "Title", null)
-//          //  newImage =  Uri.parse(path)
-//            Log.v("Look4", "bitmap uri : $newImage")
-//            Log.v("Look4", "bitmap uri path : ${newImage?.path}")
-//          //  val inputStream = contentResolver.openInputStream(newImage!!)
-//           // val newFile = File(newImage?.path!!)
-//
-//            Glide.with(this).load(bitmap).apply(RequestOptions.circleCropTransform()).into(user_edit_add_image)
-//        }
-
         when (resultCode) {
             Activity.RESULT_OK -> {
                 newImage = data?.data
@@ -130,11 +108,6 @@ class UserProfileEditActivity : AppCompatActivity() {
         }
 
     private fun dispatchTakePictureIntent() {
-//        Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI).also { takePictureIntent ->
-//            takePictureIntent.resolveActivity(packageManager)?.also {
-//                startActivityForResult(takePictureIntent, TAKE_IMAGE_REQUEST)
-//            }
-//        }
         ImagePicker.with(this)
             .cropSquare()
             .compress(1024)
@@ -147,7 +120,8 @@ class UserProfileEditActivity : AppCompatActivity() {
             != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this,
                     arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
-                    PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE)
+                    PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE
+                )
             } else {
             populateData()
         }
@@ -183,24 +157,7 @@ class UserProfileEditActivity : AppCompatActivity() {
         }
     }
 
-    private fun phoneNumberChanged(newText: String?) {
-        enteredPhoneNumber = newText?.trim()
-        validatePhoneNumber()
-    }
-
-    private fun isPhoneNumberValid(phoneNumber: String?): Boolean {
-        return phoneNumber?.isValidPhoneNumber() ?: false
-    }
-
-    private fun validatePhoneNumber() {
-        return if (isPhoneNumberValid(enteredPhoneNumber)) {
-            showPhoneNumberWarning(false)
-        } else {
-            showPhoneNumberWarning(true)
-        }
-    }
-
-    private fun showPhoneNumberWarning(state: Boolean) {
+    fun showPhoneNumberWarning(state: Boolean) {
         if (state) {
             user_edit_phone_number_layout.error = resources.getString(R.string.welcome_phone_number_warning)
         } else {

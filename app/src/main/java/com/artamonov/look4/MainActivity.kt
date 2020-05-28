@@ -12,6 +12,7 @@ import androidx.core.content.ContextCompat
 import com.artamonov.look4.base.BaseActivity
 import com.artamonov.look4.data.prefs.PreferenceHelper
 import com.artamonov.look4.service.ForegroundService
+import com.artamonov.look4.settings.SettingsActivity
 import com.artamonov.look4.utils.UserGender.Companion.ALL
 import com.artamonov.look4.utils.UserGender.Companion.FEMALE
 import com.artamonov.look4.utils.UserGender.Companion.MALE
@@ -22,14 +23,12 @@ import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.ConnectionsClient
 import kotlinx.android.synthetic.main.activity_main.*
-import org.koin.android.ext.android.inject
 
 class MainActivity : BaseActivity() {
 
 companion object {
     private lateinit var deviceId: String
 }
-    private val preferenceHelper: PreferenceHelper by inject()
     private var connectionClient: ConnectionsClient? = null
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
@@ -101,7 +100,7 @@ companion object {
     }
 
     private fun setLookGenderText() {
-        when (preferenceHelper.getUserProfile()?.lookGender) {
+        when (PreferenceHelper.getUserProfile()?.lookGender) {
             MALE -> main_look_gender_text.text = getString(R.string.main_man)
             FEMALE -> main_look_gender_text.text = getString(R.string.main_woman)
             ALL -> main_look_gender_text.text = getString(R.string.main_all)
@@ -121,15 +120,15 @@ companion object {
         when (main_look_gender_text.text) {
             getString(R.string.main_man) -> {
                 main_look_gender_text.text = getString(R.string.main_woman)
-                setProgressBar(!preferenceHelper.updateLookGender(FEMALE))
+                setProgressBar(!PreferenceHelper.updateLookGender(FEMALE))
             }
             getString(R.string.main_woman) -> {
                 main_look_gender_text.text = getString(R.string.main_all)
-                setProgressBar(!preferenceHelper.updateLookGender(ALL))
+                setProgressBar(!PreferenceHelper.updateLookGender(ALL))
             }
             getString(R.string.main_all) -> {
                 main_look_gender_text.text = getString(R.string.main_man)
-                setProgressBar(!preferenceHelper.updateLookGender(MALE))
+                setProgressBar(!PreferenceHelper.updateLookGender(MALE))
             }
         }
     }

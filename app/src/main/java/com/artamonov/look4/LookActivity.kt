@@ -51,13 +51,10 @@ import com.google.android.gms.nearby.connection.PayloadTransferUpdate
 import com.google.android.gms.nearby.connection.Strategy.P2P_POINT_TO_POINT
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_look.*
-import org.koin.android.ext.android.inject
 import java.io.File
 import java.nio.charset.Charset
 
 class LookActivity : BaseActivity() {
-
-    private val preferenceHelper: PreferenceHelper by inject()
 
     companion object {
         private val REQUIRED_PERMISSIONS = arrayOf(
@@ -97,7 +94,7 @@ class LookActivity : BaseActivity() {
 
         if (discovererName != null && discovererPhoneNumber != null && discovererFilePath != null) {
             shouldDisplayIncomeContactViews(true)
-            searchingInProgressText.visibility = View.VISIBLE
+            searchingInProgressText.visibility = VISIBLE
             searchingInProgressText.text = discovererName
             searchButtonVisibility(false)
             // Toast.makeText(applicationContext, "discovererFilePath: $discovererFilePath in onNewIntent()", Toast.LENGTH_LONG).show()
@@ -124,7 +121,7 @@ class LookActivity : BaseActivity() {
         }
 
         yes_button.setOnClickListener {
-            when (preferenceHelper.getUserProfile()?.role) {
+            when (PreferenceHelper.getUserProfile()?.role) {
                 ADVERTISER -> {
                     savePhoneNumberToDB(discovererPhoneNumber, ADVERTISER)
                     shouldDisplayIncomeContactViews(false)
@@ -136,7 +133,7 @@ class LookActivity : BaseActivity() {
                     Log.v(LOG_TAG, "Endpoint: $endpointIdSaved")
                     endpointIdSaved?.let {
                         connectionClient?.sendPayload(
-                            endpointIdSaved!!, Payload.fromBytes(preferenceHelper.getUserProfile()?.phoneNumber!!.toByteArray()))?.addOnFailureListener { e ->
+                            endpointIdSaved!!, Payload.fromBytes(PreferenceHelper.getUserProfile()?.phoneNumber!!.toByteArray()))?.addOnFailureListener { e ->
                             showSnackbarError(e.toString())
                             connectionClient ?.disconnectFromEndpoint(
                                 endpointIdSaved!!) }
@@ -146,7 +143,7 @@ class LookActivity : BaseActivity() {
 //                    Toast.makeText(applicationContext, "Endpoint: $endpointIdSaved", Toast.LENGTH_SHORT)
 //                        .show()
                     connectionClient?.stopDiscovery()
-                    val pfd: ParcelFileDescriptor? = contentResolver.openFileDescriptor(Uri.parse(preferenceHelper.getUserProfile()?.imagePath!!), "r")
+                    val pfd: ParcelFileDescriptor? = contentResolver.openFileDescriptor(Uri.parse(PreferenceHelper.getUserProfile()?.imagePath!!), "r")
                     val pFilePayload = Payload.fromFile(pfd!!)
                     endpointIdSaved?.let {
                         Log.v(LOG_TAG, "Endpoint: $endpointIdSaved")
@@ -187,7 +184,7 @@ class LookActivity : BaseActivity() {
     }
 
     private fun getUserProfile(): User? {
-        return preferenceHelper.getUserProfile()
+        return PreferenceHelper.getUserProfile()
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
@@ -233,7 +230,7 @@ class LookActivity : BaseActivity() {
         connectionClient?.startDiscovery(packageName, endpointDiscoveryCallback, discOptions)
         ?.addOnSuccessListener {
                     // logD( "$deviceId started discovering.")
-                    preferenceHelper.updateRole(DISCOVERER)
+                    PreferenceHelper.updateRole(DISCOVERER)
                 }?.addOnFailureListener { e ->
 //                Toast.makeText(applicationContext,
 //                    "Couldn't connect because of: $e", Toast.LENGTH_LONG).show()
@@ -377,7 +374,7 @@ class LookActivity : BaseActivity() {
 
     val payloadCallback = object : PayloadCallback() {
         override fun onPayloadReceived(p0: String, p1: Payload) {
-            when (preferenceHelper.getUserProfile()?.role) {
+            when (PreferenceHelper.getUserProfile()?.role) {
                 DISCOVERER -> {
                         when (p1.type) {
                             Payload.Type.BYTES -> {
@@ -436,7 +433,7 @@ class LookActivity : BaseActivity() {
     }
 
     private fun isGenderValid(advertiserGender: @UserGender.AnnotationUserGender String?): Boolean {
-        when (preferenceHelper.getUserProfile()?.lookGender) {
+        when (PreferenceHelper.getUserProfile()?.lookGender) {
             MALE -> {
                 isGenderValid = advertiserGender == MALE
                 return isGenderValid
@@ -458,12 +455,12 @@ class LookActivity : BaseActivity() {
         when (userRole) {
             DISCOVERER -> {
                 if (phoneNumber != null && advertiserName != null) {
-                    preferenceHelper.saveContact(name = advertiserName!!, phoneNumber = phoneNumber)
+                    PreferenceHelper.saveContact(name = advertiserName!!, phoneNumber = phoneNumber)
                 }
             }
             ADVERTISER -> {
                 if (phoneNumber != null && discovererName != null) {
-                    preferenceHelper.saveContact(name = discovererName!!, phoneNumber = phoneNumber)
+                    PreferenceHelper.saveContact(name = discovererName!!, phoneNumber = phoneNumber)
                 }
             }
         }
