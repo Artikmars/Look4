@@ -170,6 +170,7 @@
         android:layout_height="81dp"
         android:layout_marginTop="40dp"
         android:text="@string/profile_edit_save"
+        android:textSize="12sp"
         android:textColor="@color/green"
         android:background="@android:color/transparent"
         app:layout_constraintBottom_toBottomOf="parent"

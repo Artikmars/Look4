@@ -1,6 +1,8 @@
 package com.artamonov.look4.base
 
+import android.app.ActivityOptions
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
@@ -24,7 +26,12 @@ abstract class BaseActivity : AppCompatActivity() {
         val snackbar = Snackbar.make(findViewById(android.R.id.content),
             getString(R.string.look_you_received_phone_number), Snackbar.LENGTH_LONG)
             .setAction(getString(R.string.look_view)) {
-                startActivity(Intent(this, ContactsActivity::class.java))
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    startActivity(Intent(this, ContactsActivity::class.java),
+                        ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
+                } else {
+                    startActivity(Intent(this, ContactsActivity::class.java))
+                }
             }
         snackbar.show()
     }

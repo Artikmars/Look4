@@ -1,8 +1,10 @@
 package com.artamonov.look4
 
 import android.app.Activity
+import android.app.ActivityOptions
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import com.artamonov.look4.base.BaseActivity
 import com.artamonov.look4.data.prefs.PreferenceHelper
@@ -111,7 +113,12 @@ class WelcomeActivity : BaseActivity() {
     }
 
     private fun startMainActivity() {
-        startActivity(Intent(this, MainActivity::class.java))
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            startActivity(Intent(this, MainActivity::class.java),
+                ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
+        } else {
+            startActivity(Intent(this, MainActivity::class.java))
+        }
         finish()
     }
 

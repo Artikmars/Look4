@@ -1,5 +1,6 @@
 package com.artamonov.look4.main
 
+import android.app.ActivityOptions
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -70,16 +71,31 @@ companion object {
                 }
                 is MainState.OnLookClickedState -> {
                     stopService()
-                    startActivity(Intent(this, LookActivity::class.java))
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        startActivity(Intent(this, LookActivity::class.java),
+                            ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
+                    } else {
+                        startActivity(Intent(this, LookActivity::class.java))
+                    }
                 }
                 is MainState.LoadingState -> {
                     main_progress_bar.visibility = VISIBLE
                 }
                 is MainState.OnContactsClickedState -> {
-                    startActivity(Intent(this, ContactsActivity::class.java))
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        startActivity(Intent(this, ContactsActivity::class.java),
+                            ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
+                    } else {
+                        startActivity(Intent(this, ContactsActivity::class.java))
+                    }
                 }
                 is MainState.OnSettingsClickedState -> {
-                    startActivity(Intent(this, SettingsActivity::class.java))
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        startActivity(Intent(this, SettingsActivity::class.java),
+                            ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
+                    } else {
+                        startActivity(Intent(this, SettingsActivity::class.java))
+                    }
                 }
                 is MainState.DefaultState -> {
                     stopService()

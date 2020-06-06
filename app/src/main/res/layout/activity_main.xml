@@ -29,133 +29,88 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:visibility="visible" />
-
-    <ImageView
-        android:id="@+id/letter_l"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:layout_marginTop="40dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.501"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_black_l" />
+        tools:visibility="gone" />
 
     <ImageView
         android:id="@+id/letter_0_1"
         android:layout_width="80dp"
         android:layout_height="80dp"
-        android:layout_marginTop="16dp"
+        app:layout_constraintBottom_toTopOf="@+id/adView"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/letter_l"
+        app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/ic_black_o" />
 
     <ImageView
         android:id="@+id/black_dot"
         android:layout_width="15dp"
         android:layout_height="15dp"
-        android:layout_marginTop="47dp"
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.597"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/letter_l"
-        app:srcCompat="@drawable/ic_black_dot" />
+        app:srcCompat="@drawable/ic_black_dot"
+        tools:layout_editor_absoluteY="120dp" />
 
-    <ImageView
-        android:id="@+id/letter_o_2"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:layout_marginTop="24dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/letter_0_1"
-        app:srcCompat="@drawable/ic_black_o_plain" />
-
-    <ImageView
-        android:id="@+id/letter_k"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:layout_marginTop="24dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/letter_o_2"
-        app:srcCompat="@drawable/ic_k" />
-
-    <ImageView
-        android:id="@+id/number_4"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:layout_marginTop="24dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/letter_k"
-        app:srcCompat="@drawable/ic_4" />
 
     <TextView
         android:id="@+id/look_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="15dp"
-        android:layout_marginTop="68dp"
+        android:layout_marginEnd="20dp"
         android:text="@string/look_title"
         android:textColor="@color/black"
         android:textSize="20sp"
-        app:layout_constraintStart_toEndOf="@+id/letter_l"
+        app:layout_constraintBottom_toTopOf="@id/adView"
+        app:layout_constraintEnd_toStartOf="@+id/letter_0_1"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/offline_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="15dp"
-        android:layout_marginTop="68dp"
+        android:layout_marginBottom="20dp"
         android:text="@string/main_offline_mode"
         android:textColor="@color/black"
         android:textSize="20sp"
-        app:layout_constraintStart_toEndOf="@+id/letter_0_1"
-        app:layout_constraintTop_toBottomOf="@+id/look_text" />
+        app:layout_constraintBottom_toTopOf="@+id/letter_0_1"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/contacts_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="15dp"
-        android:layout_marginTop="76dp"
+        android:layout_marginStart="20dp"
         android:text="@string/contacts_title"
         android:textColor="@color/black"
         android:textSize="20sp"
-        app:layout_constraintStart_toEndOf="@+id/letter_o_2"
-        app:layout_constraintTop_toBottomOf="@+id/offline_text" />
+        app:layout_constraintBottom_toTopOf="@id/adView"
+        app:layout_constraintStart_toEndOf="@+id/letter_0_1"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/main_look_gender_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:layout_marginTop="76dp"
-        tools:text="@string/main_woman"
+        android:layout_marginTop="20dp"
         android:textColor="@color/black"
         android:textSize="20sp"
-        app:layout_constraintStart_toEndOf="@+id/letter_o_2"
-        app:layout_constraintTop_toBottomOf="@+id/contacts_text" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/letter_0_1"
+        tools:text="@string/main_woman" />
 
     <TextView
         android:id="@+id/settings_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:layout_marginTop="76dp"
+        android:layout_marginTop="80dp"
         android:text="@string/settings_title"
         android:textColor="@color/black"
         android:textSize="20sp"
-        app:layout_constraintStart_toEndOf="@+id/letter_o_2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/main_look_gender_text" />
 
     <com.google.android.gms.ads.AdView

@@ -12,7 +12,7 @@
     <string name="main_all">All</string>
     <string name="main_gender_female">Female</string>
     <string name="main_gender_male">Male</string>
-    <string name="main_version">v. %1$s</string>
+    <string name="main_version" translatable="false">v. %1$s</string>
 
     <string name="settings_title">Settings</string>
 
@@ -28,7 +28,7 @@
     <string name="look_search">Search</string>
     <string name="look_search_again">Search again</string>
     <string name="look_sec">sec</string>
-    <string name="look_countdown_default_value">25</string>
+    <string name="look_countdown_default_value" translatable="false">25</string>
     <string name="look_you_received_phone_number">Your new contact has been saved!</string>
     <string name="look_view">View</string>
 
@@ -42,9 +42,7 @@
     <string name="profile_edit_enter_your_phone_number">Enter your phone number</string>
     <string name="profile_edit_save">Save</string>
     <string name="welcome_submit">Submit</string>
-    <string name="about_us_description">Igor Artamonov - idea, concept, design, publishing and marketing \n
-        Email: artamonov.igor@gmail.com \n\n Andrii Artamonov - Android Developer \n LinkedIn: https://www.linkedin.com/in/andrii-artamonov/ \n
-        Email: artamonov06@gmail.com \n\n © 2020 Igor Artamonov, Andrii Artamonov, Look4</string>
+    <string name="about_us_description" translatable="false">Igor Artamonov - idea, concept, design, publishing and marketing           Email: artamonov.igor@gmail.com    Andrii Artamonov - Android Developer   LinkedIn: https://www.linkedin.com/in/andrii-artamonov/           Email: artamonov06@gmail.com    © 2020 Igor Artamonov, Andrii Artamonov, Look4</string>
 
     <string name="error_general">An error occurred. Please, try again</string>
     <string name="error_blank_fields">Please, do not leave fields blank</string>

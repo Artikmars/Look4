@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Look4</string>
+    <string name="welcome_phone_number_warning">Проверь свой номер</string>
+    <string name="main_offline_mode">Оффлайн</string>
+    <string name="main_online_mode">Онлайн</string>
+    <string name="main_advertising_has_started">Вы в онлайне</string>
+    <string name="main_advertising_has_stopped">Вы в оффлайне</string>
+    <string name="main_man">Мужчины</string>
+    <string name="main_woman">Женщины</string>
+    <string name="main_all">Все</string>
+    <string name="main_gender_female">Женский</string>
+    <string name="main_gender_male">Мужской</string>
+    <string name="settings_title">Настройки</string>
+    <string name="contacts_title">Контакты</string>
+    <string name="look_title">Поиск</string>
+    <string name="look_found_label">Найдено: 1/1</string>
+    <string name="look_yes">Да</string>
+    <string name="look_no">Нетт</string>
+    <string name="look_searching_in_progress">Идёт поиск …</string>
+    <string name="look_no_found">Упс … \nНикого нет \nрядом</string>
+    <string name="look_talk_in_person">Попробуй подойти \nвживую</string>
+    <string name="look_search">Поиск</string>
+    <string name="look_search_again">Начать поиск заново</string>
+    <string name="look_sec">секунд</string>
+    <string name="look_you_received_phone_number">Контакт сохранён!</string>
+    <string name="look_view">Открыть</string>
+    <string name="profile_edit_title">Редактировать профиль</string>
+    <string name="settings_remove_ad">Убрать рекламу</string>
+    <string name="settings_about_us">О нас</string>
+    <string name="settings_privacy_policy">Политика конфиденциальности</string>
+    <string name="contacts_placeholder">У вас пока нет контактов.</string>
+    <string name="profile_edit_photo">Фото</string>
+    <string name="profile_edit_enter_your_name">Введи своё имя</string>
+    <string name="profile_edit_enter_your_phone_number">Введите свой номер телефона</string>
+    <string name="profile_edit_save">Сохранить</string>
+    <string name="welcome_submit">Готово</string>
+    <string name="error_general">Возникла ошибка. Попробуйте позднее.</string>
+    <string name="error_blank_fields">Пожалуйста, не оставляйте поля пустыми</string>
+</resources>
