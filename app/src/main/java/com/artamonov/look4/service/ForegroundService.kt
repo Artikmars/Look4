@@ -16,11 +16,11 @@ import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
-import com.artamonov.look4.LookActivity
-import com.artamonov.look4.LookActivity.Companion.LOG_TAG
+import com.artamonov.look4.look.LookActivity.Companion.LOG_TAG
 import com.artamonov.look4.main.MainActivity
 import com.artamonov.look4.R
 import com.artamonov.look4.data.prefs.PreferenceHelper
+import com.artamonov.look4.utils.NotificationHandler
 import com.artamonov.look4.utils.UserGender
 import com.artamonov.look4.utils.UserRole.Companion.ADVERTISER
 import com.google.android.gms.nearby.Nearby
@@ -56,6 +56,8 @@ class ForegroundService : Service() {
     private var bytePayload: Payload? = null
     private var connectionClient: ConnectionsClient? = null
 
+    private lateinit var notificationHandler: NotificationHandler
+
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         connectionClient = Nearby.getConnectionsClient(applicationContext)
         val input = intent.getStringExtra("inputExtra")
@@ -63,7 +65,7 @@ class ForegroundService : Service() {
         createNotificationChannel()
         val notificationIntent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(this, 0,
-            notificationIntent, 0)
+            notificationIntent, FLAG_UPDATE_CURRENT)
         notification = NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("Online")
                 .setSmallIcon(R.drawable.ic_o_1)
@@ -210,17 +212,13 @@ class ForegroundService : Service() {
 
     private fun showPendingContactNotification(notificationId: Int) {
         // Create an explicit intent for an Activity in your app
-        val intent = Intent(this, LookActivity::class.java)
-        intent.putExtra("discovererName", discovererName)
-        intent.putExtra("discovererPhoneNumber", discovererPhoneNumber)
-        intent.putExtra("discovererFilePath", discovererFilePath)
-        intent.putExtra("advertiserPhoneNumber", advertiserPhoneNumber)
-        intent.putExtra("endpointId", endpointIdSaved)
+        notificationHandler = NotificationHandler(discovererName,
+            discovererPhoneNumber, discovererFilePath, advertiserPhoneNumber, endpointIdSaved)
+
+        val intent = notificationHandler.createIntent(this)
         val pendingIntent: PendingIntent = PendingIntent.getActivity(this, 0, intent, FLAG_UPDATE_CURRENT)
 
-        val builder = NotificationCompat.Builder(this,
-            CHANNEL_ID
-        )
+        val builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Look4")
             .setSmallIcon(R.drawable.ic_o_2)
             .setContentText("You have received a contact request")

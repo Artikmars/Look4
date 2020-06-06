@@ -2,14 +2,14 @@ package com.artamonov.look4.settings
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
 import com.artamonov.look4.AboutUsActivity
 import com.artamonov.look4.R
 import com.artamonov.look4.userprofiledit.UserProfileEditActivity
 import com.artamonov.look4.WebViewActivity
+import com.artamonov.look4.base.BaseActivity
 import kotlinx.android.synthetic.main.activity_settings.*
 
-class SettingsActivity : AppCompatActivity() {
+class SettingsActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

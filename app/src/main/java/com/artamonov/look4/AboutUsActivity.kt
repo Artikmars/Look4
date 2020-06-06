@@ -2,10 +2,10 @@ package com.artamonov.look4
 
 import android.os.Bundle
 import android.text.util.Linkify
-import androidx.appcompat.app.AppCompatActivity
+import com.artamonov.look4.base.BaseActivity
 import kotlinx.android.synthetic.main.activity_about_us.*
 
-class AboutUsActivity : AppCompatActivity() {
+class AboutUsActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

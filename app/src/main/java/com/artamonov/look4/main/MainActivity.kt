@@ -13,7 +13,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
 import com.artamonov.look4.BuildConfig
 import com.artamonov.look4.ContactsActivity
-import com.artamonov.look4.LookActivity
+import com.artamonov.look4.look.LookActivity
 import com.artamonov.look4.R
 import com.artamonov.look4.base.BaseActivity
 import com.artamonov.look4.data.database.User

@@ -8,7 +8,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
-import com.artamonov.look4.AdapterDataSource
 import com.artamonov.look4.R
 import com.artamonov.look4.data.database.User
 import kotlinx.android.synthetic.main.contact_item.view.*

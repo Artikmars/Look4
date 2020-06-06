@@ -11,12 +11,12 @@ import android.util.Log
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
 import com.artamonov.look4.PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE
 import com.artamonov.look4.R
+import com.artamonov.look4.base.BaseActivity
 import com.artamonov.look4.data.database.User
 import com.artamonov.look4.utils.PostTextChangeWatcher
 import com.artamonov.look4.utils.UserGender
@@ -26,7 +26,7 @@ import com.github.dhaval2404.imagepicker.ImagePicker
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_user_profile_edit.*
 
-class UserProfileEditActivity : AppCompatActivity() {
+class UserProfileEditActivity : BaseActivity() {
 
     var newImage: Uri? = null
     private var userProfileEditViewModel = UserProfileEditViewModel()

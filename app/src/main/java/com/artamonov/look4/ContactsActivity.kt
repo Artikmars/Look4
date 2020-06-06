@@ -5,6 +5,7 @@ import android.view.View.GONE
 import android.view.View.VISIBLE
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.artamonov.look4.adapter.AdapterDataSource
 import com.artamonov.look4.adapter.ContactListAdapter
 import com.artamonov.look4.base.BaseActivity
 import com.artamonov.look4.data.database.User

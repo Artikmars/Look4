@@ -1,4 +1,4 @@
-package com.artamonov.look4;
+package com.artamonov.look4.adapter;
 
 import androidx.annotation.Nullable;
 
