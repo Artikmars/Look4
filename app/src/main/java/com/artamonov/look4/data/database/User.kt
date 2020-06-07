@@ -3,7 +3,7 @@ package com.artamonov.look4.data.database
 import com.artamonov.look4.utils.UserGender
 import com.artamonov.look4.utils.UserRole
 
-data class User (
+data class User(
     val creationDate: Long,
     var phoneNumber: String,
     var name: String,

@@ -14,10 +14,10 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
 import com.artamonov.look4.BuildConfig
 import com.artamonov.look4.ContactsActivity
-import com.artamonov.look4.look.LookActivity
 import com.artamonov.look4.R
 import com.artamonov.look4.base.BaseActivity
 import com.artamonov.look4.data.database.User
+import com.artamonov.look4.look.LookActivity
 import com.artamonov.look4.service.ForegroundService
 import com.artamonov.look4.settings.SettingsActivity
 import com.artamonov.look4.utils.UserGender.Companion.ALL
@@ -162,7 +162,7 @@ companion object {
     }
 
     private fun setAdView() {
-        MobileAds.initialize(this) {}
+        MobileAds.initialize(this)
         val adRequest = AdRequest.Builder().build()
         adView.loadAd(adRequest)
     }

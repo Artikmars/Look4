@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "842761299007",
+    "firebase_url": "https://look4-f687d.firebaseio.com",
+    "project_id": "look4-f687d",
+    "storage_bucket": "look4-f687d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:842761299007:android:89d55e11fb01f93958848a",
+        "android_client_info": {
+          "package_name": "com.artamonov.look4"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "842761299007-1dsiqac539mq672o4c3pqc1k4c4pp2ri.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCFr8VWPX2FUC-qz3mouMN111TatPd-xvU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "842761299007-1dsiqac539mq672o4c3pqc1k4c4pp2ri.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

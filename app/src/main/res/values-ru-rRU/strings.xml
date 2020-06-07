@@ -16,7 +16,7 @@
     <string name="look_title">Поиск</string>
     <string name="look_found_label">Найдено: 1/1</string>
     <string name="look_yes">Да</string>
-    <string name="look_no">Нетт</string>
+    <string name="look_no">Нет</string>
     <string name="look_searching_in_progress">Идёт поиск …</string>
     <string name="look_no_found">Упс … \nНикого нет \nрядом</string>
     <string name="look_talk_in_person">Попробуй подойти \nвживую</string>

@@ -1,11 +1,11 @@
 package com.artamonov.look4.service
 
 import android.app.Notification
+import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.app.NotificationChannel
-import android.app.Service
 import android.app.PendingIntent.FLAG_UPDATE_CURRENT
+import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -16,21 +16,21 @@ import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
-import com.artamonov.look4.look.LookActivity.Companion.LOG_TAG
-import com.artamonov.look4.main.MainActivity
 import com.artamonov.look4.R
 import com.artamonov.look4.data.prefs.PreferenceHelper
+import com.artamonov.look4.look.LookActivity.Companion.LOG_TAG
+import com.artamonov.look4.main.MainActivity
 import com.artamonov.look4.utils.NotificationHandler
 import com.artamonov.look4.utils.UserGender
 import com.artamonov.look4.utils.UserRole.Companion.ADVERTISER
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.AdvertisingOptions
-import com.google.android.gms.nearby.connection.Payload
-import com.google.android.gms.nearby.connection.ConnectionLifecycleCallback
 import com.google.android.gms.nearby.connection.ConnectionInfo
-import com.google.android.gms.nearby.connection.ConnectionsStatusCodes
+import com.google.android.gms.nearby.connection.ConnectionLifecycleCallback
 import com.google.android.gms.nearby.connection.ConnectionResolution
 import com.google.android.gms.nearby.connection.ConnectionsClient
+import com.google.android.gms.nearby.connection.ConnectionsStatusCodes
+import com.google.android.gms.nearby.connection.Payload
 import com.google.android.gms.nearby.connection.PayloadCallback
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate
 import com.google.android.gms.nearby.connection.Strategy.P2P_POINT_TO_POINT
@@ -72,7 +72,7 @@ class ForegroundService : Service() {
                 .setContentText(input)
                 .setContentIntent(pendingIntent)
                 .build()
-        //do heavy work on a background thread
+        // do heavy work on a background thread
         // stopSelf();
         deviceId = Settings.Secure.getString(applicationContext.contentResolver, Settings.Secure.ANDROID_ID)
 
@@ -129,7 +129,7 @@ class ForegroundService : Service() {
                         val imageUri = Uri.parse(PreferenceHelper.getUserProfile()?.imagePath)
                         // val imageUri = URI.create(userImagePath!!)
                         Log.v("Look4", "imageUri: $imageUri")
-                        //Toast.makeText(applicationContext, "imageUri: $imageUri", Toast.LENGTH_LONG).show()
+                        // Toast.makeText(applicationContext, "imageUri: $imageUri", Toast.LENGTH_LONG).show()
                         val pfd: ParcelFileDescriptor? = contentResolver.openFileDescriptor(imageUri, "r")
                         // val file = File(imageUri.path!!)
                         Log.v("Look4", "imageUri.path: ${imageUri.path}")

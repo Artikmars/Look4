@@ -6,9 +6,9 @@ import android.os.Build
 import android.os.Bundle
 import com.artamonov.look4.AboutUsActivity
 import com.artamonov.look4.R
-import com.artamonov.look4.userprofiledit.UserProfileEditActivity
 import com.artamonov.look4.WebViewActivity
 import com.artamonov.look4.base.BaseActivity
+import com.artamonov.look4.userprofiledit.UserProfileEditActivity
 import kotlinx.android.synthetic.main.activity_settings.*
 
 class SettingsActivity : BaseActivity() {
