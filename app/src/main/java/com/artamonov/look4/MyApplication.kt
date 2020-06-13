@@ -7,5 +7,6 @@ class MyApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         PreferenceHelper.init(this)
+        registerActivityLifecycleCallbacks(MyLifecycleCallbacks())
     }
 }

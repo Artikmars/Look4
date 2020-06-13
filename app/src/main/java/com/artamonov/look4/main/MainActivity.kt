@@ -35,6 +35,7 @@ class MainActivity : BaseActivity() {
 
 companion object {
     private lateinit var deviceId: String
+    var active = false
 }
     private var connectionClient: ConnectionsClient? = null
     private var mainViewModel = MainViewModel()
@@ -70,12 +71,13 @@ companion object {
                     setLookGenderText(state.user as User?)
                 }
                 is MainState.OnLookClickedState -> {
-                    stopService()
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                        startActivity(Intent(this, LookActivity::class.java),
-                            ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
-                    } else {
-                        startActivity(Intent(this, LookActivity::class.java))
+                    if (serviceIsStopped()) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            startActivity(Intent(this, LookActivity::class.java),
+                                ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
+                        } else {
+                            startActivity(Intent(this, LookActivity::class.java))
+                        }
                     }
                 }
                 is MainState.LoadingState -> {
@@ -98,11 +100,12 @@ companion object {
                     }
                 }
                 is MainState.DefaultState -> {
-                    stopService()
-                    showSnackbarError(R.string.main_advertising_has_stopped)
-                    connectionClient?.stopAllEndpoints()
-                    offline_text.text = getString(R.string.main_offline_mode)
-                    letter_0_1.clearAnimation()
+                    if (serviceIsStopped()) {
+                        showSnackbarError(R.string.main_advertising_has_stopped)
+                        connectionClient?.stopAllEndpoints()
+                        offline_text.text = getString(R.string.main_offline_mode)
+                        letter_0_1.clearAnimation()
+                    }
                 }
                 is MainState.OnlineState -> {
                     startService()
@@ -134,6 +137,11 @@ companion object {
         contacts_text.setOnClickListener { mainViewModel.openContacts() }
         settings_text.setOnClickListener { mainViewModel.openSettings() }
         main_look_gender_text.setOnClickListener { mainViewModel.changeLookGenderText() }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        active = true
     }
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
@@ -173,15 +181,22 @@ companion object {
         mainViewModel.isInForeground()
     }
 
+    override fun onPause() {
+        super.onPause()
+        active = false
+    }
+
     private fun startService() {
         val serviceIntent = Intent(this, ForegroundService::class.java)
-        serviceIntent.putExtra("inputExtra", "Advertising ...")
+        serviceIntent.putExtra("inputExtra", getString(R.string.main_advertising_title))
         ContextCompat.startForegroundService(this, serviceIntent)
     }
 
-    private fun stopService() {
-        if (ForegroundService.isAppInForeground) {
+    private fun serviceIsStopped(): Boolean {
+        return if (ForegroundService.isAppInForeground) {
             stopService(Intent(this, ForegroundService::class.java))
+        } else {
+            true
         }
     }
 }

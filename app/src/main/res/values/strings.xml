@@ -5,8 +5,9 @@
 
     <string name="main_offline_mode">Offline</string>
     <string name="main_online_mode">Online</string>
-    <string name="main_advertising_has_started">Advertising has started</string>
-    <string name="main_advertising_has_stopped">Advertising has stopped</string>
+    <string name="main_advertising_has_started">You are online</string>
+    <string name="main_advertising_has_stopped">You are offline</string>
+    <string name="main_advertising_title">You are available to be found</string>
     <string name="main_man">Man</string>
     <string name="main_woman">Woman</string>
     <string name="main_all">All</string>
@@ -32,6 +33,13 @@
     <string name="look_you_received_phone_number">Your new contact has been saved!</string>
     <string name="look_view">View</string>
 
+    <string name="look_error_connection_is_lost">Connection has been lost. Write first!</string>
+    <string name="look_error_connection_is_lost_try_again">Connection has been lost. Try again later</string>
+    <string name="look_error_scanning_can_not_be_started">Scanning can not be started. Try again later</string>
+    <string name="look_error_disconnected">You has been disconnected</string>
+    <string name="look_error_failed">Connected attempt failed</string>
+    <string name="look_error_rejected">Connection attempt was rejected</string>
+
     <string name="profile_edit_title">Edit profile</string>
     <string name="settings_remove_ad">Remove Ad</string>
     <string name="settings_about_us">About Us</string>
@@ -47,6 +55,9 @@
     <string name="error_general">An error occurred. Please, try again</string>
     <string name="error_blank_fields">Please, do not leave fields blank</string>
 
+    <string name="base_check_new_request">You got new contact request! Check out your notification</string>
+
+    <string name="service_new_request">You have received a contact request</string>
 
 
 </resources>

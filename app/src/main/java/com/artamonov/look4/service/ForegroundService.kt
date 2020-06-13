@@ -20,9 +20,13 @@ import com.artamonov.look4.R
 import com.artamonov.look4.data.prefs.PreferenceHelper
 import com.artamonov.look4.look.LookActivity.Companion.LOG_TAG
 import com.artamonov.look4.main.MainActivity
+import com.artamonov.look4.utils.LiveDataNewRequestState.newRequestState
+import com.artamonov.look4.utils.NewRequestState
 import com.artamonov.look4.utils.NotificationHandler
 import com.artamonov.look4.utils.UserGender
 import com.artamonov.look4.utils.UserRole.Companion.ADVERTISER
+import com.artamonov.look4.utils.set
+import com.crashlytics.android.Crashlytics
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.AdvertisingOptions
 import com.google.android.gms.nearby.connection.ConnectionInfo
@@ -67,7 +71,7 @@ class ForegroundService : Service() {
         val pendingIntent = PendingIntent.getActivity(this, 0,
             notificationIntent, FLAG_UPDATE_CURRENT)
         notification = NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("Online")
+                .setContentTitle(getString(R.string.main_online_mode))
                 .setSmallIcon(R.drawable.ic_o_1)
                 .setContentText(input)
                 .setContentIntent(pendingIntent)
@@ -100,6 +104,7 @@ class ForegroundService : Service() {
             startForeground(1, notification)
             isAppInForeground = true
             PreferenceHelper.updateRole(ADVERTISER)
+            Crashlytics.log("Advertising has been started")
         }
             ?.addOnFailureListener { e ->
             isAppInForeground = false
@@ -221,13 +226,14 @@ class ForegroundService : Service() {
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Look4")
             .setSmallIcon(R.drawable.ic_o_2)
-            .setContentText("You have received a contact request")
+            .setContentText(getString(R.string.service_new_request))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             // Set the intent that will fire when the user taps the notification
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
 
         notificationManager?.notify(notificationId, builder.build())
+        newRequestState.set(newValue = NewRequestState.EnabledState)
 
 //        with(NotificationManagerCompat.from(this)) {
 //            notify(notificationId, builder.build())

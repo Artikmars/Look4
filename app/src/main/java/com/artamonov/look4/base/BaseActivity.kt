@@ -10,6 +10,8 @@ import com.artamonov.look4.ContactsActivity
 import com.artamonov.look4.R
 import com.artamonov.look4.utils.ContactUnseenState
 import com.artamonov.look4.utils.LiveDataContactUnseenState.contactUnseenState
+import com.artamonov.look4.utils.LiveDataNewRequestState.newRequestState
+import com.artamonov.look4.utils.NewRequestState
 import com.artamonov.look4.utils.default
 import com.artamonov.look4.utils.set
 import com.google.android.material.snackbar.Snackbar
@@ -42,6 +44,13 @@ abstract class BaseActivity : AppCompatActivity() {
         contactUnseenState.observe(this, Observer { state ->
             when (state) {
                 ContactUnseenState.EnabledState -> showSnackbarWithAction()
+            }
+        })
+
+        newRequestState.default(NewRequestState.DisabledState)
+        newRequestState.observe(this, Observer { state ->
+            when (state) {
+                NewRequestState.EnabledState -> showSnackbarError(getString(R.string.base_check_new_request))
             }
         })
     }
