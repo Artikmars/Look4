@@ -2,6 +2,7 @@ package com.artamonov.look4.main
 
 import android.app.ActivityOptions
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -20,6 +21,7 @@ import com.artamonov.look4.data.database.User
 import com.artamonov.look4.look.LookActivity
 import com.artamonov.look4.service.ForegroundService
 import com.artamonov.look4.settings.SettingsActivity
+import com.artamonov.look4.utils.LogHandler
 import com.artamonov.look4.utils.UserGender.Companion.ALL
 import com.artamonov.look4.utils.UserGender.Companion.FEMALE
 import com.artamonov.look4.utils.UserGender.Companion.MALE
@@ -29,13 +31,14 @@ import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.ConnectionsClient
+import java.io.File
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : BaseActivity() {
 
 companion object {
     private lateinit var deviceId: String
-    var active = false
+    var isDestroyed = false
 }
     private var connectionClient: ConnectionsClient? = null
     private var mainViewModel = MainViewModel()
@@ -54,6 +57,8 @@ companion object {
             R.string.main_version,
             BuildConfig.VERSION_NAME
         ) }
+
+        current_version_text.setOnClickListener { sendEmail(LogHandler.saveLogsToFile(this)) }
 
         mainViewModel.isInForeground.observe(this, Observer { isInForeground ->
             if (isInForeground) {
@@ -141,7 +146,7 @@ companion object {
 
     override fun onStart() {
         super.onStart()
-        active = true
+        MainActivity.isDestroyed = false
     }
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
@@ -181,9 +186,9 @@ companion object {
         mainViewModel.isInForeground()
     }
 
-    override fun onPause() {
-        super.onPause()
-        active = false
+    override fun onDestroy() {
+        super.onDestroy()
+        MainActivity.isDestroyed = true
     }
 
     private fun startService() {
@@ -193,10 +198,34 @@ companion object {
     }
 
     private fun serviceIsStopped(): Boolean {
-        return if (ForegroundService.isAppInForeground) {
+        return if (ForegroundService.isForegroundServiceRunning) {
             stopService(Intent(this, ForegroundService::class.java))
         } else {
             true
         }
+    }
+
+    private fun sendEmail(log: File) {
+        val emailIntent = Intent(
+            Intent.ACTION_SENDTO,
+            Uri.fromParts("mailto", "artamonov06@gmail.com", null)
+        )
+        emailIntent.putExtra(Intent.EXTRA_SUBJECT, "Look4 - logs")
+
+        emailIntent.putExtra(
+            Intent.EXTRA_TEXT,
+            "Device model: " +
+                    Build.MODEL +
+                    " (" +
+                    Build.PRODUCT +
+                    ")\n" +
+                    "Android version: " +
+                    Build.VERSION.RELEASE +
+                    "\nApp Version: " +
+                    BuildConfig.VERSION_NAME
+        )
+        val path = Uri.fromFile(log)
+        emailIntent.putExtra(Intent.EXTRA_STREAM, path)
+        startActivity(Intent.createChooser(emailIntent, "Send email..."))
     }
 }

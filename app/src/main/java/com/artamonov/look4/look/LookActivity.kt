@@ -32,6 +32,7 @@ import com.artamonov.look4.data.prefs.PreferenceHelper
 import com.artamonov.look4.main.MainActivity
 import com.artamonov.look4.utils.UserRole.Companion.ADVERTISER
 import com.artamonov.look4.utils.UserRole.Companion.DISCOVERER
+import com.artamonov.look4.utils.setSafeOnClickListener
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.crashlytics.android.Crashlytics
@@ -122,14 +123,14 @@ class LookActivity : BaseActivity() {
         searchBtn.setOnClickListener { startClient() }
         look_back.setOnClickListener { onBackPressed() }
 
-        no_button.setOnClickListener {
+        no_button.setSafeOnClickListener {
             // TODO Replace with disconnectFromEndpoint()
             lookViewModel.endpointIdSaved?.let { connectionClient?.disconnectFromEndpoint(lookViewModel.endpointIdSaved!!) }
             // connectionClient?.stopAllEndpoints()
             closeActivity()
         }
 
-        yes_button.setOnClickListener {
+        yes_button.setSafeOnClickListener {
             when (PreferenceHelper.getUserProfile()?.role) {
                 ADVERTISER -> {
                     lookViewModel.savePhoneNumberToDB(lookViewModel.discovererPhoneNumber, ADVERTISER)
@@ -186,17 +187,15 @@ class LookActivity : BaseActivity() {
     }
 
     private fun closeActivity() {
-        if (MainActivity.active) {
-            finish()
-        } else {
+        if (MainActivity.isDestroyed) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 startActivity(Intent(this, MainActivity::class.java),
                     ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
             } else {
                 startActivity(Intent(this, MainActivity::class.java))
             }
-            finish()
         }
+        finish()
     }
 
     private fun getUserProfile(): User? {

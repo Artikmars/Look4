@@ -16,16 +16,15 @@ import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ProcessLifecycleOwner
 import com.artamonov.look4.R
 import com.artamonov.look4.data.prefs.PreferenceHelper
 import com.artamonov.look4.look.LookActivity.Companion.LOG_TAG
 import com.artamonov.look4.main.MainActivity
-import com.artamonov.look4.utils.LiveDataNewRequestState.newRequestState
-import com.artamonov.look4.utils.NewRequestState
 import com.artamonov.look4.utils.NotificationHandler
 import com.artamonov.look4.utils.UserGender
 import com.artamonov.look4.utils.UserRole.Companion.ADVERTISER
-import com.artamonov.look4.utils.set
 import com.crashlytics.android.Crashlytics
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.AdvertisingOptions
@@ -90,7 +89,7 @@ class ForegroundService : Service() {
 
     override fun onDestroy() {
         connectionClient?.stopAllEndpoints()
-        isAppInForeground = false
+        isForegroundServiceRunning = false
         super.onDestroy()
     }
 
@@ -102,12 +101,12 @@ class ForegroundService : Service() {
             advOptions
         )?.addOnSuccessListener {
             startForeground(1, notification)
-            isAppInForeground = true
+            isForegroundServiceRunning = true
             PreferenceHelper.updateRole(ADVERTISER)
             Crashlytics.log("Advertising has been started")
         }
             ?.addOnFailureListener { e ->
-            isAppInForeground = false
+            isForegroundServiceRunning = false
             Toast.makeText(this, "$e", Toast.LENGTH_LONG).show()
             stopForeground(true)
             stopSelf()
@@ -208,11 +207,16 @@ class ForegroundService : Service() {
                 p1.payloadId != bytePayload?.id && p1.payloadId != filePayload?.id) {
                 //  Toast.makeText(applicationContext, "discovererFilePath: $discovererFilePath", Toast.LENGTH_LONG).show(
                 discovererFilePath = newFile?.toString()
+
                 showPendingContactNotification(2)
             } else if (p1.status == PayloadTransferUpdate.Status.SUCCESS && advertiserPhoneNumber != null) {
                 showPendingContactNotification(3)
             }
         }
+    }
+
+    private fun isAppInForeground(): Boolean {
+        return ProcessLifecycleOwner.get().lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
     }
 
     private fun showPendingContactNotification(notificationId: Int) {
@@ -221,6 +225,12 @@ class ForegroundService : Service() {
             discovererPhoneNumber, discovererFilePath, advertiserPhoneNumber, endpointIdSaved)
 
         val intent = notificationHandler.createIntent(this)
+
+        if (isAppInForeground() && notificationId == 2) {
+            startActivity(intent)
+            return
+        }
+
         val pendingIntent: PendingIntent = PendingIntent.getActivity(this, 0, intent, FLAG_UPDATE_CURRENT)
 
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
@@ -233,8 +243,6 @@ class ForegroundService : Service() {
             .setAutoCancel(true)
 
         notificationManager?.notify(notificationId, builder.build())
-        newRequestState.set(newValue = NewRequestState.EnabledState)
-
 //        with(NotificationManagerCompat.from(this)) {
 //            notify(notificationId, builder.build())
 //        }
@@ -273,6 +281,6 @@ class ForegroundService : Service() {
 
     companion object {
         const val CHANNEL_ID = "ForegroundServiceChannel"
-        var isAppInForeground: Boolean = false
+        var isForegroundServiceRunning: Boolean = false
     }
 }

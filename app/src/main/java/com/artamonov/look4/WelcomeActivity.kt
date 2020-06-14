@@ -28,6 +28,12 @@ class WelcomeActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (PreferenceHelper.userAvailable()) {
+            startMainActivity()
+            return
+        }
+
         setContentView(R.layout.activity_welcome)
         this.supportActionBar?.hide()
 
@@ -45,10 +51,6 @@ class WelcomeActivity : BaseActivity() {
 
         welcome_add_image.setOnClickListener {
             dispatchTakePictureIntent() }
-
-        if (PreferenceHelper.userAvailable()) {
-            startMainActivity()
-        }
     }
 
     private fun getChosenGender(): @UserGender.AnnotationUserGender String {

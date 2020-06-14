@@ -32,13 +32,13 @@ class MainViewModel : BaseViewModel() {
     }
 
     fun changeAdvertisingStatus() {
-        when (ForegroundService.isAppInForeground) {
+        when (ForegroundService.isForegroundServiceRunning) {
             true -> state.set(newValue = MainState.DefaultState)
             false -> state.set(newValue = MainState.OnlineState)
         }
     }
 
-    fun isInForeground() { isInForeground.set(newValue = ForegroundService.isAppInForeground) }
+    fun isInForeground() { isInForeground.set(newValue = ForegroundService.isForegroundServiceRunning) }
 
     fun changeLookGenderText() {
         state.set(newValue = MainState.LoadingState)
