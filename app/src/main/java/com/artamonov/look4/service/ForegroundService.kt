@@ -227,6 +227,7 @@ class ForegroundService : Service() {
         val intent = notificationHandler.createIntent(this)
 
         if (isAppInForeground() && notificationId == 2) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             startActivity(intent)
             return
         }
