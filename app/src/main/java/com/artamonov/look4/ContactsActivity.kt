@@ -26,6 +26,11 @@ class ContactsActivity : BaseActivity() {
         setNoContactsViewVisibility(getContactList().isNullOrEmpty())
     }
 
+    override fun onResume() {
+        super.onResume()
+        adapter?.notifyDataSetChanged()
+    }
+
     private fun initAdapter() {
         val linearLayoutManager = LinearLayoutManager(this)
         contacts_list.layoutManager = linearLayoutManager
@@ -36,11 +41,11 @@ class ContactsActivity : BaseActivity() {
         adapter = ContactListAdapter(
             object : AdapterDataSource<User> {
                 override fun getCount(): Int {
-                    return getContactList()!!.size
+                    return getContactList()?.size ?: 0
                 }
 
                 override fun get(position: Int): User? {
-                    return getContactList()!![position]
+                    return getContactList()?.get(position)
                 }
                 }, object : ContactListAdapter.OnItemClickListener {
                 override fun onItemClick(position: Int) {

@@ -44,6 +44,7 @@
 
         <activity
             android:name=".main.MainActivity"
+            android:launchMode="singleTask"
             android:screenOrientation="portrait" />
         <activity
             android:name=".look.LookActivity"

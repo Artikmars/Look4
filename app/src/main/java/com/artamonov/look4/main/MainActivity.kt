@@ -13,12 +13,14 @@ import android.view.animation.RotateAnimation
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import com.artamonov.look4.BuildConfig
 import com.artamonov.look4.ContactsActivity
 import com.artamonov.look4.R
 import com.artamonov.look4.base.BaseActivity
 import com.artamonov.look4.data.database.User
 import com.artamonov.look4.look.LookActivity
+import com.artamonov.look4.look.LookViewModel
 import com.artamonov.look4.service.ForegroundService
 import com.artamonov.look4.settings.SettingsActivity
 import com.artamonov.look4.utils.LogHandler
@@ -41,13 +43,14 @@ companion object {
     var isDestroyed = false
 }
     private var connectionClient: ConnectionsClient? = null
-    private var mainViewModel = MainViewModel()
+    private lateinit var mainViewModel: MainViewModel
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         this.supportActionBar?.hide()
+        mainViewModel = ViewModelProvider(this).get(MainViewModel::class.java)
 
         connectionClient = Nearby.getConnectionsClient(this)
         deviceId = Settings.Secure.getString(applicationContext.contentResolver, Settings.Secure.ANDROID_ID)

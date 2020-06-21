@@ -177,30 +177,14 @@
         android:id="@+id/countdown_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="50dp"
         android:text="@string/look_countdown_default_value"
         android:textColor="@color/black"
-        android:textSize="45sp"
+        android:textSize="80sp"
         android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.432"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/searchingInProgressText"
-        tools:visibility="gone" />
-
-    <TextView
-        android:id="@+id/countdown_label"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="10dp"
-        android:layout_marginTop="74dp"
-        android:text="@string/look_sec"
-        android:textAllCaps="true"
-        android:textColor="@color/black"
-        android:textSize="20sp"
-        android:visibility="gone"
-        app:layout_constraintStart_toEndOf="@+id/countdown_view"
-        app:layout_constraintTop_toBottomOf="@+id/searchingInProgressText"
+        app:layout_constraintTop_toTopOf="parent"
         tools:visibility="visible" />
 
 

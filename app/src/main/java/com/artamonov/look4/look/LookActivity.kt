@@ -1,12 +1,6 @@
 package com.artamonov.look4.look
 
-import android.Manifest.permission.ACCESS_COARSE_LOCATION
-import android.Manifest.permission.ACCESS_FINE_LOCATION
-import android.Manifest.permission.ACCESS_WIFI_STATE
-import android.Manifest.permission.BLUETOOTH
-import android.Manifest.permission.BLUETOOTH_ADMIN
-import android.Manifest.permission.CHANGE_WIFI_STATE
-import android.Manifest.permission.READ_EXTERNAL_STORAGE
+import android.Manifest.permission.*
 import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
@@ -24,12 +18,14 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import com.artamonov.look4.PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE
 import com.artamonov.look4.R
 import com.artamonov.look4.base.BaseActivity
 import com.artamonov.look4.data.database.User
 import com.artamonov.look4.data.prefs.PreferenceHelper
 import com.artamonov.look4.main.MainActivity
+import com.artamonov.look4.utils.CountDownTimer.timer
 import com.artamonov.look4.utils.UserRole.Companion.ADVERTISER
 import com.artamonov.look4.utils.UserRole.Companion.DISCOVERER
 import com.artamonov.look4.utils.setSafeOnClickListener
@@ -49,7 +45,6 @@ import com.google.android.gms.nearby.connection.Payload
 import com.google.android.gms.nearby.connection.PayloadCallback
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate
 import com.google.android.gms.nearby.connection.Strategy.P2P_POINT_TO_POINT
-import java.lang.Exception
 import kotlinx.android.synthetic.main.activity_look.*
 
 class LookActivity : BaseActivity() {
@@ -67,12 +62,11 @@ class LookActivity : BaseActivity() {
         private val STRATEGY = P2P_POINT_TO_POINT
         const val LOG_TAG = "Look4"
         lateinit var deviceId: String
-        private var timer: CountDownTimer? = null
 
         private var connectionClient: ConnectionsClient? = null
 
         private val discOptions = DiscoveryOptions.Builder().setStrategy(STRATEGY).build()
-        private var lookViewModel = LookViewModel()
+        private lateinit var lookViewModel: LookViewModel
         private var user: User? = null
     }
 
@@ -84,6 +78,7 @@ class LookActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_look)
+        lookViewModel = ViewModelProvider(this).get(LookViewModel::class.java)
         checkForPermissions()
         connectionClient = Nearby.getConnectionsClient(this)
         deviceId = Settings.Secure.getString(applicationContext.contentResolver, Settings.Secure.ANDROID_ID)
@@ -224,13 +219,10 @@ class LookActivity : BaseActivity() {
         found_view.visibility = GONE
         searchingInProgressText.visibility = GONE
         countdown_view.visibility = GONE
-        countdown_label.visibility = GONE
         Crashlytics.log("Default view is populated")
     }
 
     private fun populateScanningView() {
-        searchingInProgressText.isAllCaps = true
-        searchingInProgressText.text = resources.getString(R.string.look_searching_in_progress)
         talk_in_person_text.visibility = GONE
         look_divider.visibility = GONE
         searchBtn.visibility = GONE
@@ -238,9 +230,8 @@ class LookActivity : BaseActivity() {
         yes_button.visibility = GONE
         profile_image.visibility = GONE
         found_view.visibility = GONE
-        searchingInProgressText.visibility = VISIBLE
+        searchingInProgressText.visibility = GONE
         countdown_view.visibility = VISIBLE
-        countdown_label.visibility = VISIBLE
         Crashlytics.log("Scanning view is populated")
     }
 
@@ -248,7 +239,6 @@ class LookActivity : BaseActivity() {
         searchingInProgressText.text = resources.getString(R.string.look_no_found)
         searchBtn.text = resources.getString(R.string.look_search_again)
         countdown_view.visibility = GONE
-        countdown_label.visibility = GONE
         no_button.visibility = GONE
         yes_button.visibility = GONE
         profile_image.visibility = GONE
@@ -256,20 +246,20 @@ class LookActivity : BaseActivity() {
         talk_in_person_text.visibility = VISIBLE
         look_divider.visibility = VISIBLE
         searchBtn.visibility = VISIBLE
+        searchingInProgressText.visibility = VISIBLE
         Crashlytics.log("No found view is populated")
     }
 
     private fun populateSucceedView() {
-            countdown_view.visibility = GONE
-            countdown_label.visibility = GONE
-            talk_in_person_text.visibility = GONE
-            look_divider.visibility = GONE
-            searchBtn.visibility = GONE
-            no_button.visibility = VISIBLE
-            yes_button.visibility = VISIBLE
-            profile_image.visibility = VISIBLE
-            found_view.visibility = VISIBLE
-            Crashlytics.log("Succeed view is populated")
+        countdown_view.visibility = GONE
+        talk_in_person_text.visibility = GONE
+        look_divider.visibility = GONE
+        searchBtn.visibility = GONE
+        no_button.visibility = VISIBLE
+        yes_button.visibility = VISIBLE
+        profile_image.visibility = VISIBLE
+        found_view.visibility = VISIBLE
+        Crashlytics.log("Succeed view is populated")
     }
 
     private fun checkForPermissions() {
@@ -320,11 +310,12 @@ class LookActivity : BaseActivity() {
 
             override fun onFinish() {
                 connectionClient?.stopAllEndpoints()
-                populateNoFoundView()
+                countdown_view.visibility = GONE
+                lookViewModel.setNoFoundState()
                 Crashlytics.log("timer onFinish()")
             }
         }
-        timer?.start()
+        timer.start()
     }
 
     private val endpointDiscoveryCallback: EndpointDiscoveryCallback = object : EndpointDiscoveryCallback() {
@@ -403,7 +394,7 @@ class LookActivity : BaseActivity() {
             if (p1.status == PayloadTransferUpdate.Status.SUCCESS && p1.totalBytes > 1000) {
                 Crashlytics.log("onPayloadTransferUpdate: ${p1.status} && ${p1.totalBytes}")
                 if (profile_image.drawable == null && lookViewModel.isGenderValid) {
-                    timer?.cancel()
+                    timer.cancel()
                     lookViewModel.advertiserName?.let { searchingInProgressText.text =
                         lookViewModel.advertiserName
                     }
@@ -420,7 +411,7 @@ class LookActivity : BaseActivity() {
     private fun handleFailedResponse(exception: Exception) {
         Crashlytics.logException(exception)
         connectionClient?.stopAllEndpoints()
-        timer?.cancel()
-        populateNoFoundView()
+        timer.cancel()
+        lookViewModel.setNoFoundState()
     }
 }

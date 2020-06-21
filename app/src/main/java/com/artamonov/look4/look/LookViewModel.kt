@@ -2,6 +2,7 @@ package com.artamonov.look4.look
 
 import android.content.Intent
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
 import com.artamonov.look4.base.BaseViewModel
 import com.artamonov.look4.data.database.User
 import com.artamonov.look4.data.prefs.PreferenceHelper
@@ -14,6 +15,8 @@ import com.artamonov.look4.utils.default
 import com.artamonov.look4.utils.isValidPhoneNumber
 import com.artamonov.look4.utils.set
 import com.google.android.gms.nearby.connection.Payload
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.io.File
 import java.nio.charset.Charset
 
@@ -55,11 +58,15 @@ class LookViewModel : BaseViewModel() {
     }
 
     fun updateRole(role: @UserRole.AnnotationUserRole String) {
-        PreferenceHelper.updateRole(role)
-        user.postValue(PreferenceHelper.getUserProfile())
+        viewModelScope.launch(Dispatchers.IO) {
+            PreferenceHelper.updateRole(role)
+            user.postValue(PreferenceHelper.getUserProfile())
+        }
     }
 
     fun startDiscovering() { state.set(newValue = LookState.SearchState) }
+
+    fun setNoFoundState() { state.set(newValue = LookState.NoFoundState) }
 
     fun handlePayload(p1: Payload) {
         when (PreferenceHelper.getUserProfile()?.role) {

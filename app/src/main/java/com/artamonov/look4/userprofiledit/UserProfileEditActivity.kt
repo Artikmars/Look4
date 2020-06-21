@@ -14,6 +14,8 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.get
 import com.artamonov.look4.PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE
 import com.artamonov.look4.R
 import com.artamonov.look4.base.BaseActivity
@@ -29,12 +31,14 @@ import kotlinx.android.synthetic.main.activity_user_profile_edit.*
 class UserProfileEditActivity : BaseActivity() {
 
     var newImage: Uri? = null
-    private var userProfileEditViewModel = UserProfileEditViewModel()
+    private lateinit var userProfileEditViewModel: UserProfileEditViewModel
     private var userProfile: User? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_user_profile_edit)
+
+        userProfileEditViewModel = ViewModelProvider(this).get(UserProfileEditViewModel::class.java)
 
         userProfileEditViewModel.state.observe(this, Observer { state ->
             when (state) {
