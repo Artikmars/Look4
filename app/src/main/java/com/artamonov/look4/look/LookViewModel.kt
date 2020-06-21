@@ -15,10 +15,10 @@ import com.artamonov.look4.utils.default
 import com.artamonov.look4.utils.isValidPhoneNumber
 import com.artamonov.look4.utils.set
 import com.google.android.gms.nearby.connection.Payload
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.io.File
 import java.nio.charset.Charset
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 sealed class LookState {
     object DefaultState : LookState()

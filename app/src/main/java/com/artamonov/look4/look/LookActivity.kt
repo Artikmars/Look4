@@ -1,6 +1,12 @@
 package com.artamonov.look4.look
 
-import android.Manifest.permission.*
+import android.Manifest.permission.ACCESS_COARSE_LOCATION
+import android.Manifest.permission.ACCESS_FINE_LOCATION
+import android.Manifest.permission.ACCESS_WIFI_STATE
+import android.Manifest.permission.BLUETOOTH
+import android.Manifest.permission.BLUETOOTH_ADMIN
+import android.Manifest.permission.CHANGE_WIFI_STATE
+import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
@@ -25,9 +31,12 @@ import com.artamonov.look4.base.BaseActivity
 import com.artamonov.look4.data.database.User
 import com.artamonov.look4.data.prefs.PreferenceHelper
 import com.artamonov.look4.main.MainActivity
+import com.artamonov.look4.utils.ContactUnseenState
 import com.artamonov.look4.utils.CountDownTimer.timer
+import com.artamonov.look4.utils.LiveDataContactUnseenState
 import com.artamonov.look4.utils.UserRole.Companion.ADVERTISER
 import com.artamonov.look4.utils.UserRole.Companion.DISCOVERER
+import com.artamonov.look4.utils.set
 import com.artamonov.look4.utils.setSafeOnClickListener
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
@@ -98,7 +107,6 @@ class LookActivity : BaseActivity() {
                     lookViewModel.endpointIdSaved
                     ?.let { connectionClient?.disconnectFromEndpoint(lookViewModel.endpointIdSaved!!) }
                     showSnackbarWithAction()
-                    populateDefaultView()
                 }
                 is LookState.SucceededAdvertiserIsFoundState<*> -> {
                     populateSucceedView()
@@ -130,7 +138,8 @@ class LookActivity : BaseActivity() {
                 ADVERTISER -> {
                     lookViewModel.savePhoneNumberToDB(lookViewModel.discovererPhoneNumber, ADVERTISER)
 
-                    showSnackbarWithAction()
+                    LiveDataContactUnseenState.contactUnseenState.set(newValue = ContactUnseenState.EnabledState)
+
                     lookViewModel.endpointIdSaved?.let {
                         connectionClient?.sendPayload(
                             lookViewModel.endpointIdSaved!!, Payload.fromBytes(PreferenceHelper.getUserProfile()?.phoneNumber!!.toByteArray()))?.addOnFailureListener { e ->
@@ -346,9 +355,9 @@ class LookActivity : BaseActivity() {
         }
 
         override fun onConnectionResult(endpointId: String, result: ConnectionResolution) {
+            lookViewModel.endpointIdSaved = endpointId
             when (result.status.statusCode) {
                 ConnectionsStatusCodes.STATUS_OK -> {
-                    lookViewModel.endpointIdSaved = endpointId
                     Crashlytics.log("endpointId = $endpointId")
                 }
 
@@ -358,20 +367,17 @@ class LookActivity : BaseActivity() {
                     closeActivity()
                 }
                 ConnectionsStatusCodes.STATUS_ENDPOINT_IO_ERROR -> {
-                    connectionClient?.disconnectFromEndpoint(endpointId)
                     handleFailedResponse(Exception("ConnectionsStatusCodes.STATUS_ENDPOINT_IO_ERROR"))
                     showSnackbarError(getString(R.string.look_error_failed))
                     closeActivity()
                 }
 
                 ConnectionsStatusCodes.STATUS_ERROR -> {
-                    connectionClient?.disconnectFromEndpoint(endpointId)
                     handleFailedResponse(Exception("ConnectionsStatusCodes.STATUS_ERROR"))
                     showSnackbarError(getString(R.string.look_error_failed))
                     closeActivity()
                 }
                 else -> {
-                    connectionClient?.disconnectFromEndpoint(endpointId)
                     handleFailedResponse(Exception("Unknown status code"))
                     showSnackbarError(getString(R.string.look_error_connection_is_lost_try_again))
                     closeActivity()
@@ -381,6 +387,7 @@ class LookActivity : BaseActivity() {
 
         override fun onDisconnected(p0: String) {
             showSnackbarError(getString(R.string.look_error_disconnected))
+            lookViewModel.endpointIdSaved?.let { connectionClient?.disconnectFromEndpoint(lookViewModel.endpointIdSaved!!) }
             Crashlytics.log("onDisconnected: $p0")
         }
     }
@@ -410,6 +417,7 @@ class LookActivity : BaseActivity() {
 
     private fun handleFailedResponse(exception: Exception) {
         Crashlytics.logException(exception)
+        lookViewModel.endpointIdSaved?.let { connectionClient?.disconnectFromEndpoint(lookViewModel.endpointIdSaved!!) }
         connectionClient?.stopAllEndpoints()
         timer.cancel()
         lookViewModel.setNoFoundState()

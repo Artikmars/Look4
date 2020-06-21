@@ -20,7 +20,6 @@ import com.artamonov.look4.R
 import com.artamonov.look4.base.BaseActivity
 import com.artamonov.look4.data.database.User
 import com.artamonov.look4.look.LookActivity
-import com.artamonov.look4.look.LookViewModel
 import com.artamonov.look4.service.ForegroundService
 import com.artamonov.look4.settings.SettingsActivity
 import com.artamonov.look4.utils.LogHandler

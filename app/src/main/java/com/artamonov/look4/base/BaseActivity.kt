@@ -8,12 +8,17 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import com.artamonov.look4.ContactsActivity
 import com.artamonov.look4.R
+import com.artamonov.look4.data.prefs.PreferenceHelper
 import com.artamonov.look4.utils.ContactUnseenState
 import com.artamonov.look4.utils.LiveDataContactUnseenState.contactUnseenState
+import com.artamonov.look4.utils.UserRole
 import com.artamonov.look4.utils.default
+import com.artamonov.look4.utils.set
 import com.google.android.material.snackbar.Snackbar
 
 abstract class BaseActivity : AppCompatActivity() {
+
+    private var contactState: ContactUnseenState = ContactUnseenState.DisabledState
 
     fun showSnackbarError(resourceId: Int) { Snackbar.make(findViewById(android.R.id.content),
         getString(resourceId), Snackbar.LENGTH_LONG).show() }
@@ -39,9 +44,19 @@ abstract class BaseActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         contactUnseenState.default(ContactUnseenState.DisabledState)
         contactUnseenState.observe(this, Observer { state ->
+            contactState = state
             when (state) {
-                ContactUnseenState.EnabledState -> showSnackbarWithAction()
+                ContactUnseenState.EnabledState -> if (PreferenceHelper.getUserProfile()?.role == UserRole.DISCOVERER)
+                    showSnackbarWithAction()
             }
         })
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (contactState == ContactUnseenState.EnabledState) {
+            showSnackbarWithAction()
+            contactUnseenState.set(newValue = ContactUnseenState.DisabledState)
+        }
     }
 }

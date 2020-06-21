@@ -106,6 +106,7 @@ class ForegroundService : Service() {
             Crashlytics.log("Advertising has been started")
         }
             ?.addOnFailureListener { e ->
+                disconnectFromEndpoint()
             isForegroundServiceRunning = false
             Toast.makeText(this, "$e", Toast.LENGTH_LONG).show()
             stopForeground(true)
@@ -119,9 +120,9 @@ class ForegroundService : Service() {
         }
 
         override fun onConnectionResult(endpointId: String, result: ConnectionResolution) {
+            endpointIdSaved = endpointId
             when (result.status.statusCode) {
                 ConnectionsStatusCodes.STATUS_OK -> {
-                    endpointIdSaved = endpointId
                     Log.v(LOG_TAG, "in service onConnectionResult: $endpointId")
                     //  bytePayload = Payload.fromBytes(preferenceHelper.getUserProfile()?.name!!.toByteArray())
                     bytePayload = Payload.fromBytes((PreferenceHelper.getUserProfile()?.name +
@@ -147,6 +148,7 @@ class ForegroundService : Service() {
                 // We're connected! Can now start sending and receiving data.
 
                 ConnectionsStatusCodes.STATUS_CONNECTION_REJECTED -> {
+                    disconnectFromEndpoint()
 //                    Toast.makeText(
 //                        applicationContext,
 //                        "Connection attempt to $endpointId was rejected",
@@ -156,6 +158,7 @@ class ForegroundService : Service() {
                 // The connection was rejected by one or both sides.
 
                 ConnectionsStatusCodes.STATUS_ERROR -> {
+                    disconnectFromEndpoint()
 //                    Toast.makeText(
 //                        applicationContext,
 //                        "Connected attempt to $endpointId failed",
@@ -165,6 +168,7 @@ class ForegroundService : Service() {
                 // The connection broke before it was able to be accepted.
 
                 else -> {
+                    disconnectFromEndpoint()
 //                    Toast.makeText(
 //                        applicationContext,
 //                        "Unknown status code",
@@ -176,6 +180,7 @@ class ForegroundService : Service() {
         }
 
         override fun onDisconnected(p0: String) {
+            disconnectFromEndpoint()
             // We've been disconnected from this endpoint. No more data can be
             // sent or received.
         }
@@ -217,6 +222,10 @@ class ForegroundService : Service() {
 
     private fun isAppInForeground(): Boolean {
         return ProcessLifecycleOwner.get().lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
+    }
+
+    private fun disconnectFromEndpoint() {
+        endpointIdSaved?.let { connectionClient?.disconnectFromEndpoint(endpointIdSaved!!) }
     }
 
     private fun showPendingContactNotification(notificationId: Int) {
