@@ -296,14 +296,17 @@ class LookActivity : BaseActivity() {
     }
 
     private fun startClient() {
+        look_progress_bar.visibility = VISIBLE
         populateScanningView()
         lookViewModel.endpointIdSaved?.let { connectionClient?.disconnectFromEndpoint(lookViewModel.endpointIdSaved!!) }
         connectionClient?.startDiscovery(packageName, endpointDiscoveryCallback, discOptions)
         ?.addOnSuccessListener { lookViewModel.updateRole(DISCOVERER)
+            look_progress_bar.visibility = GONE
             startTimer()
             Crashlytics.log("Discovery has been started")
         }?.addOnFailureListener { e ->
                 // We're unable to start discovering.
+                look_progress_bar.visibility = GONE
                 showSnackbarError(getString(R.string.look_error_scanning_can_not_be_started))
                 handleFailedResponse(e)
                 closeActivity()
@@ -416,10 +419,10 @@ class LookActivity : BaseActivity() {
     }
 
     private fun handleFailedResponse(exception: Exception) {
+        timer.cancel()
         Crashlytics.logException(exception)
         lookViewModel.endpointIdSaved?.let { connectionClient?.disconnectFromEndpoint(lookViewModel.endpointIdSaved!!) }
         connectionClient?.stopAllEndpoints()
-        timer.cancel()
         lookViewModel.setNoFoundState()
     }
 }
