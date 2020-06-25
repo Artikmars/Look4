@@ -322,7 +322,7 @@ class LookActivity : BaseActivity() {
                 Crashlytics.log("timer onFinish()")
             }
         }
-        timer.start()
+        timer?.start()
     }
 
     private val endpointDiscoveryCallback: EndpointDiscoveryCallback = object : EndpointDiscoveryCallback() {
@@ -399,7 +399,7 @@ class LookActivity : BaseActivity() {
             if (p1.status == PayloadTransferUpdate.Status.SUCCESS && p1.totalBytes > 1000) {
                 Crashlytics.log("onPayloadTransferUpdate: ${p1.status} && ${p1.totalBytes}")
                 if (profile_image.drawable == null && lookViewModel.isGenderValid) {
-                    timer.cancel()
+                    timer?.cancel()
                     lookViewModel.advertiserName?.let { searchingInProgressText.text =
                         lookViewModel.advertiserName
                     }
@@ -414,7 +414,7 @@ class LookActivity : BaseActivity() {
     }
 
     private fun handleFailedResponse(exception: Exception) {
-        timer.cancel()
+        timer?.cancel()
         Crashlytics.logException(exception)
         lookViewModel.endpointIdSaved?.let { connectionClient?.disconnectFromEndpoint(lookViewModel.endpointIdSaved!!) }
         connectionClient?.stopAllEndpoints()

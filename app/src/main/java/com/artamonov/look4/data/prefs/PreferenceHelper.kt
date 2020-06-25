@@ -3,8 +3,10 @@ package com.artamonov.look4.data.prefs
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
+import com.artamonov.look4.data.database.ContactRequest
 import com.artamonov.look4.data.database.User
 import com.artamonov.look4.data.prefs.PreferenceHelper.Consts.CONTACT_LIST
+import com.artamonov.look4.data.prefs.PreferenceHelper.Consts.CONTACT_REQUEST
 import com.artamonov.look4.data.prefs.PreferenceHelper.Consts.USER_PROFILE
 import com.artamonov.look4.utils.UserGender
 import com.artamonov.look4.utils.UserGender.Companion.FEMALE
@@ -20,6 +22,7 @@ object PreferenceHelper {
     object Consts {
         const val CONTACT_LIST = "CONTACT_LIST"
         const val USER_PROFILE = "USER_PROFILE"
+        const val CONTACT_REQUEST = "CONTACT_REQUEST"
     }
 
     private lateinit var prefs: SharedPreferences
@@ -104,5 +107,19 @@ object PreferenceHelper {
         contacts?.removeAt(position)
         val json = Gson().toJson(contacts)
         return getSharedEditor().putString(CONTACT_LIST, json).commit()
+    }
+
+    fun saveContactRequest(contactRequest: ContactRequest?): Boolean {
+        return getSharedEditor().putString(CONTACT_REQUEST, Gson().toJson(contactRequest)).commit()
+    }
+
+    fun getContactRequest(): ContactRequest? {
+        val contactRequest = prefs.getString(CONTACT_REQUEST, null)
+        return try {
+            Gson().fromJson(contactRequest, ContactRequest::class.java)
+        } catch (jse: JsonSyntaxException) {
+            jse.printStackTrace()
+            null
+        }
     }
     }

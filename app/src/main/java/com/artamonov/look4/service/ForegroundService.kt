@@ -19,6 +19,7 @@ import androidx.core.app.NotificationCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ProcessLifecycleOwner
 import com.artamonov.look4.R
+import com.artamonov.look4.data.database.ContactRequest
 import com.artamonov.look4.data.prefs.PreferenceHelper
 import com.artamonov.look4.look.LookActivity.Companion.LOG_TAG
 import com.artamonov.look4.main.MainActivity
@@ -234,6 +235,12 @@ class ForegroundService : Service() {
             discovererPhoneNumber, discovererFilePath, advertiserPhoneNumber, endpointIdSaved)
 
         val intent = notificationHandler.createIntent(this)
+
+        PreferenceHelper.saveContactRequest(ContactRequest(discovererName = discovererName,
+            discovererPhoneNumber = discovererPhoneNumber,
+            discovererFilePath = discovererFilePath, advertiserPhoneNumber = advertiserPhoneNumber,
+            endpointIdSaved = endpointIdSaved
+        ))
 
         if (isAppInForeground() && notificationId == 2) {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

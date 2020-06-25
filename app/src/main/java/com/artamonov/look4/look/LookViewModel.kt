@@ -147,6 +147,8 @@ class LookViewModel : BaseViewModel() {
     }
 
     fun handleNewIntent(intent: Intent?) {
+        PreferenceHelper.saveContactRequest(null)
+
         if (intent == null || intent.extras == null) {
             return
         }

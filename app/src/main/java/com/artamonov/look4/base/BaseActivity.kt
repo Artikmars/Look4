@@ -9,8 +9,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import com.artamonov.look4.R
 import com.artamonov.look4.contacts.ContactsActivity
+import com.artamonov.look4.data.prefs.PreferenceHelper
 import com.artamonov.look4.utils.ContactUnseenState
 import com.artamonov.look4.utils.LiveDataContactUnseenState.contactDiscovererUnseenState
+import com.artamonov.look4.utils.NotificationHandler
 import com.artamonov.look4.utils.set
 import com.google.android.material.snackbar.Snackbar
 
@@ -53,5 +55,14 @@ abstract class BaseActivity : AppCompatActivity() {
                 }
             }
         })
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (PreferenceHelper.getContactRequest() != null) {
+            val notificationHandler = NotificationHandler()
+            startActivity(notificationHandler.createIntent(this,
+                PreferenceHelper.getContactRequest()!!))
+        }
     }
 }
