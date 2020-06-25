@@ -11,6 +11,6 @@ class WebViewActivity : AppCompatActivity() {
         setContentView(R.layout.activity_web_view)
 
         web_view_back.setOnClickListener { onBackPressed() }
-        webView.loadUrl("http://project77341.tilda.ws/page11400033.html")
+        webView.loadUrl("https://project77341.tilda.ws/page11400033.html")
     }
 }
