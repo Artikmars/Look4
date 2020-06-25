@@ -22,10 +22,13 @@ import com.artamonov.look4.data.database.User
 import com.artamonov.look4.look.LookActivity
 import com.artamonov.look4.service.ForegroundService
 import com.artamonov.look4.settings.SettingsActivity
+import com.artamonov.look4.utils.ContactUnseenState
+import com.artamonov.look4.utils.LiveDataContactUnseenState.contactUnseenState
 import com.artamonov.look4.utils.LogHandler
 import com.artamonov.look4.utils.UserGender.Companion.ALL
 import com.artamonov.look4.utils.UserGender.Companion.FEMALE
 import com.artamonov.look4.utils.UserGender.Companion.MALE
+import com.artamonov.look4.utils.default
 import com.artamonov.look4.utils.setSafeOnClickListener
 import com.bumptech.glide.Glide
 import com.google.android.gms.ads.AdRequest
@@ -186,6 +189,14 @@ companion object {
     override fun onResume() {
         super.onResume()
         mainViewModel.isInForeground()
+        contactUnseenState.observe(this, Observer { state ->
+            when (state) {
+                ContactUnseenState.EnabledState -> {
+                    showSnackbarWithAction()
+                    contactUnseenState.default(ContactUnseenState.DisabledState)
+                }
+            }
+        })
     }
 
     override fun onDestroy() {

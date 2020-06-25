@@ -26,9 +26,11 @@
             android:value="ca-app-pub-3940256099942544~3347511713"/>
         <activity android:name=".WebViewActivity"/>
         <activity android:name=".AboutUsActivity" />
-        <activity android:name=".ContactsActivity" />
+        <activity android:name=".ContactsActivity"
+            android:parentActivityName=".main.MainActivity"/>
         <activity android:name=".userprofiledit.UserProfileEditActivity" />
-        <activity android:name=".settings.SettingsActivity" />
+        <activity android:name=".settings.SettingsActivity"
+            android:parentActivityName=".main.MainActivity"/>
         <activity android:name=".WelcomeActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -49,6 +51,7 @@
         <activity
             android:name=".look.LookActivity"
             android:launchMode="singleTask"
+            android:parentActivityName=".main.MainActivity"
             android:screenOrientation="portrait" />
     </application>
 

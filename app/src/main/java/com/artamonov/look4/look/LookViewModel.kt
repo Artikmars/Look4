@@ -83,7 +83,6 @@ class LookViewModel : BaseViewModel() {
                         if (isMobileNumber(textArray?.get(0))) {
                             savePhoneNumberToDB(textArray?.get(0), UserRole.DISCOVERER)
                             contactUnseenState.set(newValue = ContactUnseenState.EnabledState)
-                            state.set(newValue = LookState.PhoneNumberReceived)
                         } else {
                             advertiserName = textArray?.get(0)
                         }

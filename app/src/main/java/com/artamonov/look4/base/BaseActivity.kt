@@ -4,15 +4,13 @@ import android.app.ActivityOptions
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import com.artamonov.look4.ContactsActivity
 import com.artamonov.look4.R
-import com.artamonov.look4.data.prefs.PreferenceHelper
 import com.artamonov.look4.utils.ContactUnseenState
 import com.artamonov.look4.utils.LiveDataContactUnseenState.contactUnseenState
-import com.artamonov.look4.utils.UserRole
-import com.artamonov.look4.utils.default
 import com.artamonov.look4.utils.set
 import com.google.android.material.snackbar.Snackbar
 
@@ -40,23 +38,20 @@ abstract class BaseActivity : AppCompatActivity() {
         snackbar.show()
     }
 
+    private fun showToast() {
+        Toast.makeText(this, getString(R.string.look_you_received_phone_number), Toast.LENGTH_LONG).show()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        contactUnseenState.default(ContactUnseenState.DisabledState)
         contactUnseenState.observe(this, Observer { state ->
             contactState = state
             when (state) {
-                ContactUnseenState.EnabledState -> if (PreferenceHelper.getUserProfile()?.role == UserRole.DISCOVERER)
-                    showSnackbarWithAction()
+                ContactUnseenState.EnabledState -> {
+                    showToast()
+                    contactUnseenState.set(newValue = ContactUnseenState.DisabledState)
+                }
             }
         })
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if (contactState == ContactUnseenState.EnabledState) {
-            showSnackbarWithAction()
-            contactUnseenState.set(newValue = ContactUnseenState.DisabledState)
-        }
     }
 }

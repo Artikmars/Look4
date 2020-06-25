@@ -33,7 +33,7 @@ import com.artamonov.look4.data.prefs.PreferenceHelper
 import com.artamonov.look4.main.MainActivity
 import com.artamonov.look4.utils.ContactUnseenState
 import com.artamonov.look4.utils.CountDownTimer.timer
-import com.artamonov.look4.utils.LiveDataContactUnseenState
+import com.artamonov.look4.utils.LiveDataContactUnseenState.contactUnseenState
 import com.artamonov.look4.utils.UserRole.Companion.ADVERTISER
 import com.artamonov.look4.utils.UserRole.Companion.DISCOVERER
 import com.artamonov.look4.utils.set
@@ -124,12 +124,10 @@ class LookActivity : BaseActivity() {
         lookViewModel.user.observe(this, Observer { user = it })
 
         searchBtn.setOnClickListener { startClient() }
-        look_back.setOnClickListener { onBackPressed() }
+        look_back.setOnClickListener { closeActivity() }
 
         no_button.setSafeOnClickListener {
-            // TODO Replace with disconnectFromEndpoint()
             lookViewModel.endpointIdSaved?.let { connectionClient?.disconnectFromEndpoint(lookViewModel.endpointIdSaved!!) }
-            // connectionClient?.stopAllEndpoints()
             closeActivity()
         }
 
@@ -137,8 +135,6 @@ class LookActivity : BaseActivity() {
             when (PreferenceHelper.getUserProfile()?.role) {
                 ADVERTISER -> {
                     lookViewModel.savePhoneNumberToDB(lookViewModel.discovererPhoneNumber, ADVERTISER)
-
-                    LiveDataContactUnseenState.contactUnseenState.set(newValue = ContactUnseenState.EnabledState)
 
                     lookViewModel.endpointIdSaved?.let {
                         connectionClient?.sendPayload(
@@ -149,6 +145,7 @@ class LookActivity : BaseActivity() {
                             closeActivity()
                         }?.addOnSuccessListener {
                             lookViewModel.endpointIdSaved?.let { connectionClient?.disconnectFromEndpoint(lookViewModel.endpointIdSaved!!) }
+                            contactUnseenState.set(newValue = ContactUnseenState.EnabledState)
                             closeActivity()
                         }
                     }
@@ -191,14 +188,11 @@ class LookActivity : BaseActivity() {
     }
 
     private fun closeActivity() {
-        if (MainActivity.isDestroyed) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                startActivity(Intent(this, MainActivity::class.java),
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            startActivity(Intent(this, MainActivity::class.java),
                     ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
-            } else {
-                startActivity(Intent(this, MainActivity::class.java))
-            }
-        }
+            } else { startActivity(Intent(this, MainActivity::class.java)) }
+
         finish()
     }
 
