@@ -15,15 +15,15 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.artamonov.look4.BuildConfig
-import com.artamonov.look4.ContactsActivity
 import com.artamonov.look4.R
 import com.artamonov.look4.base.BaseActivity
+import com.artamonov.look4.contacts.ContactsActivity
 import com.artamonov.look4.data.database.User
 import com.artamonov.look4.look.LookActivity
 import com.artamonov.look4.service.ForegroundService
 import com.artamonov.look4.settings.SettingsActivity
 import com.artamonov.look4.utils.ContactUnseenState
-import com.artamonov.look4.utils.LiveDataContactUnseenState.contactUnseenState
+import com.artamonov.look4.utils.LiveDataContactUnseenState.contactAdvertiserUnseenState
 import com.artamonov.look4.utils.LogHandler
 import com.artamonov.look4.utils.UserGender.Companion.ALL
 import com.artamonov.look4.utils.UserGender.Companion.FEMALE
@@ -189,11 +189,11 @@ companion object {
     override fun onResume() {
         super.onResume()
         mainViewModel.isInForeground()
-        contactUnseenState.observe(this, Observer { state ->
+        contactAdvertiserUnseenState.observe(this, Observer { state ->
             when (state) {
                 ContactUnseenState.EnabledState -> {
                     showSnackbarWithAction()
-                    contactUnseenState.default(ContactUnseenState.DisabledState)
+                    contactAdvertiserUnseenState.default(ContactUnseenState.DisabledState)
                 }
             }
         })

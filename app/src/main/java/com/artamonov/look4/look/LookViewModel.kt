@@ -7,7 +7,9 @@ import com.artamonov.look4.base.BaseViewModel
 import com.artamonov.look4.data.database.User
 import com.artamonov.look4.data.prefs.PreferenceHelper
 import com.artamonov.look4.utils.ContactUnseenState
-import com.artamonov.look4.utils.LiveDataContactUnseenState.contactUnseenState
+import com.artamonov.look4.utils.ContactsState
+import com.artamonov.look4.utils.LiveDataContactListState.contactListState
+import com.artamonov.look4.utils.LiveDataContactUnseenState.contactDiscovererUnseenState
 import com.artamonov.look4.utils.NotificationHandler
 import com.artamonov.look4.utils.UserGender
 import com.artamonov.look4.utils.UserRole
@@ -82,7 +84,8 @@ class LookViewModel : BaseViewModel() {
 
                         if (isMobileNumber(textArray?.get(0))) {
                             savePhoneNumberToDB(textArray?.get(0), UserRole.DISCOVERER)
-                            contactUnseenState.set(newValue = ContactUnseenState.EnabledState)
+                            contactDiscovererUnseenState.set(newValue = ContactUnseenState.EnabledState)
+                            contactListState.set(newValue = ContactsState.UpdatedListState)
                         } else {
                             advertiserName = textArray?.get(0)
                         }

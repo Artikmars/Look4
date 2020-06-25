@@ -1,34 +1,55 @@
-package com.artamonov.look4
+package com.artamonov.look4.contacts
 
 import android.os.Bundle
 import android.view.View.GONE
 import android.view.View.VISIBLE
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.artamonov.look4.R
 import com.artamonov.look4.adapter.AdapterDataSource
 import com.artamonov.look4.adapter.ContactListAdapter
 import com.artamonov.look4.base.BaseActivity
 import com.artamonov.look4.data.database.User
 import com.artamonov.look4.data.prefs.PreferenceHelper
+import com.artamonov.look4.utils.ContactsState
+import com.artamonov.look4.utils.LiveDataContactListState.contactListState
 import kotlinx.android.synthetic.main.activity_contacts.*
 
 class ContactsActivity : BaseActivity() {
 
     private var adapter: ContactListAdapter? = null
+    private lateinit var contactsViewModel: ContactsViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_contacts)
-
+        contactsViewModel = ViewModelProvider(this).get(ContactsViewModel::class.java)
         contacts_back.setOnClickListener { onBackPressed() }
 
-        if (!getContactList().isNullOrEmpty()) { initAdapter() }
-        setNoContactsViewVisibility(getContactList().isNullOrEmpty())
-    }
+        contactListState.observe(this, Observer { state ->
+            when (state) {
+                ContactsState.LoadedState -> {
+                    initAdapter()
+                    setNoContactsViewVisibility(false)
+                }
+                ContactsState.UpdatedListState -> {
+                    setNoContactsViewVisibility(false)
+                    if (adapter == null) {
+                        initAdapter()
+                        return@Observer
+                    }
+                    adapter?.notifyDataSetChanged()
+                }
 
-    override fun onResume() {
-        super.onResume()
-        adapter?.notifyDataSetChanged()
+                ContactsState.NoContactsState -> {
+                    setNoContactsViewVisibility(true)
+                }
+            }
+        })
+
+        contactsViewModel.initList()
     }
 
     private fun initAdapter() {
@@ -41,27 +62,22 @@ class ContactsActivity : BaseActivity() {
         adapter = ContactListAdapter(
             object : AdapterDataSource<User> {
                 override fun getCount(): Int {
-                    return getContactList()?.size ?: 0
+                    return contactsViewModel.getContactList()?.size ?: 0
                 }
 
                 override fun get(position: Int): User? {
-                    return getContactList()?.get(position)
+                    return contactsViewModel.getContactList()?.get(position)
                 }
                 }, object : ContactListAdapter.OnItemClickListener {
                 override fun onItemClick(position: Int) {
                     if (PreferenceHelper.deleteContactItemFromDB(position)) {
-                        adapter?.notifyDataSetChanged()
-                        setNoContactsViewVisibility(getContactList().isNullOrEmpty())
+                        contactsViewModel.updateList()
                     }
                 }
             }
             )
 
         contacts_list.adapter = adapter
-    }
-
-    private fun getContactList(): ArrayList<User>? {
-        return PreferenceHelper.getContactList()
     }
 
     private fun setNoContactsViewVisibility(state: Boolean) {

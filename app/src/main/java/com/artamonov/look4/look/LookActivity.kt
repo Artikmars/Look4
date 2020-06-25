@@ -7,7 +7,6 @@ import android.Manifest.permission.BLUETOOTH
 import android.Manifest.permission.BLUETOOTH_ADMIN
 import android.Manifest.permission.CHANGE_WIFI_STATE
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
-import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -22,7 +21,9 @@ import android.view.View.GONE
 import android.view.View.VISIBLE
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
+import androidx.core.app.ActivityOptionsCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.artamonov.look4.PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE
@@ -33,7 +34,7 @@ import com.artamonov.look4.data.prefs.PreferenceHelper
 import com.artamonov.look4.main.MainActivity
 import com.artamonov.look4.utils.ContactUnseenState
 import com.artamonov.look4.utils.CountDownTimer.timer
-import com.artamonov.look4.utils.LiveDataContactUnseenState.contactUnseenState
+import com.artamonov.look4.utils.LiveDataContactUnseenState.contactAdvertiserUnseenState
 import com.artamonov.look4.utils.UserRole.Companion.ADVERTISER
 import com.artamonov.look4.utils.UserRole.Companion.DISCOVERER
 import com.artamonov.look4.utils.set
@@ -145,7 +146,7 @@ class LookActivity : BaseActivity() {
                             closeActivity()
                         }?.addOnSuccessListener {
                             lookViewModel.endpointIdSaved?.let { connectionClient?.disconnectFromEndpoint(lookViewModel.endpointIdSaved!!) }
-                            contactUnseenState.set(newValue = ContactUnseenState.EnabledState)
+                            contactAdvertiserUnseenState.set(newValue = ContactUnseenState.EnabledState)
                             closeActivity()
                         }
                     }
@@ -190,7 +191,7 @@ class LookActivity : BaseActivity() {
     private fun closeActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             startActivity(Intent(this, MainActivity::class.java),
-                    ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
+                    ActivityOptionsCompat.makeSceneTransitionAnimation(this).toBundle())
             } else { startActivity(Intent(this, MainActivity::class.java)) }
 
         finish()

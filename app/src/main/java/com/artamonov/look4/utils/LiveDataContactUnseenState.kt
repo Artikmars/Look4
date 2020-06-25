@@ -8,5 +8,6 @@ sealed class ContactUnseenState {
 }
 
 object LiveDataContactUnseenState {
-    val contactUnseenState = MutableLiveData<ContactUnseenState>().default(initialValue = ContactUnseenState.DisabledState)
+    val contactDiscovererUnseenState = MutableLiveData<ContactUnseenState>().default(initialValue = ContactUnseenState.DisabledState)
+    val contactAdvertiserUnseenState = MutableLiveData<ContactUnseenState>().default(initialValue = ContactUnseenState.DisabledState)
 }

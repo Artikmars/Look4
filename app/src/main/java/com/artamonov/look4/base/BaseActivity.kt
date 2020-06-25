@@ -7,10 +7,10 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
-import com.artamonov.look4.ContactsActivity
 import com.artamonov.look4.R
+import com.artamonov.look4.contacts.ContactsActivity
 import com.artamonov.look4.utils.ContactUnseenState
-import com.artamonov.look4.utils.LiveDataContactUnseenState.contactUnseenState
+import com.artamonov.look4.utils.LiveDataContactUnseenState.contactDiscovererUnseenState
 import com.artamonov.look4.utils.set
 import com.google.android.material.snackbar.Snackbar
 
@@ -44,12 +44,12 @@ abstract class BaseActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        contactUnseenState.observe(this, Observer { state ->
+        contactDiscovererUnseenState.observe(this, Observer { state ->
             contactState = state
             when (state) {
                 ContactUnseenState.EnabledState -> {
                     showToast()
-                    contactUnseenState.set(newValue = ContactUnseenState.DisabledState)
+                    contactDiscovererUnseenState.set(newValue = ContactUnseenState.DisabledState)
                 }
             }
         })

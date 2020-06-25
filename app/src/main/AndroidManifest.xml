@@ -26,7 +26,7 @@
             android:value="ca-app-pub-3940256099942544~3347511713"/>
         <activity android:name=".WebViewActivity"/>
         <activity android:name=".AboutUsActivity" />
-        <activity android:name=".ContactsActivity"
+        <activity android:name=".contacts.ContactsActivity"
             android:parentActivityName=".main.MainActivity"/>
         <activity android:name=".userprofiledit.UserProfileEditActivity" />
         <activity android:name=".settings.SettingsActivity"
