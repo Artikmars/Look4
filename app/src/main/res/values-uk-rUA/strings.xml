@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Look4</string>
+    <string name="welcome_phone_number_warning">Перевірте свій номер</string>
+    <string name="main_offline_mode">Офлайн</string>
+    <string name="main_online_mode">Онлайн</string>
+    <string name="main_advertising_has_started">Вас можуть знайти</string>
+    <string name="main_advertising_has_stopped">Ви недоступні для пошуку</string>
+    <string name="main_advertising_title">Ви доступні для пошуку</string>
+
+    <string name="main_man">Чоловіки</string>
+    <string name="main_woman">Жінки</string>
+    <string name="main_all">Всі</string>
+    <string name="main_gender_female">Жіночий</string>
+    <string name="main_gender_male">Чоловічий</string>
+    <string name="settings_title">Налаштування</string>
+    <string name="contacts_title">Контакти</string>
+    <string name="look_found_label">Знайдено: 1/1</string>
+    <string name="look_yes">Так</string>
+    <string name="look_no">Ні</string>
+    <string name="look_searching_in_progress">Йде пошук …</string>
+    <string name="look_no_found">Упс … \nНікого немає \nпоруч</string>
+    <string name="look_talk_in_person">Знайомимося старим \nспособом</string>
+    <string name="look_search">Пошук</string>
+    <string name="look_search_again">Почати пошук ще раз</string>
+    <string name="look_you_received_phone_number">Контакт збережений!</string>
+    <string name="look_view">Відкрити</string>
+
+    <string name="look_error_connection_is_lost">З\'єднання втрачено. Напишіть першою (-им)!</string>
+    <string name="look_error_connection_is_lost_try_again">З\'єднання втрачено. Спробуйте знову</string>
+    <string name="look_error_scanning_can_not_be_started">Сканування не може бути розпочато. Спробуйте знову</string>
+    <string name="look_error_disconnected">Ви були від\'єднані</string>
+    <string name="look_error_failed">Спроба з\'єднання виявилася невдалою</string>
+    <string name="look_error_rejected">Спроба з\'єднання була відхилена</string>
+
+    <string name="profile_edit_title">Профіль</string>
+    <string name="settings_remove_ad">Прибрати рекламу</string>
+    <string name="settings_about_us">Про нас</string>
+    <string name="settings_privacy_policy">Політика конфіденційності</string>
+    <string name="contacts_placeholder">Поки порожньо</string>
+    <string name="profile_edit_photo">Фото</string>
+    <string name="profile_edit_enter_your_name">Введіть своє ім\'я</string>
+    <string name="profile_edit_enter_your_phone_number">Введіть свій номер телефону</string>
+    <string name="profile_edit_save">Зберегти</string>
+    <string name="welcome_submit">Готово</string>
+    <string name="error_general">Виникла помилка. Спробуйте пізніше</string>
+    <string name="error_blank_fields">Будь ласка, не залишайте поля порожніми</string>
+
+    <string name="base_check_new_request">Ви отримали новий запит на обмін контактами. Перевірте оповіщення!</string>
+
+    <string name="service_new_request">Ви отримали новий запит на обмін контактами</string>
+</resources>

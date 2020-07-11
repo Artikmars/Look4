@@ -170,4 +170,8 @@ class LookViewModel : BaseViewModel() {
 //            searchingInProgressText.visibility = View.VISIBLE
 //        }
     }
+
+    override fun onCleared() {
+        super.onCleared()
+    }
 }

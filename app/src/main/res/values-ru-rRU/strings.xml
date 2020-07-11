@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Look4</string>
-    <string name="welcome_phone_number_warning">Проверь свой номер</string>
+    <string name="welcome_phone_number_warning">Проверьте свой номер</string>
     <string name="main_offline_mode">Оффлайн</string>
     <string name="main_online_mode">Онлайн</string>
-    <string name="main_advertising_has_started">Ты в онлайне</string>
-    <string name="main_advertising_has_stopped">Ты в оффлайне</string>
-    <string name="main_advertising_title">Ты доступна(ен) для поиска</string>
+    <string name="main_advertising_has_started">Вас могут найти</string>
+    <string name="main_advertising_has_stopped">Вы недоступны для поиска</string>
+    <string name="main_advertising_title">Вы доступны для поиска</string>
 
     <string name="main_man">Мужчины</string>
     <string name="main_woman">Женщины</string>
@@ -15,42 +15,41 @@
     <string name="main_gender_male">Мужской</string>
     <string name="settings_title">Настройки</string>
     <string name="contacts_title">Контакты</string>
-    <string name="look_title">Поиск</string>
     <string name="look_found_label">Найдено: 1/1</string>
     <string name="look_yes">Да</string>
     <string name="look_no">Нет</string>
     <string name="look_searching_in_progress">Идёт поиск …</string>
-    <string name="look_no_found">Упс … \nНикого нет \nрядом</string>
-    <string name="look_talk_in_person">Попробуй подойти \nвживую</string>
+    <string name="look_no_found">Упс… \nНикого нет \nрядом</string>
+    <string name="look_talk_in_person">Знакомимся старым \nспособом</string>
     <string name="look_search">Поиск</string>
     <string name="look_search_again">Начать поиск заново</string>
     <string name="look_sec">секунд</string>
     <string name="look_you_received_phone_number">Контакт сохранён!</string>
     <string name="look_view">Открыть</string>
 
-    <string name="look_error_connection_is_lost">Соединение потеряно. Напиши первой(ым)!</string>
-    <string name="look_error_connection_is_lost_try_again">Соединение потеряно. Попробуй снова</string>
-    <string name="look_error_scanning_can_not_be_started">Сканирование не может быть начато. Попробуй снова</string>
-    <string name="look_error_disconnected">Ты был(а) рассоединен(а)</string>
+    <string name="look_error_connection_is_lost">Соединение потеряно. Напишите первой(ым)!</string>
+    <string name="look_error_connection_is_lost_try_again">Соединение потеряно. Попробуйте снова</string>
+    <string name="look_error_scanning_can_not_be_started">Сканирование не может быть начато. Попробуйте снова</string>
+    <string name="look_error_disconnected">Вы были рассоединены</string>
     <string name="look_error_failed">Попытка соединения оказалась неудачной</string>
     <string name="look_error_rejected">Попытка соединения была отклонена</string>
 
-    <string name="profile_edit_title">Редактировать профиль</string>
+    <string name="profile_edit_title">Профиль</string>
     <string name="settings_remove_ad">Убрать рекламу</string>
     <string name="settings_about_us">О нас</string>
     <string name="settings_privacy_policy">Политика конфиденциальности</string>
-    <string name="contacts_placeholder">У тебя пока нет контактов.</string>
+    <string name="contacts_placeholder">Пока пусто</string>
     <string name="profile_edit_photo">Фото</string>
-    <string name="profile_edit_enter_your_name">Введи своё имя</string>
-    <string name="profile_edit_enter_your_phone_number">Введи свой номер телефона</string>
+    <string name="profile_edit_enter_your_name">Введите своё имя</string>
+    <string name="profile_edit_enter_your_phone_number">Введите свой номер телефона</string>
     <string name="profile_edit_save">Сохранить</string>
     <string name="welcome_submit">Готово</string>
-    <string name="error_general">Возникла ошибка. Попробуй позднее.</string>
-    <string name="error_blank_fields">Пожалуйста, не оставляй поля пустыми</string>
+    <string name="error_general">Возникла ошибка. Попробуйте позднее</string>
+    <string name="error_blank_fields">Пожалуйста, не оставляйте поля пустыми</string>
 
-    <string name="base_check_new_request">Ты получил(а) новый запрос на обмен контактами. Проверь оповещение!</string>
+    <string name="base_check_new_request">Вы получили новый запрос на обмен контактами. Проверьте оповещение!</string>
 
-    <string name="service_new_request">Ты получил(а) новый запрос на обмен контактами</string>
+    <string name="service_new_request">Вы получили новый запрос на обмен контактами</string>
 
 
 </resources>

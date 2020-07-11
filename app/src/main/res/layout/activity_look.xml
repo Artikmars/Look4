@@ -36,7 +36,7 @@
                 android:id="@+id/look_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/look_title"
+                android:text="@string/look_search"
                 android:textColor="@color/black"
                 android:textSize="20sp"
                 android:textStyle="bold"

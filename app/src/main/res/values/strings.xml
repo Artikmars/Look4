@@ -19,7 +19,6 @@
 
     <string name="contacts_title">Contacts</string>
 
-    <string name="look_title">Look</string>
     <string name="look_found_label">Found: 1/1</string>
     <string name="look_yes">Yes</string>
     <string name="look_no">No</string>
@@ -28,8 +27,7 @@
     <string name="look_talk_in_person">Try to talk \n in person \n or</string>
     <string name="look_search">Search</string>
     <string name="look_search_again">Search again</string>
-    <string name="look_sec">sec</string>
-    <string name="look_countdown_default_value" translatable="false">25</string>
+    <string name="look_countdown_default_value" translatable="false">1</string>
     <string name="look_you_received_phone_number">Your new contact has been saved!</string>
     <string name="look_view">View</string>
 
@@ -40,11 +38,11 @@
     <string name="look_error_failed">Connected attempt failed</string>
     <string name="look_error_rejected">Connection attempt was rejected</string>
 
-    <string name="profile_edit_title">Edit profile</string>
+    <string name="profile_edit_title">Profile</string>
     <string name="settings_remove_ad">Remove Ad</string>
     <string name="settings_about_us">About Us</string>
     <string name="settings_privacy_policy">Privacy Policy</string>
-    <string name="contacts_placeholder">You have no contacts yet.</string>
+    <string name="contacts_placeholder">Nothing so far</string>
     <string name="profile_edit_photo">Photo</string>
     <string name="profile_edit_enter_your_name">Enter your name</string>
     <string name="profile_edit_enter_your_phone_number">Enter your phone number</string>

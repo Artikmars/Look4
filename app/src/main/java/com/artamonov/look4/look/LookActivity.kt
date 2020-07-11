@@ -93,35 +93,7 @@ class LookActivity : BaseActivity() {
         connectionClient = Nearby.getConnectionsClient(this)
         deviceId = Settings.Secure.getString(applicationContext.contentResolver, Settings.Secure.ANDROID_ID)
 
-        lookViewModel.state.observe(this, Observer { state ->
-            when (state) {
-                is LookState.DefaultState -> {
-                    populateDefaultView()
-                }
-                is LookState.NoFoundState -> {
-                    populateNoFoundView()
-                }
-                is LookState.SearchState -> {
-                    startClient()
-                }
-                is LookState.PhoneNumberReceived -> {
-                    lookViewModel.endpointIdSaved
-                    ?.let { connectionClient?.disconnectFromEndpoint(lookViewModel.endpointIdSaved!!) }
-                    showSnackbarWithAction()
-                }
-                is LookState.SucceededAdvertiserIsFoundState<*> -> {
-                    populateSucceedView()
-                }
-                is LookState.SucceededDiscoverIsFoundState<*> -> {
-                    populateSucceedView()
-                    searchingInProgressText.visibility = VISIBLE
-                    searchingInProgressText.text =
-                        lookViewModel.discovererName
-                    profile_image.setImageDrawable(Drawable.createFromPath(lookViewModel.discovererFilePath))
-                }
-        }
-        })
-
+        lookViewModel.state.observe(this, Observer { bindViewState(it) })
         lookViewModel.user.observe(this, Observer { user = it })
 
         searchBtn.setOnClickListener { startClient() }
@@ -186,6 +158,35 @@ class LookActivity : BaseActivity() {
 //                stopAllEndpoints()
 //           }
 //        }
+    }
+
+    private fun bindViewState(viewState: LookState) {
+        when (viewState) {
+            is LookState.DefaultState -> {
+                populateDefaultView()
+            }
+            is LookState.NoFoundState -> {
+                populateNoFoundView()
+            }
+            is LookState.SearchState -> {
+                startClient()
+            }
+            is LookState.PhoneNumberReceived -> {
+                lookViewModel.endpointIdSaved
+                    ?.let { connectionClient?.disconnectFromEndpoint(lookViewModel.endpointIdSaved!!) }
+                showSnackbarWithAction()
+            }
+            is LookState.SucceededAdvertiserIsFoundState<*> -> {
+                populateSucceedView()
+            }
+            is LookState.SucceededDiscoverIsFoundState<*> -> {
+                populateSucceedView()
+                searchingInProgressText.visibility = VISIBLE
+                searchingInProgressText.text =
+                    lookViewModel.discovererName
+                profile_image.setImageDrawable(Drawable.createFromPath(lookViewModel.discovererFilePath))
+            }
+        }
     }
 
     private fun closeActivity() {
@@ -311,7 +312,7 @@ class LookActivity : BaseActivity() {
     private fun startTimer() {
         timer = object : CountDownTimer(25000, 1000) {
             override fun onTick(millisUntilFinished: Long) {
-                countdown_view.text = (millisUntilFinished / 1000).toString()
+                countdown_view.text = ((25000 - millisUntilFinished) / 1000).toString()
                 Crashlytics.log("onTick(): ${countdown_view.text}")
             }
 
