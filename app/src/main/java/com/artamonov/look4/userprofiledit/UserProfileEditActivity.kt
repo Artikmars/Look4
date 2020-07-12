@@ -7,7 +7,6 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
-import android.util.Log
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.widget.Toast
@@ -15,11 +14,13 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.get
 import com.artamonov.look4.PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE
 import com.artamonov.look4.R
 import com.artamonov.look4.base.BaseActivity
-import com.artamonov.look4.data.database.User
+import com.artamonov.look4.userprofiledit.models.FetchStatus
+import com.artamonov.look4.userprofiledit.models.ProfileEditAction
+import com.artamonov.look4.userprofiledit.models.ProfileEditEvent
+import com.artamonov.look4.userprofiledit.models.ProfileEditViewState
 import com.artamonov.look4.utils.PostTextChangeWatcher
 import com.artamonov.look4.utils.UserGender
 import com.bumptech.glide.Glide
@@ -30,76 +31,92 @@ import kotlinx.android.synthetic.main.activity_user_profile_edit.*
 
 class UserProfileEditActivity : BaseActivity() {
 
-    var newImage: Uri? = null
-    private lateinit var userProfileEditViewModel: UserProfileEditViewModel
-    private var userProfile: User? = null
+    private lateinit var viewModel: UserProfileEditViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_user_profile_edit)
 
-        userProfileEditViewModel = ViewModelProvider(this).get(UserProfileEditViewModel::class.java)
+        viewModel = ViewModelProvider(this).get(UserProfileEditViewModel::class.java)
 
-        userProfileEditViewModel.state.observe(this, Observer { state ->
-            when (state) {
-                UserEditProfileState.LoadingState -> {
-                    user_edit_progress_bar.visibility = VISIBLE
-                }
-                UserEditProfileState.SucceededState -> {
-                    finish()
-                }
-                UserEditProfileState.PhoneValidationErrorState -> {
-                    user_edit_progress_bar.visibility = GONE
-                    Snackbar.make(findViewById(android.R.id.content), getString(R.string.error_blank_fields),
-                        Snackbar.LENGTH_SHORT).show()
-                }
-                UserEditProfileState.ProfileWasNotUpdatedErrorState -> {
-                    user_edit_progress_bar.visibility = GONE
-                    Snackbar.make(findViewById(android.R.id.content), getString(R.string.error_general),
-                        Snackbar.LENGTH_SHORT).show()
-                }
-            }
-        })
+        viewModel.viewStates().observe(this, Observer { bindViewState(it) })
+        viewModel.viewEffects().observe(this, Observer { bindViewActions(it) })
 
-        userProfileEditViewModel.userProfileLiveData.observe(this, Observer { user ->
-            userProfile = user
-            checkForPermissions()
-        })
+        viewModel.obtainEvent(ProfileEditEvent.ScreenShown)
+        checkForPermissions()
 
         user_edit_phone_number.addTextChangedListener(PostTextChangeWatcher {
-            userProfileEditViewModel.phoneNumberChanged(it) })
+            viewModel.phoneNumberChanged(it) })
+
+        user_edit_name.addTextChangedListener(PostTextChangeWatcher {
+            viewModel.nameChanged(it) })
+
+        radioGroup.setOnCheckedChangeListener { _, i ->
+            viewModel.setCheckedRadioButton(i)
+        }
 
         profile_edit_back.setOnClickListener { onBackPressed() }
 
         user_edit_submit_button.setOnClickListener {
-            userProfileEditViewModel.submitProfile(name = user_edit_name.text.toString(), phoneNumber =
-            user_edit_phone_number.text.toString(), imagePath = newImage?.toString(),
-                radioButtonId = radioGroup.checkedRadioButtonId)
+            viewModel.obtainEvent(ProfileEditEvent.SaveClicked)
         }
 
         user_edit_add_image.setOnClickListener {
             dispatchTakePictureIntent() }
 
-        userProfileEditViewModel.phoneNumberLayoutErrorLiveData.observe(this, Observer { state ->
+        viewModel.phoneNumberLayoutErrorLiveData.observe(this, Observer { state ->
             if (state == true) { user_edit_phone_number_layout.error =
                 resources.getString(R.string.welcome_phone_number_warning)
             } else { user_edit_phone_number_layout.error = null }
         })
     }
 
-    private fun populateData() {
-        user_edit_name.setText(userProfile?.name)
-        user_edit_phone_number.setText(userProfile?.phoneNumber)
-        setRadioButtonState()
-        val imageString = userProfile?.imagePath
+    private fun bindViewState(viewState: ProfileEditViewState) {
+        when (viewState.fetchStatus) {
+            FetchStatus.LoadingState -> {
+                user_edit_progress_bar.visibility = VISIBLE
+            }
+            FetchStatus.SucceededState -> { finish() }
+            FetchStatus.PhoneValidationErrorState -> {
+                user_edit_progress_bar.visibility = GONE
+                Snackbar.make(findViewById(android.R.id.content), getString(R.string.error_blank_fields),
+                    Snackbar.LENGTH_SHORT).show()
+            }
+            FetchStatus.ProfileWasNotUpdatedErrorState -> {
+                user_edit_progress_bar.visibility = GONE
+                Snackbar.make(findViewById(android.R.id.content), getString(R.string.error_general),
+                    Snackbar.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun bindViewActions(viewAction: ProfileEditAction) {
+        when (viewAction) {
+            is ProfileEditAction.ShowSnackbar -> {
+                user_edit_progress_bar.visibility = VISIBLE
+            }
+            is ProfileEditAction.UpdateImage -> {
+                updateImage(viewAction.uri)
+            }
+            is ProfileEditAction.PopulateCurrentProfileData -> {
+                populateData(viewAction)
+            }
+        }
+    }
+
+    private fun populateData(viewAction: ProfileEditAction.PopulateCurrentProfileData) {
+        user_edit_name.setText(viewAction.name)
+        user_edit_phone_number.setText(viewAction.phoneNumber)
+        setRadioButtonState(viewAction.gender)
+        val imageString = viewAction.imagePath
         imageString?.let {
             val bitmap = MediaStore.Images.Media.getBitmap(this.contentResolver, Uri.parse(imageString))
             Glide.with(this).load(bitmap).apply(RequestOptions.circleCropTransform()).into(user_edit_add_image)
         }
     }
 
-    private fun setRadioButtonState() {
-        when (userProfile?.gender) {
+    private fun setRadioButtonState(gender: @UserGender.AnnotationUserGender String?) {
+        when (gender) {
             UserGender.MALE -> radioMale.isChecked = true
             UserGender.FEMALE -> radioFemale.isChecked = true
         }
@@ -109,10 +126,10 @@ class UserProfileEditActivity : BaseActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         when (resultCode) {
             Activity.RESULT_OK -> {
-                newImage = data?.data
-                Log.v("Look4", "uri : $newImage")
-                Log.v("Look4", "uri.path : ${newImage?.path}")
-                Glide.with(this).load(newImage).apply(RequestOptions.circleCropTransform()).into(user_edit_add_image)
+                data?.data?.let {
+                    viewModel.setImagePath(it)
+                    viewModel.obtainEvent(ProfileEditEvent.ProfilePhotoClicked)
+                }
             }
             ImagePicker.RESULT_ERROR -> {
                 Toast.makeText(this, ImagePicker.getError(data), Toast.LENGTH_SHORT).show()
@@ -122,6 +139,10 @@ class UserProfileEditActivity : BaseActivity() {
             }
         }
         }
+
+    private fun updateImage(uri: Uri) {
+        Glide.with(this).load(uri).apply(RequestOptions.circleCropTransform()).into(user_edit_add_image)
+    }
 
     private fun dispatchTakePictureIntent() {
         ImagePicker.with(this)
@@ -139,7 +160,7 @@ class UserProfileEditActivity : BaseActivity() {
                     PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE
                 )
             } else {
-            populateData()
+            viewModel.obtainEvent(ProfileEditEvent.CurrentProfileDataLoaded)
         }
     }
 
@@ -154,7 +175,7 @@ class UserProfileEditActivity : BaseActivity() {
                 if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
                     // permission was granted, yay! Do the
                     // contacts-related task you need to do.
-                    populateData()
+                    viewModel.obtainEvent(ProfileEditEvent.CurrentProfileDataLoaded)
                 } else {
                     // permission denied, boo! Disable the
                     // functionality that depends on this permission.
