@@ -51,7 +51,8 @@ class ForegroundService : Service() {
     lateinit var deviceId: String
     private val STRATEGY = P2P_POINT_TO_POINT
     private var isGenderValid: Boolean = true
-    private val advOptions: AdvertisingOptions = AdvertisingOptions.Builder().setStrategy(STRATEGY).build()
+    private val advOptions: AdvertisingOptions =
+        AdvertisingOptions.Builder().setStrategy(STRATEGY).build()
     var notification: Notification? = null
     var notificationManager: NotificationManager? = null
     private var newFile: File? = null
@@ -68,17 +69,22 @@ class ForegroundService : Service() {
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         createNotificationChannel()
         val notificationIntent = Intent(this, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(this, 0,
-            notificationIntent, FLAG_UPDATE_CURRENT)
+        val pendingIntent = PendingIntent.getActivity(
+            this, 0,
+            notificationIntent, FLAG_UPDATE_CURRENT
+        )
         notification = NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle(getString(R.string.main_online_mode))
-                .setSmallIcon(R.drawable.ic_o_1)
-                .setContentText(input)
-                .setContentIntent(pendingIntent)
-                .build()
+            .setContentTitle(getString(R.string.main_online_mode))
+            .setSmallIcon(R.drawable.ic_o_1)
+            .setContentText(input)
+            .setContentIntent(pendingIntent)
+            .build()
         // do heavy work on a background thread
         // stopSelf();
-        deviceId = Settings.Secure.getString(applicationContext.contentResolver, Settings.Secure.ANDROID_ID)
+        deviceId = Settings.Secure.getString(
+            applicationContext.contentResolver,
+            Settings.Secure.ANDROID_ID
+        )
 
         startServer()
         return START_NOT_STICKY
@@ -108,84 +114,88 @@ class ForegroundService : Service() {
         }
             ?.addOnFailureListener { e ->
                 disconnectFromEndpoint()
-            isForegroundServiceRunning = false
-            Toast.makeText(this, "$e", Toast.LENGTH_LONG).show()
-            stopForeground(true)
-            stopSelf()
-        }
+                isForegroundServiceRunning = false
+                Toast.makeText(this, "$e", Toast.LENGTH_LONG).show()
+                stopForeground(true)
+                stopSelf()
+            }
     }
 
-    private val connectionLifecycleCallback: ConnectionLifecycleCallback = object : ConnectionLifecycleCallback() {
-        override fun onConnectionInitiated(p0: String, p1: ConnectionInfo) {
-            connectionClient?.acceptConnection(p0, payloadCallback)
-        }
+    private val connectionLifecycleCallback: ConnectionLifecycleCallback =
+        object : ConnectionLifecycleCallback() {
+            override fun onConnectionInitiated(p0: String, p1: ConnectionInfo) {
+                connectionClient?.acceptConnection(p0, payloadCallback)
+            }
 
-        override fun onConnectionResult(endpointId: String, result: ConnectionResolution) {
-            endpointIdSaved = endpointId
-            when (result.status.statusCode) {
-                ConnectionsStatusCodes.STATUS_OK -> {
-                    Log.v(LOG_TAG, "in service onConnectionResult: $endpointId")
-                    //  bytePayload = Payload.fromBytes(preferenceHelper.getUserProfile()?.name!!.toByteArray())
-                    bytePayload = Payload.fromBytes((PreferenceHelper.getUserProfile()?.name +
-                            ";" + PreferenceHelper.getUserProfile()?.gender).toByteArray())
-                    connectionClient?.sendPayload(endpointId, bytePayload!!)
+            override fun onConnectionResult(endpointId: String, result: ConnectionResolution) {
+                endpointIdSaved = endpointId
+                when (result.status.statusCode) {
+                    ConnectionsStatusCodes.STATUS_OK -> {
+                        Log.v(LOG_TAG, "in service onConnectionResult: $endpointId")
+                        //  bytePayload = Payload.fromBytes(preferenceHelper.getUserProfile()?.name!!.toByteArray())
+                        bytePayload = Payload.fromBytes(
+                            (PreferenceHelper.getUserProfile()?.name +
+                                    ";" + PreferenceHelper.getUserProfile()?.gender).toByteArray()
+                        )
+                        connectionClient?.sendPayload(endpointId, bytePayload!!)
 
-                    // Toast.makeText(applicationContext, "userImagePath: $advertiserFilePath", Toast.LENGTH_LONG).show()
-                    PreferenceHelper.getUserProfile()?.imagePath?.let {
-                        val imageUri = Uri.parse(PreferenceHelper.getUserProfile()?.imagePath)
-                        // val imageUri = URI.create(userImagePath!!)
-                        Log.v("Look4", "imageUri: $imageUri")
-                        // Toast.makeText(applicationContext, "imageUri: $imageUri", Toast.LENGTH_LONG).show()
-                        val pfd: ParcelFileDescriptor? = contentResolver.openFileDescriptor(imageUri, "r")
-                        // val file = File(imageUri.path!!)
-                        Log.v("Look4", "imageUri.path: ${imageUri.path}")
-                        //  Log.v("Look4", "file: $file")
+                        // Toast.makeText(applicationContext, "userImagePath: $advertiserFilePath", Toast.LENGTH_LONG).show()
+                        PreferenceHelper.getUserProfile()?.imagePath?.let {
+                            val imageUri = Uri.parse(PreferenceHelper.getUserProfile()?.imagePath)
+                            // val imageUri = URI.create(userImagePath!!)
+                            Log.v("Look4", "imageUri: $imageUri")
+                            // Toast.makeText(applicationContext, "imageUri: $imageUri", Toast.LENGTH_LONG).show()
+                            val pfd: ParcelFileDescriptor? =
+                                contentResolver.openFileDescriptor(imageUri, "r")
+                            // val file = File(imageUri.path!!)
+                            Log.v("Look4", "imageUri.path: ${imageUri.path}")
+                            //  Log.v("Look4", "file: $file")
 
-                        filePayload = Payload.fromFile(pfd!!)
-                        connectionClient?.sendPayload(endpointId, filePayload!!)
+                            filePayload = Payload.fromFile(pfd!!)
+                            connectionClient?.sendPayload(endpointId, filePayload!!)
+                        }
                     }
-                }
 
-                // We're connected! Can now start sending and receiving data.
+                    // We're connected! Can now start sending and receiving data.
 
-                ConnectionsStatusCodes.STATUS_CONNECTION_REJECTED -> {
-                    disconnectFromEndpoint()
+                    ConnectionsStatusCodes.STATUS_CONNECTION_REJECTED -> {
+                        disconnectFromEndpoint()
 //                    Toast.makeText(
 //                        applicationContext,
 //                        "Connection attempt to $endpointId was rejected",
 //                        Toast.LENGTH_SHORT
 //                    ).show()
-                }
-                // The connection was rejected by one or both sides.
+                    }
+                    // The connection was rejected by one or both sides.
 
-                ConnectionsStatusCodes.STATUS_ERROR -> {
-                    disconnectFromEndpoint()
+                    ConnectionsStatusCodes.STATUS_ERROR -> {
+                        disconnectFromEndpoint()
 //                    Toast.makeText(
 //                        applicationContext,
 //                        "Connected attempt to $endpointId failed",
 //                        Toast.LENGTH_SHORT
 //                    ).show()
-                }
-                // The connection broke before it was able to be accepted.
+                    }
+                    // The connection broke before it was able to be accepted.
 
-                else -> {
-                    disconnectFromEndpoint()
+                    else -> {
+                        disconnectFromEndpoint()
 //                    Toast.makeText(
 //                        applicationContext,
 //                        "Unknown status code",
 //                        Toast.LENGTH_SHORT
 //                    ).show()
+                    }
+                    // Unknown status code
                 }
-                // Unknown status code
+            }
+
+            override fun onDisconnected(p0: String) {
+                disconnectFromEndpoint()
+                // We've been disconnected from this endpoint. No more data can be
+                // sent or received.
             }
         }
-
-        override fun onDisconnected(p0: String) {
-            disconnectFromEndpoint()
-            // We've been disconnected from this endpoint. No more data can be
-            // sent or received.
-        }
-    }
 
     val payloadCallback = object : PayloadCallback() {
         override fun onPayloadReceived(p0: String, p1: Payload) {
@@ -197,7 +207,9 @@ class ForegroundService : Service() {
                         discovererName = textArray[0]
                         discovererPhoneNumber = textArray[1]
                         isGenderValid(textArray[2])
-                    } else { advertiserPhoneNumber = receivedContact }
+                    } else {
+                        advertiserPhoneNumber = receivedContact
+                    }
                 }
                 Payload.Type.FILE -> {
                     file = p1.asFile()?.asJavaFile()
@@ -208,9 +220,12 @@ class ForegroundService : Service() {
         }
 
         override fun onPayloadTransferUpdate(p0: String, p1: PayloadTransferUpdate) {
-            if (!isGenderValid) { return }
+            if (!isGenderValid) {
+                return
+            }
             if (p1.status == PayloadTransferUpdate.Status.SUCCESS && p1.totalBytes > 1000 && advertiserPhoneNumber == null &&
-                p1.payloadId != bytePayload?.id && p1.payloadId != filePayload?.id) {
+                p1.payloadId != bytePayload?.id && p1.payloadId != filePayload?.id
+            ) {
                 //  Toast.makeText(applicationContext, "discovererFilePath: $discovererFilePath", Toast.LENGTH_LONG).show(
                 discovererFilePath = newFile?.toString()
 
@@ -231,16 +246,21 @@ class ForegroundService : Service() {
 
     private fun showPendingContactNotification(notificationId: Int) {
         // Create an explicit intent for an Activity in your app
-        notificationHandler = NotificationHandler(discovererName,
-            discovererPhoneNumber, discovererFilePath, advertiserPhoneNumber, endpointIdSaved)
+        notificationHandler = NotificationHandler(
+            discovererName,
+            discovererPhoneNumber, discovererFilePath, advertiserPhoneNumber, endpointIdSaved
+        )
 
         val intent = notificationHandler.createIntent(this)
 
-        PreferenceHelper.saveContactRequest(ContactRequest(discovererName = discovererName,
-            discovererPhoneNumber = discovererPhoneNumber,
-            discovererFilePath = discovererFilePath, advertiserPhoneNumber = advertiserPhoneNumber,
-            endpointIdSaved = endpointIdSaved
-        ))
+        PreferenceHelper.saveContactRequest(
+            ContactRequest(
+                name = discovererName,
+                phoneNumber = discovererPhoneNumber,
+                filePath = discovererFilePath, advertiserPhoneNumber = advertiserPhoneNumber,
+                endpointId = endpointIdSaved
+            )
+        )
 
         if (isAppInForeground() && notificationId == 2) {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -248,7 +268,8 @@ class ForegroundService : Service() {
             return
         }
 
-        val pendingIntent: PendingIntent = PendingIntent.getActivity(this, 0, intent, FLAG_UPDATE_CURRENT)
+        val pendingIntent: PendingIntent =
+            PendingIntent.getActivity(this, 0, intent, FLAG_UPDATE_CURRENT)
 
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Look4")

@@ -1,72 +1,82 @@
 package com.artamonov.look4.main
 
-import androidx.lifecycle.MutableLiveData
-import com.artamonov.look4.base.BaseViewModel
+import com.artamonov.look4.base.BaseVM
+import com.artamonov.look4.data.database.ContactRequest
 import com.artamonov.look4.data.prefs.PreferenceHelper
+import com.artamonov.look4.main.models.FetchMainStatus
+import com.artamonov.look4.main.models.MainAction
+import com.artamonov.look4.main.models.MainEvent
+import com.artamonov.look4.main.models.MainViewState
 import com.artamonov.look4.service.ForegroundService
-import com.artamonov.look4.utils.UserGender
-import com.artamonov.look4.utils.default
-import com.artamonov.look4.utils.set
+import com.artamonov.look4.utils.UserGender.Companion.ALL
+import com.artamonov.look4.utils.UserGender.Companion.FEMALE
+import com.artamonov.look4.utils.UserGender.Companion.MALE
 
-sealed class MainState {
-    object DefaultState : MainState()
-    object LoadingState : MainState()
-    class SucceededState<User>(val user: User) : MainState()
-    object OnLookClickedState : MainState()
-    object OnContactsClickedState : MainState()
-    object OnSettingsClickedState : MainState()
-    object LookGenderManState : MainState()
-    object LookGenderWomenState : MainState()
-    object LookGenderAllState : MainState()
-    object OnlineState : MainState()
-    object ErrorState : MainState()
-}
+class MainViewModel : BaseVM<MainViewState, MainAction, MainEvent>() {
 
-class MainViewModel : BaseViewModel() {
-
-    val state = MutableLiveData<MainState>().default(initialValue = MainState.DefaultState)
-    var isInForeground: MutableLiveData<Boolean> = MutableLiveData()
-
-    fun populateData() {
-        state.set(newValue = MainState.SucceededState(user = PreferenceHelper.getUserProfile()))
-    }
-
-    fun changeAdvertisingStatus() {
-        when (ForegroundService.isForegroundServiceRunning) {
-            true -> state.set(newValue = MainState.DefaultState)
-            false -> state.set(newValue = MainState.OnlineState)
-        }
-    }
-
-    fun isInForeground() { isInForeground.set(newValue = ForegroundService.isForegroundServiceRunning) }
-
-    fun changeLookGenderText() {
-        state.set(newValue = MainState.LoadingState)
-        when (PreferenceHelper.getUserProfile()?.lookGender) {
-            UserGender.MALE -> {
-                val isUpdated = PreferenceHelper.updateLookGender(UserGender.FEMALE)
-                if (isUpdated) state.set(newValue = MainState.LookGenderWomenState) else {
-                    state.set(newValue = MainState.ErrorState)
-                }
+    override fun obtainEvent(viewEvent: MainEvent) {
+        when (viewEvent) {
+            MainEvent.DiscoveringIsStarted -> {
+                viewState = viewState.copy(fetchStatus = FetchMainStatus.OnLookClickedState)
             }
-            UserGender.FEMALE -> {
-                val isUpdated = PreferenceHelper.updateLookGender(UserGender.ALL)
-                if (isUpdated) state.set(newValue = MainState.LookGenderAllState) else {
-                    state.set(newValue = MainState.ErrorState)
-                }
+            MainEvent.ChangeStatus -> {
+                changeAdvertisingStatus()
             }
-            UserGender.ALL -> {
-                val isUpdated = PreferenceHelper.updateLookGender(UserGender.MALE)
-                if (isUpdated) state.set(newValue = MainState.LookGenderManState) else {
-                    state.set(newValue = MainState.ErrorState)
-                }
+            MainEvent.OpenContacts -> {
+                viewState = viewState.copy(fetchStatus = FetchMainStatus.OnContactsClickedState)
+            }
+            MainEvent.OpenSettings -> {
+                viewState = viewState.copy(fetchStatus = FetchMainStatus.OnSettingsClickedState)
+            }
+            MainEvent.ChangeLookGender -> {
+                changeLookGenderText()
+            }
+            MainEvent.SendEmail -> {
+                viewAction = MainAction.SendEmail
             }
         }
     }
 
-    fun startDiscovering() { state.set(newValue = MainState.OnLookClickedState) }
+    init {
+        viewState = MainViewState(
+            fetchStatus = FetchMainStatus.DefaultState,
+            data = PreferenceHelper.getUserProfile(), contactRequest = ContactRequest()
+        )
+    }
 
-    fun openContacts() { state.set(newValue = MainState.OnContactsClickedState) }
+    private fun changeAdvertisingStatus() {
+        viewState = when (ForegroundService.isForegroundServiceRunning) {
+            true -> viewState.copy(fetchStatus = FetchMainStatus.OfflineState)
+            false -> viewState.copy(fetchStatus = FetchMainStatus.OnlineState)
+        }
+    }
 
-    fun openSettings() { state.set(newValue = MainState.OnSettingsClickedState) }
+    private fun changeLookGenderText() {
+        when (viewState.data?.lookGender) {
+            MALE -> {
+                if (PreferenceHelper.updateLookGender(FEMALE)) {
+                    viewState = viewState.copy(
+                        data = PreferenceHelper.getUserProfile(),
+                        fetchStatus = FetchMainStatus.LookGenderWomenState
+                    )
+                }
+            }
+            FEMALE -> {
+                if (PreferenceHelper.updateLookGender(ALL)) {
+                    viewState = viewState.copy(
+                        data = PreferenceHelper.getUserProfile(),
+                        fetchStatus = FetchMainStatus.LookGenderAllState
+                    )
+                }
+            }
+            ALL -> {
+                if (PreferenceHelper.updateLookGender(MALE)) {
+                    viewState = viewState.copy(
+                        data = PreferenceHelper.getUserProfile(),
+                        fetchStatus = FetchMainStatus.LookGenderManState
+                    )
+                }
+            }
+        }
+    }
 }

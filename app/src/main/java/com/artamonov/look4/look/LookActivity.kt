@@ -7,6 +7,7 @@ import android.Manifest.permission.BLUETOOTH
 import android.Manifest.permission.BLUETOOTH_ADMIN
 import android.Manifest.permission.CHANGE_WIFI_STATE
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
+import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -21,12 +22,10 @@ import android.view.View.GONE
 import android.view.View.VISIBLE
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
-import androidx.core.app.ActivityOptionsCompat
 import androidx.core.content.ContextCompat
-import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import com.artamonov.look4.PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE
+import com.artamonov.look4.PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION
 import com.artamonov.look4.R
 import com.artamonov.look4.base.BaseActivity
 import com.artamonov.look4.data.database.User
@@ -55,6 +54,7 @@ import com.google.android.gms.nearby.connection.Payload
 import com.google.android.gms.nearby.connection.PayloadCallback
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate
 import com.google.android.gms.nearby.connection.Strategy.P2P_POINT_TO_POINT
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_look.*
 
 class LookActivity : BaseActivity() {
@@ -66,7 +66,8 @@ class LookActivity : BaseActivity() {
             ACCESS_WIFI_STATE,
             CHANGE_WIFI_STATE,
             ACCESS_COARSE_LOCATION,
-            ACCESS_FINE_LOCATION)
+            ACCESS_FINE_LOCATION,
+            READ_EXTERNAL_STORAGE)
 
         private const val REQUEST_CODE_REQUIRED_PERMISSIONS = 1
         private val STRATEGY = P2P_POINT_TO_POINT
@@ -89,7 +90,6 @@ class LookActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_look)
         lookViewModel = ViewModelProvider(this).get(LookViewModel::class.java)
-        checkForPermissions()
         connectionClient = Nearby.getConnectionsClient(this)
         deviceId = Settings.Secure.getString(applicationContext.contentResolver, Settings.Secure.ANDROID_ID)
 
@@ -148,8 +148,7 @@ class LookActivity : BaseActivity() {
             }
         }
 
-        lookViewModel.startDiscovering()
-        onNewIntent(intent)
+        checkForPermissions()
 
 //        disconnectButton.setOnClickListener {
 //            connClient.apply {
@@ -192,7 +191,7 @@ class LookActivity : BaseActivity() {
     private fun closeActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             startActivity(Intent(this, MainActivity::class.java),
-                    ActivityOptionsCompat.makeSceneTransitionAnimation(this).toBundle())
+                    ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
             } else { startActivity(Intent(this, MainActivity::class.java)) }
 
         finish()
@@ -268,12 +267,49 @@ class LookActivity : BaseActivity() {
     }
 
     private fun checkForPermissions() {
-        if (ContextCompat.checkSelfPermission(this, READ_EXTERNAL_STORAGE)
+        if (ContextCompat.checkSelfPermission(this, ACCESS_COARSE_LOCATION)
             != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
-                arrayOf(READ_EXTERNAL_STORAGE),
-                PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE
+                arrayOf(ACCESS_COARSE_LOCATION),
+                PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION
             )
+        } else {
+            lookViewModel.startDiscovering()
+            onNewIntent(intent)
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        when (requestCode) {
+            PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION -> {
+                // If request is cancelled, the result arrays are empty.
+                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+                    lookViewModel.startDiscovering()
+                    onNewIntent(intent)
+                } else {
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                    finish()
+                    Snackbar.make(
+                        findViewById(android.R.id.content),
+                        "You need to grant the permission to start discovering",
+                        Snackbar.LENGTH_SHORT
+                    ).show()
+                }
+                return
+            }
+
+            // Add other 'when' lines to check for other
+            // permissions this app might request.
+            else -> {
+                // Ignore all other requests.
+            }
         }
     }
 

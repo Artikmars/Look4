@@ -21,6 +21,8 @@ import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_welcome.*
 
 const val PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 5545
+const val PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION = 5493
+const val PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 5969
 var selectedImage: Uri? = null
 var enteredPhoneNumber: String? = null
 

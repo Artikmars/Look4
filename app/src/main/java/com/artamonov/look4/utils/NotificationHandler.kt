@@ -59,11 +59,10 @@ class NotificationHandler() {
 
     fun createIntent(context: Context, request: ContactRequest): Intent {
         val intent = Intent(context, LookActivity::class.java)
-        intent.putExtra(EXTRA_DISCOVERER_NAME, request.discovererName)
-        intent.putExtra(EXTRA_DISCOVERER_PHONE_NUMBER, request.discovererPhoneNumber)
-        intent.putExtra(EXTRA_DISCOVERER_FILE_PATH, request.discovererFilePath)
-        intent.putExtra(EXTRA_ADVERTISER_PHONE_NUMBER, request.advertiserPhoneNumber)
-        intent.putExtra(EXTRA_ENDPOINT_ID, request.endpointIdSaved)
+        intent.putExtra(EXTRA_DISCOVERER_NAME, request.name)
+        intent.putExtra(EXTRA_DISCOVERER_PHONE_NUMBER, request.phoneNumber)
+        intent.putExtra(EXTRA_DISCOVERER_FILE_PATH, request.filePath)
+        intent.putExtra(EXTRA_ENDPOINT_ID, request.endpointId)
         return intent
     }
 

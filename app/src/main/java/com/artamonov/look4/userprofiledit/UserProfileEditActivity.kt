@@ -46,10 +46,12 @@ class UserProfileEditActivity : BaseActivity() {
         checkForPermissions()
 
         user_edit_phone_number.addTextChangedListener(PostTextChangeWatcher {
-            viewModel.phoneNumberChanged(it) })
+            viewModel.phoneNumberChanged(it)
+        })
 
         user_edit_name.addTextChangedListener(PostTextChangeWatcher {
-            viewModel.nameChanged(it) })
+            viewModel.nameChanged(it)
+        })
 
         radioGroup.setOnCheckedChangeListener { _, i ->
             viewModel.setCheckedRadioButton(i)
@@ -62,12 +64,16 @@ class UserProfileEditActivity : BaseActivity() {
         }
 
         user_edit_add_image.setOnClickListener {
-            dispatchTakePictureIntent() }
+            dispatchTakePictureIntent()
+        }
 
         viewModel.phoneNumberLayoutErrorLiveData.observe(this, Observer { state ->
-            if (state == true) { user_edit_phone_number_layout.error =
-                resources.getString(R.string.welcome_phone_number_warning)
-            } else { user_edit_phone_number_layout.error = null }
+            if (state == true) {
+                user_edit_phone_number_layout.error =
+                    resources.getString(R.string.welcome_phone_number_warning)
+            } else {
+                user_edit_phone_number_layout.error = null
+            }
         })
     }
 
@@ -76,16 +82,22 @@ class UserProfileEditActivity : BaseActivity() {
             FetchStatus.LoadingState -> {
                 user_edit_progress_bar.visibility = VISIBLE
             }
-            FetchStatus.SucceededState -> { finish() }
+            FetchStatus.SucceededState -> {
+                finish()
+            }
             FetchStatus.PhoneValidationErrorState -> {
                 user_edit_progress_bar.visibility = GONE
-                Snackbar.make(findViewById(android.R.id.content), getString(R.string.error_blank_fields),
-                    Snackbar.LENGTH_SHORT).show()
+                Snackbar.make(
+                    findViewById(android.R.id.content), getString(R.string.error_blank_fields),
+                    Snackbar.LENGTH_SHORT
+                ).show()
             }
             FetchStatus.ProfileWasNotUpdatedErrorState -> {
                 user_edit_progress_bar.visibility = GONE
-                Snackbar.make(findViewById(android.R.id.content), getString(R.string.error_general),
-                    Snackbar.LENGTH_SHORT).show()
+                Snackbar.make(
+                    findViewById(android.R.id.content), getString(R.string.error_general),
+                    Snackbar.LENGTH_SHORT
+                ).show()
             }
         }
     }
@@ -109,9 +121,11 @@ class UserProfileEditActivity : BaseActivity() {
         user_edit_phone_number.setText(viewAction.phoneNumber)
         setRadioButtonState(viewAction.gender)
         val imageString = viewAction.imagePath
-        imageString?.let {
-            val bitmap = MediaStore.Images.Media.getBitmap(this.contentResolver, Uri.parse(imageString))
-            Glide.with(this).load(bitmap).apply(RequestOptions.circleCropTransform()).into(user_edit_add_image)
+        if (!imageString.isNullOrEmpty()) {
+            val bitmap =
+                MediaStore.Images.Media.getBitmap(this.contentResolver, Uri.parse(imageString))
+            Glide.with(this).load(bitmap).apply(RequestOptions.circleCropTransform())
+                .into(user_edit_add_image)
         }
     }
 
@@ -138,10 +152,11 @@ class UserProfileEditActivity : BaseActivity() {
                 //   Toast.makeText(this, "Task Cancelled", Toast.LENGTH_SHORT).show()
             }
         }
-        }
+    }
 
     private fun updateImage(uri: Uri) {
-        Glide.with(this).load(uri).apply(RequestOptions.circleCropTransform()).into(user_edit_add_image)
+        Glide.with(this).load(uri).apply(RequestOptions.circleCropTransform())
+            .into(user_edit_add_image)
     }
 
     private fun dispatchTakePictureIntent() {
@@ -154,12 +169,14 @@ class UserProfileEditActivity : BaseActivity() {
 
     private fun checkForPermissions() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
-            != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this,
-                    arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
-                    PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE
-                )
-            } else {
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
+                PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE
+            )
+        } else {
             viewModel.obtainEvent(ProfileEditEvent.CurrentProfileDataLoaded)
         }
     }
@@ -180,8 +197,11 @@ class UserProfileEditActivity : BaseActivity() {
                     // permission denied, boo! Disable the
                     // functionality that depends on this permission.
                     finish()
-                    Snackbar.make(findViewById(android.R.id.content), "You need to grant the permission to read your profile picture",
-                        Snackbar.LENGTH_SHORT).show()
+                    Snackbar.make(
+                        findViewById(android.R.id.content),
+                        "You need to grant the permission to read your profile picture",
+                        Snackbar.LENGTH_SHORT
+                    ).show()
                 }
                 return
             }

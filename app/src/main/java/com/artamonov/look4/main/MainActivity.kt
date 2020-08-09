@@ -6,8 +6,6 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.view.View.GONE
-import android.view.View.VISIBLE
 import android.view.animation.Animation
 import android.view.animation.RotateAnimation
 import androidx.annotation.RequiresApi
@@ -18,8 +16,11 @@ import com.artamonov.look4.BuildConfig
 import com.artamonov.look4.R
 import com.artamonov.look4.base.BaseActivity
 import com.artamonov.look4.contacts.ContactsActivity
-import com.artamonov.look4.data.database.User
 import com.artamonov.look4.look.LookActivity
+import com.artamonov.look4.main.models.FetchMainStatus
+import com.artamonov.look4.main.models.MainAction
+import com.artamonov.look4.main.models.MainEvent
+import com.artamonov.look4.main.models.MainViewState
 import com.artamonov.look4.service.ForegroundService
 import com.artamonov.look4.settings.SettingsActivity
 import com.artamonov.look4.utils.ContactUnseenState
@@ -34,7 +35,6 @@ import com.bumptech.glide.Glide
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.nearby.Nearby
-import com.google.android.gms.nearby.connection.ConnectionsClient
 import java.io.File
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -44,17 +44,15 @@ companion object {
     private lateinit var deviceId: String
     var isDestroyed = false
 }
-    private var connectionClient: ConnectionsClient? = null
-    private lateinit var mainViewModel: MainViewModel
+    private lateinit var viewModel: MainViewModel
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         this.supportActionBar?.hide()
-        mainViewModel = ViewModelProvider(this).get(MainViewModel::class.java)
+        viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
 
-        connectionClient = Nearby.getConnectionsClient(this)
         deviceId = Settings.Secure.getString(applicationContext.contentResolver, Settings.Secure.ANDROID_ID)
         setAdView()
 
@@ -63,90 +61,84 @@ companion object {
             BuildConfig.VERSION_NAME
         ) }
 
-        current_version_text.setOnClickListener { sendEmail(LogHandler.saveLogsToFile(this)) }
+        current_version_text.setOnClickListener { viewModel.obtainEvent(MainEvent.SendEmail) }
 
-        mainViewModel.isInForeground.observe(this, Observer { isInForeground ->
-            if (isInForeground) {
-                offline_text.text = resources.getString(R.string.main_online_mode)
+        viewModel.viewStates().observe(this, Observer { bindViewState(it) })
+        viewModel.viewEffects().observe(this, Observer { bindViewAction(it) })
+
+        look_text.setOnClickListener { viewModel.obtainEvent(MainEvent.DiscoveringIsStarted) }
+        offline_text.setSafeOnClickListener { viewModel.obtainEvent(MainEvent.ChangeStatus) }
+        contacts_text.setOnClickListener { viewModel.obtainEvent(MainEvent.OpenContacts) }
+        settings_text.setOnClickListener { viewModel.obtainEvent(MainEvent.OpenSettings) }
+        main_look_gender_text.setOnClickListener { viewModel.obtainEvent(MainEvent.ChangeLookGender) }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+    private fun bindViewState(viewState: MainViewState) {
+        when (viewState.fetchStatus) {
+            is FetchMainStatus.DefaultState -> {
+                setLookGenderText(viewState.data?.lookGender)
+            }
+            is FetchMainStatus.OnLookClickedState -> {
+                if (serviceWasStopped()) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        startActivity(Intent(this, LookActivity::class.java),
+                            ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
+                    } else {
+                        startActivity(Intent(this, LookActivity::class.java))
+                    }
+                }
+            }
+            is FetchMainStatus.LoadingState -> {
+            }
+            is FetchMainStatus.OnContactsClickedState -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    startActivity(Intent(this, ContactsActivity::class.java),
+                        ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
+                } else {
+                    startActivity(Intent(this, ContactsActivity::class.java))
+                }
+            }
+            is FetchMainStatus.OnSettingsClickedState -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    startActivity(Intent(this, SettingsActivity::class.java),
+                        ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
+                } else {
+                    startActivity(Intent(this, SettingsActivity::class.java))
+                }
+            }
+            is FetchMainStatus.OfflineState -> {
+                if (serviceWasStopped()) {
+                    showSnackbarError(R.string.main_advertising_has_stopped)
+                    Nearby.getConnectionsClient(this).stopAllEndpoints()
+                    offline_text.text = getString(R.string.main_offline_mode)
+                    letter_0_1.clearAnimation()
+                }
+            }
+            is FetchMainStatus.OnlineState -> {
+                startService()
+                showSnackbarError(R.string.main_advertising_has_started)
                 animateDot()
-            } else {
-                offline_text.text = resources.getString(R.string.main_offline_mode)
-                letter_0_1.clearAnimation()
+                look_text.isEnabled = true
+                look_text.isClickable = true
+                offline_text.text = getString(R.string.main_online_mode)
             }
-        })
-
-        mainViewModel.state.observe(this, Observer { state ->
-            when (state) {
-                is MainState.SucceededState<*> -> {
-                    setLookGenderText(state.user as User?)
-                }
-                is MainState.OnLookClickedState -> {
-                    if (serviceIsStopped()) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                            startActivity(Intent(this, LookActivity::class.java),
-                                ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
-                        } else {
-                            startActivity(Intent(this, LookActivity::class.java))
-                        }
-                    }
-                }
-                is MainState.LoadingState -> {
-                    main_progress_bar.visibility = VISIBLE
-                }
-                is MainState.OnContactsClickedState -> {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                        startActivity(Intent(this, ContactsActivity::class.java),
-                            ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
-                    } else {
-                        startActivity(Intent(this, ContactsActivity::class.java))
-                    }
-                }
-                is MainState.OnSettingsClickedState -> {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                        startActivity(Intent(this, SettingsActivity::class.java),
-                            ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
-                    } else {
-                        startActivity(Intent(this, SettingsActivity::class.java))
-                    }
-                }
-                is MainState.DefaultState -> {
-                    if (serviceIsStopped()) {
-                        showSnackbarError(R.string.main_advertising_has_stopped)
-                        connectionClient?.stopAllEndpoints()
-                        offline_text.text = getString(R.string.main_offline_mode)
-                        letter_0_1.clearAnimation()
-                    }
-                }
-                is MainState.OnlineState -> {
-                    startService()
-                    showSnackbarError(R.string.main_advertising_has_started)
-                    animateDot()
-                    look_text.isEnabled = true
-                    look_text.isClickable = true
-                    offline_text.text = getString(R.string.main_online_mode)
-                }
-                is MainState.LookGenderManState -> {
-                    main_progress_bar.visibility = GONE
-                    main_look_gender_text.text = getString(R.string.main_man)
-                }
-                is MainState.LookGenderWomenState -> {
-                    main_progress_bar.visibility = GONE
-                    main_look_gender_text.text = getString(R.string.main_woman)
-                }
-                is MainState.LookGenderAllState -> {
-                    main_progress_bar.visibility = GONE
-                    main_look_gender_text.text = getString(R.string.main_all)
-                }
+            is FetchMainStatus.LookGenderManState -> {
+                main_look_gender_text.text = getString(R.string.main_man)
             }
-        })
+            is FetchMainStatus.LookGenderWomenState -> {
+                main_look_gender_text.text = getString(R.string.main_woman)
+            }
+            is FetchMainStatus.LookGenderAllState -> {
+                main_look_gender_text.text = getString(R.string.main_all)
+            }
+        }
+    }
 
-        mainViewModel.populateData()
-
-        look_text.setOnClickListener { mainViewModel.startDiscovering() }
-        offline_text.setSafeOnClickListener { mainViewModel.changeAdvertisingStatus() }
-        contacts_text.setOnClickListener { mainViewModel.openContacts() }
-        settings_text.setOnClickListener { mainViewModel.openSettings() }
-        main_look_gender_text.setOnClickListener { mainViewModel.changeLookGenderText() }
+    private fun bindViewAction(viewAction: MainAction) {
+        when (viewAction) {
+            is MainAction.SendEmail -> { sendEmail(LogHandler.saveLogsToFile(this)) }
+        }
     }
 
     override fun onStart() {
@@ -171,8 +163,8 @@ companion object {
         letter_0_1.startAnimation(rotate)
     }
 
-    private fun setLookGenderText(user: User?) {
-        when (user?.lookGender) {
+    private fun setLookGenderText(lookGender: String?) {
+        when (lookGender) {
             MALE -> main_look_gender_text.text = getString(R.string.main_man)
             FEMALE -> main_look_gender_text.text = getString(R.string.main_woman)
             ALL -> main_look_gender_text.text = getString(R.string.main_all)
@@ -188,7 +180,6 @@ companion object {
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     override fun onResume() {
         super.onResume()
-        mainViewModel.isInForeground()
         contactAdvertiserUnseenState.observe(this, Observer { state ->
             when (state) {
                 ContactUnseenState.EnabledState -> {
@@ -210,7 +201,7 @@ companion object {
         ContextCompat.startForegroundService(this, serviceIntent)
     }
 
-    private fun serviceIsStopped(): Boolean {
+    private fun serviceWasStopped(): Boolean {
         return if (ForegroundService.isForegroundServiceRunning) {
             stopService(Intent(this, ForegroundService::class.java))
         } else {
