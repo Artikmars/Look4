@@ -20,19 +20,17 @@ import android.os.ParcelFileDescriptor
 import android.provider.Settings
 import android.view.View.GONE
 import android.view.View.VISIBLE
+import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
 import com.artamonov.look4.PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION
 import com.artamonov.look4.R
 import com.artamonov.look4.base.BaseActivity
 import com.artamonov.look4.data.database.User
-import com.artamonov.look4.data.prefs.PreferenceHelper
 import com.artamonov.look4.main.MainActivity
 import com.artamonov.look4.utils.ContactUnseenState
-import com.artamonov.look4.utils.CountDownTimer.timer
 import com.artamonov.look4.utils.LiveDataContactUnseenState.contactAdvertiserUnseenState
 import com.artamonov.look4.utils.UserRole.Companion.ADVERTISER
 import com.artamonov.look4.utils.UserRole.Companion.DISCOVERER
@@ -54,10 +52,10 @@ import com.google.android.gms.nearby.connection.Payload
 import com.google.android.gms.nearby.connection.PayloadCallback
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate
 import com.google.android.gms.nearby.connection.Strategy.P2P_POINT_TO_POINT
-import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import kotlinx.android.synthetic.main.activity_look.*
 
-class LookActivity : BaseActivity() {
+class LookActivity : BaseActivity(R.layout.activity_look) {
 
     companion object {
         private val REQUIRED_PERMISSIONS = arrayOf(
@@ -67,19 +65,22 @@ class LookActivity : BaseActivity() {
             CHANGE_WIFI_STATE,
             ACCESS_COARSE_LOCATION,
             ACCESS_FINE_LOCATION,
-            READ_EXTERNAL_STORAGE)
+            READ_EXTERNAL_STORAGE
+        )
 
         private const val REQUEST_CODE_REQUIRED_PERMISSIONS = 1
         private val STRATEGY = P2P_POINT_TO_POINT
         const val LOG_TAG = "Look4"
         lateinit var deviceId: String
 
-        private var connectionClient: ConnectionsClient? = null
-
+        private lateinit var connectionClient: ConnectionsClient
         private val discOptions = DiscoveryOptions.Builder().setStrategy(STRATEGY).build()
-        private lateinit var lookViewModel: LookViewModel
+
         private var user: User? = null
+        private var timer: CountDownTimer? = null
     }
+
+    private val lookViewModel: LookViewModel by viewModels()
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
@@ -88,8 +89,6 @@ class LookActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_look)
-        lookViewModel = ViewModelProvider(this).get(LookViewModel::class.java)
         connectionClient = Nearby.getConnectionsClient(this)
         deviceId = Settings.Secure.getString(applicationContext.contentResolver, Settings.Secure.ANDROID_ID)
 
@@ -100,49 +99,60 @@ class LookActivity : BaseActivity() {
         look_back.setOnClickListener { closeActivity() }
 
         no_button.setSafeOnClickListener {
-            lookViewModel.endpointIdSaved?.let { connectionClient?.disconnectFromEndpoint(lookViewModel.endpointIdSaved!!) }
+            lookViewModel.endpointIdSaved?.let { connectionClient.disconnectFromEndpoint(it) }
             closeActivity()
         }
 
         yes_button.setSafeOnClickListener {
-            when (PreferenceHelper.getUserProfile()?.role) {
+            requireNotNull(lookViewModel.endpointIdSaved) { "Endpoint is null" }
+            when (prefs.getUserProfile().role) {
                 ADVERTISER -> {
-                    lookViewModel.savePhoneNumberToDB(lookViewModel.discovererPhoneNumber, ADVERTISER)
+                    lookViewModel.savePhoneNumberToDB(
+                        lookViewModel.discovererPhoneNumber,
+                        ADVERTISER
+                    )
 
-                    lookViewModel.endpointIdSaved?.let {
-                        connectionClient?.sendPayload(
-                            lookViewModel.endpointIdSaved!!, Payload.fromBytes(PreferenceHelper.getUserProfile()?.phoneNumber!!.toByteArray()))?.addOnFailureListener { e ->
-                            showSnackbarError(getString(R.string.look_error_connection_is_lost))
-                            Crashlytics.logException(e)
-                            lookViewModel.endpointIdSaved?.let { connectionClient?.disconnectFromEndpoint(lookViewModel.endpointIdSaved!!) }
-                            closeActivity()
-                        }?.addOnSuccessListener {
-                            lookViewModel.endpointIdSaved?.let { connectionClient?.disconnectFromEndpoint(lookViewModel.endpointIdSaved!!) }
-                            contactAdvertiserUnseenState.set(newValue = ContactUnseenState.EnabledState)
-                            closeActivity()
-                        }
+                    lookViewModel.endpointIdSaved?.let { endpoint ->
+                        connectionClient.sendPayload(
+                            endpoint, Payload
+                                .fromBytes(
+                                    prefs.getUserProfile().phoneNumber?.toByteArray()
+                                        ?: "".toByteArray()
+                                )
+                        )
+                            ?.addOnFailureListener { e ->
+                                showSnackbarError(getString(R.string.look_error_connection_is_lost))
+                                Crashlytics.logException(e)
+                                connectionClient.disconnectFromEndpoint(endpoint)
+                                closeActivity()
+                            }?.addOnSuccessListener {
+                                connectionClient.disconnectFromEndpoint(endpoint)
+                                contactAdvertiserUnseenState.set(newValue = ContactUnseenState.EnabledState)
+                                closeActivity()
+                            }
                     }
                 }
                 DISCOVERER -> {
-                    connectionClient?.stopDiscovery()
-                    val pfd: ParcelFileDescriptor? = contentResolver.openFileDescriptor(Uri.parse(PreferenceHelper.getUserProfile()?.imagePath!!), "r")
+                    connectionClient.stopDiscovery()
+                    val pfd: ParcelFileDescriptor? = contentResolver.openFileDescriptor(
+                        Uri.parse(prefs.getUserProfile().imagePath!!), "r"
+                    )
                     val pFilePayload = Payload.fromFile(pfd!!)
-                    lookViewModel.endpointIdSaved?.let {
-                        connectionClient?.sendPayload(
-                            lookViewModel.endpointIdSaved!!,
-                            Payload.fromBytes("${getUserProfile()?.name};${getUserProfile()?.phoneNumber};${getUserProfile()?.gender}".toByteArray()))?.addOnFailureListener {
-                            e ->
-                            Crashlytics.logException(e)
-                            showSnackbarError(getString(R.string.look_error_connection_is_lost_try_again))
-                            closeActivity()
+                    connectionClient.sendPayload(
+                        lookViewModel.endpointIdSaved!!,
+                        Payload.fromBytes("${getUserProfile()?.name};${getUserProfile()?.phoneNumber};${getUserProfile()?.gender}".toByteArray())
+                    )?.addOnFailureListener { e ->
+                        Crashlytics.logException(e)
+                        showSnackbarError(getString(R.string.look_error_connection_is_lost_try_again))
+                        closeActivity()
                     }
-                        connectionClient?.sendPayload(
-                            lookViewModel.endpointIdSaved!!, pFilePayload)?.addOnFailureListener {
-                                e ->
-                            showSnackbarError(getString(R.string.look_error_connection_is_lost_try_again))
-                            Crashlytics.logException(e)
-                        }
+                    connectionClient.sendPayload(
+                        lookViewModel.endpointIdSaved!!, pFilePayload
+                    )?.addOnFailureListener { e ->
+                        showSnackbarError(getString(R.string.look_error_connection_is_lost_try_again))
+                        Crashlytics.logException(e)
                     }
+
                     finish()
                 }
             }
@@ -159,30 +169,41 @@ class LookActivity : BaseActivity() {
 //        }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        timer = null
+        endpointDiscoveryCallback = null
+        connectionLifecycleCallback = null
+    }
+
     private fun bindViewState(viewState: LookState) {
         when (viewState) {
             is LookState.DefaultState -> {
+                Crashlytics.log("State: Default")
                 populateDefaultView()
             }
             is LookState.NoFoundState -> {
+                Crashlytics.log("State: No Found")
                 populateNoFoundView()
             }
             is LookState.SearchState -> {
+                Crashlytics.log("State: Search")
                 startClient()
             }
             is LookState.PhoneNumberReceived -> {
-                lookViewModel.endpointIdSaved
-                    ?.let { connectionClient?.disconnectFromEndpoint(lookViewModel.endpointIdSaved!!) }
+                Crashlytics.log("State: PhoneNumberReceived")
+                lookViewModel.endpointIdSaved?.let { connectionClient.disconnectFromEndpoint(it) }
                 showSnackbarWithAction()
             }
             is LookState.SucceededAdvertiserIsFoundState<*> -> {
+                Crashlytics.log("State: SucceededAdvertiserIsFoundState")
                 populateSucceedView()
             }
             is LookState.SucceededDiscoverIsFoundState<*> -> {
+                Crashlytics.log("State: SucceededDiscoverIsFoundState")
                 populateSucceedView()
                 searchingInProgressText.visibility = VISIBLE
-                searchingInProgressText.text =
-                    lookViewModel.discovererName
+                searchingInProgressText.text = lookViewModel.discovererName
                 profile_image.setImageDrawable(Drawable.createFromPath(lookViewModel.discovererFilePath))
             }
         }
@@ -190,21 +211,25 @@ class LookActivity : BaseActivity() {
 
     private fun closeActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            startActivity(Intent(this, MainActivity::class.java),
-                    ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
-            } else { startActivity(Intent(this, MainActivity::class.java)) }
+            startActivity(
+                Intent(this, MainActivity::class.java),
+                ActivityOptions.makeSceneTransitionAnimation(this).toBundle()
+            )
+        } else {
+            startActivity(Intent(this, MainActivity::class.java))
+        }
 
         finish()
     }
 
     private fun getUserProfile(): User? {
-        return PreferenceHelper.getUserProfile()
+        return prefs.getUserProfile()
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onStart() {
         super.onStart()
-        if (!hasPermissions(this, REQUIRED_PERMISSIONS.toString())) {
+        if (!hasPermissions(this, REQUIRED_PERMISSIONS)) {
             requestPermissions(
                 REQUIRED_PERMISSIONS,
                 REQUEST_CODE_REQUIRED_PERMISSIONS
@@ -212,68 +237,18 @@ class LookActivity : BaseActivity() {
         }
     }
 
-    private fun populateDefaultView() {
-        searchingInProgressText.isAllCaps = true
-        talk_in_person_text.visibility = GONE
-        look_divider.visibility = GONE
-        searchBtn.visibility = GONE
-        no_button.visibility = GONE
-        yes_button.visibility = GONE
-        profile_image.visibility = GONE
-        found_view.visibility = GONE
-        searchingInProgressText.visibility = GONE
-        countdown_view.visibility = GONE
-        Crashlytics.log("Default view is populated")
-    }
-
-    private fun populateScanningView() {
-        talk_in_person_text.visibility = GONE
-        look_divider.visibility = GONE
-        searchBtn.visibility = GONE
-        no_button.visibility = GONE
-        yes_button.visibility = GONE
-        profile_image.visibility = GONE
-        found_view.visibility = GONE
-        searchingInProgressText.visibility = GONE
-        countdown_view.visibility = VISIBLE
-        Crashlytics.log("Scanning view is populated")
-    }
-
-    private fun populateNoFoundView() {
-        searchingInProgressText.text = resources.getString(R.string.look_no_found)
-        searchBtn.text = resources.getString(R.string.look_search_again)
-        countdown_view.visibility = GONE
-        no_button.visibility = GONE
-        yes_button.visibility = GONE
-        profile_image.visibility = GONE
-        found_view.visibility = GONE
-        talk_in_person_text.visibility = VISIBLE
-        look_divider.visibility = VISIBLE
-        searchBtn.visibility = VISIBLE
-        searchingInProgressText.visibility = VISIBLE
-        Crashlytics.log("No found view is populated")
-    }
-
-    private fun populateSucceedView() {
-        countdown_view.visibility = GONE
-        talk_in_person_text.visibility = GONE
-        look_divider.visibility = GONE
-        searchBtn.visibility = GONE
-        no_button.visibility = VISIBLE
-        yes_button.visibility = VISIBLE
-        profile_image.visibility = VISIBLE
-        found_view.visibility = VISIBLE
-        Crashlytics.log("Succeed view is populated")
-    }
-
     private fun checkForPermissions() {
         if (ContextCompat.checkSelfPermission(this, ACCESS_COARSE_LOCATION)
-            != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            Crashlytics.log("Permission is missing in checkForPermissions(): $ACCESS_COARSE_LOCATION")
+            ActivityCompat.requestPermissions(
+                this,
                 arrayOf(ACCESS_COARSE_LOCATION),
                 PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION
             )
         } else {
+            Crashlytics.log("Permission is given in checkForPermissions(): $ACCESS_COARSE_LOCATION")
             lookViewModel.startDiscovering()
             onNewIntent(intent)
         }
@@ -296,11 +271,7 @@ class LookActivity : BaseActivity() {
                     // permission denied, boo! Disable the
                     // functionality that depends on this permission.
                     finish()
-                    Snackbar.make(
-                        findViewById(android.R.id.content),
-                        "You need to grant the permission to start discovering",
-                        Snackbar.LENGTH_SHORT
-                    ).show()
+                    showSnackbarError(R.string.error_permissions_are_not_granted_for_discovering)
                 }
                 return
             }
@@ -314,13 +285,14 @@ class LookActivity : BaseActivity() {
     }
 
     /** Returns true if the app was granted all the permissions. Otherwise, returns false.  */
-    private fun hasPermissions(context: Context, vararg permissions: String): Boolean {
+    private fun hasPermissions(context: Context, permissions: Array<String>): Boolean {
         for (permission in permissions) {
             if (ContextCompat.checkSelfPermission(
-                            context,
-                            permission
-                    ) != PackageManager.PERMISSION_GRANTED
+                    context,
+                    permission
+                ) != PackageManager.PERMISSION_GRANTED
             ) {
+                Crashlytics.log("Permission is missing: $permission")
                 return false
             }
         }
@@ -330,18 +302,22 @@ class LookActivity : BaseActivity() {
     private fun startClient() {
         startTimer()
         populateScanningView()
-        lookViewModel.endpointIdSaved?.let { connectionClient?.disconnectFromEndpoint(lookViewModel.endpointIdSaved!!) }
-        connectionClient?.startDiscovery(packageName, endpointDiscoveryCallback, discOptions)
-        ?.addOnSuccessListener { lookViewModel.updateRole(DISCOVERER)
-            Crashlytics.log("Discovery has been started")
-        }?.addOnFailureListener { e ->
-                // We're unable to start discovering.
-                showSnackbarError(getString(R.string.look_error_scanning_can_not_be_started))
-                handleFailedResponse(e)
-                closeActivity()
+        lookViewModel.endpointIdSaved?.let { connectionClient.disconnectFromEndpoint(it) }
+        endpointDiscoveryCallback?.let {
+            connectionClient.startDiscovery(packageName, it, discOptions)
+                ?.addOnSuccessListener {
+                    lookViewModel.updateRole(DISCOVERER)
+                    Crashlytics.log("Discovery has been started")
+                }?.addOnFailureListener { e ->
+                    // We're unable to start discovering.
+                    showSnackbarError(getString(R.string.look_error_scanning_can_not_be_started))
+                    handleFailedResponse(e)
+                    //  closeActivity()
                 }
+        }
     }
 
+    @Synchronized
     private fun startTimer() {
         timer = object : CountDownTimer(25000, 1000) {
             override fun onTick(millisUntilFinished: Long) {
@@ -350,79 +326,83 @@ class LookActivity : BaseActivity() {
             }
 
             override fun onFinish() {
-                connectionClient?.stopAllEndpoints()
+                connectionClient.stopAllEndpoints()
                 countdown_view.visibility = GONE
                 lookViewModel.setNoFoundState()
+                Crashlytics.logException(Throwable("No found. Timer has finished"))
+                FirebaseCrashlytics.getInstance().recordException(Throwable("No found. Timer has finished"))
                 Crashlytics.log("timer onFinish()")
             }
         }
         timer?.start()
     }
 
-    private val endpointDiscoveryCallback: EndpointDiscoveryCallback = object : EndpointDiscoveryCallback() {
-        override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
-            user?.let {
-                connectionClient?.requestConnection(user?.name!!, endpointId, connectionLifecycleCallback)
-                    ?.addOnFailureListener { e ->
-                        handleFailedResponse(e)
-                        showSnackbarError(getString(R.string.look_error_connection_is_lost_try_again))
-                        closeActivity()
-                    }
+    private var endpointDiscoveryCallback: EndpointDiscoveryCallback? =
+        object : EndpointDiscoveryCallback() {
+            override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
+                if (user?.name != null && connectionLifecycleCallback != null) {
+                    connectionClient.requestConnection(user?.name!!, endpointId, connectionLifecycleCallback!!)
+                        ?.addOnFailureListener { e ->
+                            handleFailedResponse(e)
+                            showSnackbarError(getString(R.string.look_error_connection_is_lost_try_again))
+                            // closeActivity()
+                        }
+                }
+            }
+
+            override fun onEndpointLost(endpointId: String) {
+                showSnackbarError(getString(R.string.look_error_disconnected))
+                Crashlytics.log("onEndpointLost: $endpointId")
             }
         }
 
-        override fun onEndpointLost(endpointId: String) {
-            showSnackbarError(getString(R.string.look_error_disconnected))
-            Crashlytics.log("onEndpointLost: $endpointId")
-        }
-    }
-
-    private val connectionLifecycleCallback: ConnectionLifecycleCallback = object : ConnectionLifecycleCallback() {
-        override fun onConnectionInitiated(p0: String, p1: ConnectionInfo) {
-            connectionClient?.acceptConnection(p0, payloadCallback)?.addOnFailureListener { e ->
-                showSnackbarError(getString(R.string.look_error_connection_is_lost_try_again))
-                Crashlytics.logException(e)
-                closeActivity()
-            }
-        }
-
-        override fun onConnectionResult(endpointId: String, result: ConnectionResolution) {
-            lookViewModel.endpointIdSaved = endpointId
-            when (result.status.statusCode) {
-                ConnectionsStatusCodes.STATUS_OK -> {
-                    Crashlytics.log("endpointId = $endpointId")
-                }
-
-                ConnectionsStatusCodes.STATUS_CONNECTION_REJECTED -> {
-                    handleFailedResponse(Exception("ConnectionsStatusCodes.STATUS_CONNECTION_REJECTED"))
-                    showSnackbarError(getString(R.string.look_error_rejected))
-                    closeActivity()
-                }
-                ConnectionsStatusCodes.STATUS_ENDPOINT_IO_ERROR -> {
-                    handleFailedResponse(Exception("ConnectionsStatusCodes.STATUS_ENDPOINT_IO_ERROR"))
-                    showSnackbarError(getString(R.string.look_error_failed))
-                    closeActivity()
-                }
-
-                ConnectionsStatusCodes.STATUS_ERROR -> {
-                    handleFailedResponse(Exception("ConnectionsStatusCodes.STATUS_ERROR"))
-                    showSnackbarError(getString(R.string.look_error_failed))
-                    closeActivity()
-                }
-                else -> {
-                    handleFailedResponse(Exception("Unknown status code"))
+    private var connectionLifecycleCallback: ConnectionLifecycleCallback? =
+        object : ConnectionLifecycleCallback() {
+            override fun onConnectionInitiated(p0: String, p1: ConnectionInfo) {
+                connectionClient.acceptConnection(p0, payloadCallback)?.addOnFailureListener { e ->
                     showSnackbarError(getString(R.string.look_error_connection_is_lost_try_again))
+                    Crashlytics.logException(e)
                     closeActivity()
                 }
             }
-        }
 
-        override fun onDisconnected(p0: String) {
-            showSnackbarError(getString(R.string.look_error_disconnected))
-            lookViewModel.endpointIdSaved?.let { connectionClient?.disconnectFromEndpoint(lookViewModel.endpointIdSaved!!) }
-            Crashlytics.log("onDisconnected: $p0")
+            override fun onConnectionResult(endpointId: String, result: ConnectionResolution) {
+                lookViewModel.endpointIdSaved = endpointId
+                when (result.status.statusCode) {
+                    ConnectionsStatusCodes.STATUS_OK -> {
+                        Crashlytics.log("endpointId = $endpointId")
+                    }
+
+                    ConnectionsStatusCodes.STATUS_CONNECTION_REJECTED -> {
+                        handleFailedResponse(Exception("ConnectionsStatusCodes.STATUS_CONNECTION_REJECTED"))
+                        showSnackbarError(getString(R.string.look_error_rejected))
+                        //  closeActivity()
+                    }
+                    ConnectionsStatusCodes.STATUS_ENDPOINT_IO_ERROR -> {
+                        handleFailedResponse(Exception("ConnectionsStatusCodes.STATUS_ENDPOINT_IO_ERROR"))
+                        showSnackbarError(getString(R.string.look_error_failed))
+                        //  closeActivity()
+                    }
+
+                    ConnectionsStatusCodes.STATUS_ERROR -> {
+                        handleFailedResponse(Exception("ConnectionsStatusCodes.STATUS_ERROR"))
+                        showSnackbarError(getString(R.string.look_error_failed))
+                        //  closeActivity()
+                    }
+                    else -> {
+                        handleFailedResponse(Exception("Unknown status code"))
+                        showSnackbarError(getString(R.string.look_error_connection_is_lost_try_again))
+                        //  closeActivity()
+                    }
+                }
+            }
+
+            override fun onDisconnected(p0: String) {
+                showSnackbarError(getString(R.string.look_error_disconnected))
+                lookViewModel.endpointIdSaved?.let { connectionClient.disconnectFromEndpoint(it) }
+                Crashlytics.log("onDisconnected: $p0")
+            }
         }
-    }
 
     val payloadCallback = object : PayloadCallback() {
         override fun onPayloadReceived(p0: String, p1: Payload) {
@@ -434,8 +414,9 @@ class LookActivity : BaseActivity() {
                 Crashlytics.log("onPayloadTransferUpdate: ${p1.status} && ${p1.totalBytes}")
                 if (profile_image.drawable == null && lookViewModel.isGenderValid) {
                     timer?.cancel()
-                    lookViewModel.advertiserName?.let { searchingInProgressText.text =
-                        lookViewModel.advertiserName
+                    lookViewModel.advertiserName?.let {
+                        searchingInProgressText.text =
+                            lookViewModel.advertiserName
                     }
                     populateSucceedView()
                     Glide.with(applicationContext)
@@ -450,8 +431,8 @@ class LookActivity : BaseActivity() {
     private fun handleFailedResponse(exception: Exception) {
         timer?.cancel()
         Crashlytics.logException(exception)
-        lookViewModel.endpointIdSaved?.let { connectionClient?.disconnectFromEndpoint(lookViewModel.endpointIdSaved!!) }
-        connectionClient?.stopAllEndpoints()
+        lookViewModel.endpointIdSaved?.let { connectionClient.disconnectFromEndpoint(it) }
+        connectionClient.stopAllEndpoints()
         lookViewModel.setNoFoundState()
     }
 }

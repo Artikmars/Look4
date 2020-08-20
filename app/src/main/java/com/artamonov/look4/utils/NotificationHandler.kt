@@ -14,13 +14,11 @@ class NotificationHandler() {
     private var advertiserPhoneNumber: String? = null
     private var endpointIdSaved: String? = null
 
-    constructor(intent: Intent?) : this() {
-        intent?.let {
-            discovererName = it.getStringExtra(EXTRA_DISCOVERER_NAME)
-            discovererPhoneNumber = it.getStringExtra(EXTRA_DISCOVERER_PHONE_NUMBER)
-            discovererFilePath = it.getStringExtra(EXTRA_DISCOVERER_FILE_PATH)
-            endpointIdSaved = it.getStringExtra(EXTRA_ENDPOINT_ID)
-            }
+    constructor(intent: Intent) : this() {
+        discovererName = intent.getStringExtra(EXTRA_DISCOVERER_NAME)
+        discovererPhoneNumber = intent.getStringExtra(EXTRA_DISCOVERER_PHONE_NUMBER)
+        discovererFilePath = intent.getStringExtra(EXTRA_DISCOVERER_FILE_PATH)
+        endpointIdSaved = intent.getStringExtra(EXTRA_ENDPOINT_ID)
     }
 
     constructor(
@@ -28,7 +26,7 @@ class NotificationHandler() {
         discovererPhoneNumber: String?,
         discovererFilePath: String?,
         advertiserPhoneNumber: String?,
-        endpointIdSaved: String?
+        endpointIdSaved: String
     ) : this() {
         this.advertiserPhoneNumber = advertiserPhoneNumber
         this.discovererFilePath = discovererFilePath
@@ -38,7 +36,7 @@ class NotificationHandler() {
     }
 
     fun isNotificationValid(): Boolean = (discovererFilePath != null && discovererName != null &&
-            discovererPhoneNumber != null)
+            discovererPhoneNumber != null && endpointIdSaved != null)
 
     fun getAdvertiserName() = this.advertiserName
     fun getDiscovererName() = this.discovererName

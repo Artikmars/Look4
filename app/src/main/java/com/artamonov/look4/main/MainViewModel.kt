@@ -1,5 +1,6 @@
 package com.artamonov.look4.main
 
+import androidx.hilt.lifecycle.ViewModelInject
 import com.artamonov.look4.base.BaseVM
 import com.artamonov.look4.data.database.ContactRequest
 import com.artamonov.look4.data.prefs.PreferenceHelper
@@ -12,7 +13,9 @@ import com.artamonov.look4.utils.UserGender.Companion.ALL
 import com.artamonov.look4.utils.UserGender.Companion.FEMALE
 import com.artamonov.look4.utils.UserGender.Companion.MALE
 
-class MainViewModel : BaseVM<MainViewState, MainAction, MainEvent>() {
+class MainViewModel @ViewModelInject constructor(
+    private val prefs: PreferenceHelper
+) : BaseVM<MainViewState, MainAction, MainEvent>() {
 
     override fun obtainEvent(viewEvent: MainEvent) {
         when (viewEvent) {
@@ -40,7 +43,7 @@ class MainViewModel : BaseVM<MainViewState, MainAction, MainEvent>() {
     init {
         viewState = MainViewState(
             fetchStatus = FetchMainStatus.DefaultState,
-            data = PreferenceHelper.getUserProfile(), contactRequest = ContactRequest()
+            data = prefs.getUserProfile(), contactRequest = ContactRequest()
         )
     }
 
@@ -54,25 +57,25 @@ class MainViewModel : BaseVM<MainViewState, MainAction, MainEvent>() {
     private fun changeLookGenderText() {
         when (viewState.data?.lookGender) {
             MALE -> {
-                if (PreferenceHelper.updateLookGender(FEMALE)) {
+                if (prefs.updateLookGender(FEMALE)) {
                     viewState = viewState.copy(
-                        data = PreferenceHelper.getUserProfile(),
+                        data = prefs.getUserProfile(),
                         fetchStatus = FetchMainStatus.LookGenderWomenState
                     )
                 }
             }
             FEMALE -> {
-                if (PreferenceHelper.updateLookGender(ALL)) {
+                if (prefs.updateLookGender(ALL)) {
                     viewState = viewState.copy(
-                        data = PreferenceHelper.getUserProfile(),
+                        data = prefs.getUserProfile(),
                         fetchStatus = FetchMainStatus.LookGenderAllState
                     )
                 }
             }
             ALL -> {
-                if (PreferenceHelper.updateLookGender(MALE)) {
+                if (prefs.updateLookGender(MALE)) {
                     viewState = viewState.copy(
-                        data = PreferenceHelper.getUserProfile(),
+                        data = prefs.getUserProfile(),
                         fetchStatus = FetchMainStatus.LookGenderManState
                     )
                 }

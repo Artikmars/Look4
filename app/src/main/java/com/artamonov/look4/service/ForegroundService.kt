@@ -25,6 +25,8 @@ import com.artamonov.look4.look.LookActivity.Companion.LOG_TAG
 import com.artamonov.look4.main.MainActivity
 import com.artamonov.look4.utils.NotificationHandler
 import com.artamonov.look4.utils.UserGender
+import com.artamonov.look4.utils.UserGender.Companion.FEMALE
+import com.artamonov.look4.utils.UserGender.Companion.MALE
 import com.artamonov.look4.utils.UserRole.Companion.ADVERTISER
 import com.crashlytics.android.Crashlytics
 import com.google.android.gms.nearby.Nearby
@@ -38,9 +40,12 @@ import com.google.android.gms.nearby.connection.Payload
 import com.google.android.gms.nearby.connection.PayloadCallback
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate
 import com.google.android.gms.nearby.connection.Strategy.P2P_POINT_TO_POINT
+import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
 import java.nio.charset.Charset
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class ForegroundService : Service() {
 
     var endpointIdSaved: String? = null
@@ -54,14 +59,16 @@ class ForegroundService : Service() {
     private val advOptions: AdvertisingOptions =
         AdvertisingOptions.Builder().setStrategy(STRATEGY).build()
     var notification: Notification? = null
-    var notificationManager: NotificationManager? = null
+    lateinit var notificationManager: NotificationManager
     private var newFile: File? = null
     private var file: File? = null
     private var filePayload: Payload? = null
-    private var bytePayload: Payload? = null
-    private var connectionClient: ConnectionsClient? = null
+    private lateinit var bytePayload: Payload
+    private lateinit var connectionClient: ConnectionsClient
 
     private lateinit var notificationHandler: NotificationHandler
+
+    @Inject lateinit var prefs: PreferenceHelper
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         connectionClient = Nearby.getConnectionsClient(applicationContext)
@@ -95,13 +102,13 @@ class ForegroundService : Service() {
     }
 
     override fun onDestroy() {
-        connectionClient?.stopAllEndpoints()
+        connectionClient.stopAllEndpoints()
         isForegroundServiceRunning = false
         super.onDestroy()
     }
 
     private fun startServer() {
-        connectionClient?.startAdvertising(
+        connectionClient.startAdvertising(
             deviceId,
             packageName,
             connectionLifecycleCallback,
@@ -109,7 +116,7 @@ class ForegroundService : Service() {
         )?.addOnSuccessListener {
             startForeground(1, notification)
             isForegroundServiceRunning = true
-            PreferenceHelper.updateRole(ADVERTISER)
+            prefs.updateRole(ADVERTISER)
             Crashlytics.log("Advertising has been started")
         }
             ?.addOnFailureListener { e ->
@@ -124,7 +131,7 @@ class ForegroundService : Service() {
     private val connectionLifecycleCallback: ConnectionLifecycleCallback =
         object : ConnectionLifecycleCallback() {
             override fun onConnectionInitiated(p0: String, p1: ConnectionInfo) {
-                connectionClient?.acceptConnection(p0, payloadCallback)
+                connectionClient.acceptConnection(p0, payloadCallback)
             }
 
             override fun onConnectionResult(endpointId: String, result: ConnectionResolution) {
@@ -134,14 +141,14 @@ class ForegroundService : Service() {
                         Log.v(LOG_TAG, "in service onConnectionResult: $endpointId")
                         //  bytePayload = Payload.fromBytes(preferenceHelper.getUserProfile()?.name!!.toByteArray())
                         bytePayload = Payload.fromBytes(
-                            (PreferenceHelper.getUserProfile()?.name +
-                                    ";" + PreferenceHelper.getUserProfile()?.gender).toByteArray()
+                            (prefs.getUserProfile().name +
+                                    ";" + prefs.getUserProfile().gender).toByteArray()
                         )
-                        connectionClient?.sendPayload(endpointId, bytePayload!!)
+                        connectionClient.sendPayload(endpointId, bytePayload)
 
                         // Toast.makeText(applicationContext, "userImagePath: $advertiserFilePath", Toast.LENGTH_LONG).show()
-                        PreferenceHelper.getUserProfile()?.imagePath?.let {
-                            val imageUri = Uri.parse(PreferenceHelper.getUserProfile()?.imagePath)
+                        prefs.getUserProfile().imagePath.let {
+                            val imageUri = Uri.parse(prefs.getUserProfile().imagePath)
                             // val imageUri = URI.create(userImagePath!!)
                             Log.v("Look4", "imageUri: $imageUri")
                             // Toast.makeText(applicationContext, "imageUri: $imageUri", Toast.LENGTH_LONG).show()
@@ -152,7 +159,7 @@ class ForegroundService : Service() {
                             //  Log.v("Look4", "file: $file")
 
                             filePayload = Payload.fromFile(pfd!!)
-                            connectionClient?.sendPayload(endpointId, filePayload!!)
+                            connectionClient.sendPayload(endpointId, filePayload!!)
                         }
                     }
 
@@ -220,11 +227,12 @@ class ForegroundService : Service() {
         }
 
         override fun onPayloadTransferUpdate(p0: String, p1: PayloadTransferUpdate) {
+            require(isGenderValid) { "Gender is not valid" }
             if (!isGenderValid) {
                 return
             }
             if (p1.status == PayloadTransferUpdate.Status.SUCCESS && p1.totalBytes > 1000 && advertiserPhoneNumber == null &&
-                p1.payloadId != bytePayload?.id && p1.payloadId != filePayload?.id
+                p1.payloadId != bytePayload.id && p1.payloadId != filePayload?.id
             ) {
                 //  Toast.makeText(applicationContext, "discovererFilePath: $discovererFilePath", Toast.LENGTH_LONG).show(
                 discovererFilePath = newFile?.toString()
@@ -241,22 +249,20 @@ class ForegroundService : Service() {
     }
 
     private fun disconnectFromEndpoint() {
-        endpointIdSaved?.let { connectionClient?.disconnectFromEndpoint(endpointIdSaved!!) }
+        endpointIdSaved?.let { connectionClient.disconnectFromEndpoint(it) }
     }
 
     private fun showPendingContactNotification(notificationId: Int) {
+        requireNotNull(endpointIdSaved) { "Endpoint ID is null" }
         // Create an explicit intent for an Activity in your app
-        notificationHandler = NotificationHandler(
-            discovererName,
-            discovererPhoneNumber, discovererFilePath, advertiserPhoneNumber, endpointIdSaved
+        notificationHandler = NotificationHandler(discovererName, discovererPhoneNumber,
+            discovererFilePath, advertiserPhoneNumber, endpointIdSaved!!
         )
 
         val intent = notificationHandler.createIntent(this)
 
-        PreferenceHelper.saveContactRequest(
-            ContactRequest(
-                name = discovererName,
-                phoneNumber = discovererPhoneNumber,
+        prefs.saveContactRequest(
+            ContactRequest(name = discovererName, phoneNumber = discovererPhoneNumber,
                 filePath = discovererFilePath, advertiserPhoneNumber = advertiserPhoneNumber,
                 endpointId = endpointIdSaved
             )
@@ -280,7 +286,7 @@ class ForegroundService : Service() {
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
 
-        notificationManager?.notify(notificationId, builder.build())
+        notificationManager.notify(notificationId, builder.build())
 //        with(NotificationManagerCompat.from(this)) {
 //            notify(notificationId, builder.build())
 //        }
@@ -288,33 +294,21 @@ class ForegroundService : Service() {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val serviceChannel = NotificationChannel(
-                CHANNEL_ID,
-                "Foreground Service Channel",
+            val serviceChannel = NotificationChannel(CHANNEL_ID, "Foreground Service Channel",
                 NotificationManager.IMPORTANCE_DEFAULT
             )
             serviceChannel.enableVibration(true)
-            notificationManager?.createNotificationChannel(serviceChannel)
+            notificationManager.createNotificationChannel(serviceChannel)
         }
     }
 
     private fun isGenderValid(advertiserGender: @UserGender.AnnotationUserGender String?): Boolean {
-        when (PreferenceHelper.getUserProfile()?.lookGender) {
-            UserGender.MALE -> {
-                isGenderValid = advertiserGender == UserGender.MALE
-                return isGenderValid
-            }
-            UserGender.FEMALE -> {
-                isGenderValid = advertiserGender == UserGender.FEMALE
-                return isGenderValid
-            }
-            UserGender.ALL -> {
-                isGenderValid = true
-                return isGenderValid
-            }
+        when (prefs.getUserProfile().lookGender) { MALE -> {
+            return advertiserGender == MALE }
+            FEMALE -> { return advertiserGender == FEMALE }
+            UserGender.ALL -> { return true }
         }
-        isGenderValid = true
-        return isGenderValid
+        return true
     }
 
     companion object {

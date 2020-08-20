@@ -26,16 +26,14 @@ import com.artamonov.look4.utils.UserGender
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.github.dhaval2404.imagepicker.ImagePicker
-import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_user_profile_edit.*
 
-class UserProfileEditActivity : BaseActivity() {
+class UserProfileEditActivity : BaseActivity(R.layout.activity_user_profile_edit) {
 
     private lateinit var viewModel: UserProfileEditViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_user_profile_edit)
 
         viewModel = ViewModelProvider(this).get(UserProfileEditViewModel::class.java)
 
@@ -87,17 +85,11 @@ class UserProfileEditActivity : BaseActivity() {
             }
             FetchStatus.PhoneValidationErrorState -> {
                 user_edit_progress_bar.visibility = GONE
-                Snackbar.make(
-                    findViewById(android.R.id.content), getString(R.string.error_blank_fields),
-                    Snackbar.LENGTH_SHORT
-                ).show()
+                showSnackbarError(R.string.error_blank_fields)
             }
             FetchStatus.ProfileWasNotUpdatedErrorState -> {
                 user_edit_progress_bar.visibility = GONE
-                Snackbar.make(
-                    findViewById(android.R.id.content), getString(R.string.error_general),
-                    Snackbar.LENGTH_SHORT
-                ).show()
+                showSnackbarError(R.string.error_general)
             }
         }
     }
@@ -140,10 +132,8 @@ class UserProfileEditActivity : BaseActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         when (resultCode) {
             Activity.RESULT_OK -> {
-                data?.data?.let {
-                    viewModel.setImagePath(it)
-                    viewModel.obtainEvent(ProfileEditEvent.ProfilePhotoClicked)
-                }
+                viewModel.setImagePath(data?.data)
+                viewModel.obtainEvent(ProfileEditEvent.ProfilePhotoClicked)
             }
             ImagePicker.RESULT_ERROR -> {
                 Toast.makeText(this, ImagePicker.getError(data), Toast.LENGTH_SHORT).show()
@@ -197,11 +187,7 @@ class UserProfileEditActivity : BaseActivity() {
                     // permission denied, boo! Disable the
                     // functionality that depends on this permission.
                     finish()
-                    Snackbar.make(
-                        findViewById(android.R.id.content),
-                        "You need to grant the permission to read your profile picture",
-                        Snackbar.LENGTH_SHORT
-                    ).show()
+                    showSnackbarError(R.string.error_permissions_are_not_granted_for_setting_new_picture)
                 }
                 return
             }

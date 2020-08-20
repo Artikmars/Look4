@@ -7,7 +7,6 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import com.artamonov.look4.base.BaseActivity
-import com.artamonov.look4.data.prefs.PreferenceHelper
 import com.artamonov.look4.main.MainActivity
 import com.artamonov.look4.utils.PostTextChangeWatcher
 import com.artamonov.look4.utils.UserGender
@@ -17,7 +16,6 @@ import com.artamonov.look4.utils.isValidPhoneNumber
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.github.dhaval2404.imagepicker.ImagePicker
-import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_welcome.*
 
 const val PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 5545
@@ -26,28 +24,26 @@ const val PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 5969
 var selectedImage: Uri? = null
 var enteredPhoneNumber: String? = null
 
-class WelcomeActivity : BaseActivity() {
+class WelcomeActivity : BaseActivity(R.layout.activity_welcome) {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (PreferenceHelper.userAvailable()) {
+        if (prefs.userAvailable()) {
             startMainActivity()
             return
         }
-
-        setContentView(R.layout.activity_welcome)
         this.supportActionBar?.hide()
 
         etPhoneNumber.addTextChangedListener(PostTextChangeWatcher { phoneNumberChanged(it) })
 
         submit_button.setOnClickListener {
             if (fieldsAreValid()) {
-                val isSaved = PreferenceHelper.createUserProfile(name = etName.text.toString(), phoneNumber =
+                val isSaved = prefs.createUserProfile(name = etName.text.toString(), phoneNumber =
                 etPhoneNumber.text.toString(), imagePath = selectedImage.toString(), gender = getChosenGender())
                 if (isSaved) { startMainActivity() }
             } else {
-                Snackbar.make(findViewById(android.R.id.content), "Please, don't leave fields blank", Snackbar.LENGTH_SHORT).show()
+                showSnackbarError(R.string.error_blank_fields)
             }
         }
 
@@ -108,7 +104,7 @@ class WelcomeActivity : BaseActivity() {
                 Glide.with(this).load(selectedImage).apply(RequestOptions.circleCropTransform()).into(welcome_add_image)
             }
             ImagePicker.RESULT_ERROR -> {
-                showSnackbarError("Error while processing your photo")
+                showSnackbarError(getString(R.string.welcome_processinng_image_error))
             }
             else -> {
                 //   Toast.makeText(this, "Task Cancelled", Toast.LENGTH_SHORT).show()

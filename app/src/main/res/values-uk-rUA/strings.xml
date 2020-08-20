@@ -43,10 +43,14 @@
     <string name="profile_edit_enter_your_phone_number">Введіть свій номер телефону</string>
     <string name="profile_edit_save">Зберегти</string>
     <string name="welcome_submit">Готово</string>
+
     <string name="error_general">Виникла помилка. Спробуйте пізніше</string>
     <string name="error_blank_fields">Будь ласка, не залишайте поля порожніми</string>
+    <string name="error_permissions_are_not_granted_for_discovering">Ви повинні надати необхідні дозволи для початку пошуку</string>
+    <string name="error_permissions_are_not_granted_for_setting_new_picture">Ви повинні надати нам дозвіл для читання вашого фото</string>
 
     <string name="base_check_new_request">Ви отримали новий запит на обмін контактами. Перевірте оповіщення!</string>
 
     <string name="service_new_request">Ви отримали новий запит на обмін контактами</string>
+    <string name="welcome_processinng_image_error">Помилка при обробці фото</string>
 </resources>

@@ -48,10 +48,14 @@
     <string name="profile_edit_enter_your_phone_number">Enter your phone number</string>
     <string name="profile_edit_save">Save</string>
     <string name="welcome_submit">Submit</string>
+    <string name="welcome_processinng_image_error">Error while processing your photo</string>
+
     <string name="about_us_description" translatable="false">Igor Artamonov - idea, concept, design, publishing and marketing\nEmail: artamonov.igor@gmail.com\nAndrii Artamonov - Android Developer\nLinkedIn: https://www.linkedin.com/in/andrii-artamonov/\nEmail: artamonov06@gmail.com\n© 2020 Igor Artamonov, Andrii Artamonov, Look4</string>
 
     <string name="error_general">An error occurred. Please, try again</string>
     <string name="error_blank_fields">Please, do not leave fields blank</string>
+    <string name="error_permissions_are_not_granted_for_discovering">You need to grant the permission to start discovering</string>
+    <string name="error_permissions_are_not_granted_for_setting_new_picture">You need to grant us the permission to read your profile picture</string>
 
     <string name="base_check_new_request">You got new contact request! Check out your notification</string>
 

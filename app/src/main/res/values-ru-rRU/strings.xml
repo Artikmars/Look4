@@ -43,12 +43,17 @@
     <string name="profile_edit_enter_your_phone_number">Введите свой номер телефона</string>
     <string name="profile_edit_save">Сохранить</string>
     <string name="welcome_submit">Готово</string>
+
     <string name="error_general">Возникла ошибка. Попробуйте позднее</string>
     <string name="error_blank_fields">Пожалуйста, не оставляйте поля пустыми</string>
+    <string name="error_permissions_are_not_granted_for_discovering">Вы должны предоставить нам необходимые разрешения для начала поиска</string>
+    <string name="error_permissions_are_not_granted_for_setting_new_picture">Вы должны предоставить нам разрешение для чтения вашего фото</string>
+
 
     <string name="base_check_new_request">Вы получили новый запрос на обмен контактами. Проверьте оповещение!</string>
 
     <string name="service_new_request">Вы получили новый запрос на обмен контактами</string>
+    <string name="welcome_processinng_image_error">Ошибка при обработке фото</string>
 
 
 </resources>

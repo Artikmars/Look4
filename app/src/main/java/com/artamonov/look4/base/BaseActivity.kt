@@ -15,10 +15,15 @@ import com.artamonov.look4.utils.LiveDataContactUnseenState.contactDiscovererUns
 import com.artamonov.look4.utils.NotificationHandler
 import com.artamonov.look4.utils.set
 import com.google.android.material.snackbar.Snackbar
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
-abstract class BaseActivity : AppCompatActivity() {
+@AndroidEntryPoint
+abstract class BaseActivity(contentLayoutId: Int) : AppCompatActivity(contentLayoutId) {
 
     private var contactState: ContactUnseenState = ContactUnseenState.DisabledState
+
+    @Inject lateinit var prefs: PreferenceHelper
 
     fun showSnackbarError(resourceId: Int) { Snackbar.make(findViewById(android.R.id.content),
         getString(resourceId), Snackbar.LENGTH_LONG).show() }
@@ -59,10 +64,10 @@ abstract class BaseActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        if (PreferenceHelper.getContactRequest() != null) {
+        if (prefs.getContactRequest().name != null) {
             val notificationHandler = NotificationHandler()
             startActivity(notificationHandler.createIntent(this,
-                PreferenceHelper.getContactRequest()!!))
+                prefs.getContactRequest()))
         }
     }
 }

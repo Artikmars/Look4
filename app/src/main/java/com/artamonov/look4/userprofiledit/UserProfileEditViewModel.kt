@@ -1,6 +1,7 @@
 package com.artamonov.look4.userprofiledit
 
 import android.net.Uri
+import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.MutableLiveData
 import com.artamonov.look4.R
 import com.artamonov.look4.base.BaseVM
@@ -12,8 +13,9 @@ import com.artamonov.look4.userprofiledit.models.ProfileEditViewState
 import com.artamonov.look4.utils.UserGender
 import com.artamonov.look4.utils.isValidPhoneNumber
 
-class UserProfileEditViewModel :
-    BaseVM<ProfileEditViewState, ProfileEditAction, ProfileEditEvent>() {
+class UserProfileEditViewModel @ViewModelInject constructor(
+    private val prefs: PreferenceHelper
+) : BaseVM<ProfileEditViewState, ProfileEditAction, ProfileEditEvent>() {
     var phoneNumberLayoutErrorLiveData: MutableLiveData<Boolean> = MutableLiveData()
     private var enteredPhoneNumber: String? = null
     private var enteredName: String? = null
@@ -23,7 +25,7 @@ class UserProfileEditViewModel :
     init {
         viewState = ProfileEditViewState(
             fetchStatus = FetchStatus.DefaultState,
-            data = PreferenceHelper.getUserProfile()
+            data = prefs.getUserProfile()
         )
     }
 
@@ -75,8 +77,8 @@ class UserProfileEditViewModel :
         gender: @UserGender.AnnotationUserGender String?,
         imagePath: String?
     ): Boolean {
-        val isUpdated = PreferenceHelper.updateUserProfile(name, phoneNumber, gender, imagePath)
-        viewState.copy(data = PreferenceHelper.getUserProfile())
+        val isUpdated = prefs.updateUserProfile(name, phoneNumber, gender, imagePath)
+        viewState.copy(data = prefs.getUserProfile())
         return isUpdated
     }
 
@@ -101,8 +103,8 @@ class UserProfileEditViewModel :
         enteredName = newText?.trim()
     }
 
-    fun setImagePath(uri: Uri) {
-        imageUri = uri
+    fun setImagePath(uri: Uri?) {
+        uri?.let { imageUri = it }
     }
 
     fun setCheckedRadioButton(resourceId: Int) {

@@ -8,10 +8,10 @@ import android.os.Bundle
 import android.provider.Settings
 import android.view.animation.Animation
 import android.view.animation.RotateAnimation
+import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
 import com.artamonov.look4.BuildConfig
 import com.artamonov.look4.R
 import com.artamonov.look4.base.BaseActivity
@@ -38,21 +38,19 @@ import com.google.android.gms.nearby.Nearby
 import java.io.File
 import kotlinx.android.synthetic.main.activity_main.*
 
-class MainActivity : BaseActivity() {
+class MainActivity : BaseActivity(R.layout.activity_main) {
 
 companion object {
     private lateinit var deviceId: String
     var isDestroyed = false
 }
-    private lateinit var viewModel: MainViewModel
+
+    private val viewModel: MainViewModel by viewModels()
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
         this.supportActionBar?.hide()
-        viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
-
         deviceId = Settings.Secure.getString(applicationContext.contentResolver, Settings.Secure.ANDROID_ID)
         setAdView()
 

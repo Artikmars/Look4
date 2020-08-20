@@ -11,11 +11,10 @@ import com.artamonov.look4.base.BaseActivity
 import com.artamonov.look4.userprofiledit.UserProfileEditActivity
 import kotlinx.android.synthetic.main.activity_settings.*
 
-class SettingsActivity : BaseActivity() {
+class SettingsActivity : BaseActivity(R.layout.activity_settings) {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_settings)
         settings_profile.setOnClickListener {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 startActivity(Intent(this, UserProfileEditActivity::class.java),

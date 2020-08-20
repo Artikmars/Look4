@@ -1,9 +1,11 @@
 package com.artamonov.look4.look
 
 import android.content.Intent
+import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.artamonov.look4.base.BaseViewModel
+import com.artamonov.look4.data.database.ContactRequest
 import com.artamonov.look4.data.database.User
 import com.artamonov.look4.data.prefs.PreferenceHelper
 import com.artamonov.look4.utils.ContactUnseenState
@@ -32,7 +34,9 @@ sealed class LookState {
     object ErrorState : LookState()
 }
 
-class LookViewModel : BaseViewModel() {
+class LookViewModel @ViewModelInject constructor(
+    private val prefs: PreferenceHelper
+) : BaseViewModel() {
 
     var isGenderValid: Boolean = true
     var advertiserName: String? = null
@@ -45,33 +49,37 @@ class LookViewModel : BaseViewModel() {
     var newFile: File? = null
     private lateinit var notificationHandler: NotificationHandler
     val state = MutableLiveData<LookState>().default(initialValue = LookState.DefaultState)
-    var user: MutableLiveData<User> = MutableLiveData()
+    val user: MutableLiveData<User> = MutableLiveData()
 
     init {
         loadUserFromDB()
     }
 
     fun populateData() {
-        state.set(newValue = LookState.SucceededAdvertiserIsFoundState(user = PreferenceHelper.getUserProfile()))
+        state.set(newValue = LookState.SucceededAdvertiserIsFoundState(user = prefs.getUserProfile()))
     }
 
     private fun loadUserFromDB() {
-        user.postValue(PreferenceHelper.getUserProfile())
+        user.postValue(prefs.getUserProfile())
     }
 
     fun updateRole(role: @UserRole.AnnotationUserRole String) {
         viewModelScope.launch(Dispatchers.IO) {
-            PreferenceHelper.updateRole(role)
-            user.postValue(PreferenceHelper.getUserProfile())
+            prefs.updateRole(role)
+            user.postValue(prefs.getUserProfile())
         }
     }
 
-    fun startDiscovering() { state.set(newValue = LookState.SearchState) }
+    fun startDiscovering() {
+        state.set(newValue = LookState.SearchState)
+    }
 
-    fun setNoFoundState() { state.set(newValue = LookState.NoFoundState) }
+    fun setNoFoundState() {
+        state.set(newValue = LookState.NoFoundState)
+    }
 
     fun handlePayload(p1: Payload) {
-        when (PreferenceHelper.getUserProfile()?.role) {
+        when (prefs.getUserProfile().role) {
             UserRole.DISCOVERER -> {
                 when (p1.type) {
                     Payload.Type.BYTES -> {
@@ -79,7 +87,9 @@ class LookViewModel : BaseViewModel() {
                         val textArray = byteString?.split(";")?.toTypedArray()
                         when (textArray?.size) {
                             0, 1 -> isGenderValid = true
-                            2 -> if (!isGenderValid(textArray[1])) { return }
+                            2 -> if (!isGenderValid(textArray[1])) {
+                                return
+                            }
                         }
 
                         if (isMobileNumber(textArray?.get(0))) {
@@ -103,7 +113,7 @@ class LookViewModel : BaseViewModel() {
                 val receivedContact = p1.asBytes()?.toString(Charset.defaultCharset())
                 val textArray = receivedContact?.split(";")?.toTypedArray()
                 discovererPhoneNumber = textArray?.get(1)
-                state.set(newValue = LookState.SucceededAdvertiserIsFoundState(user = PreferenceHelper.getUserProfile()))
+                state.set(newValue = LookState.SucceededAdvertiserIsFoundState(user = prefs.getUserProfile()))
             }
         }
     }
@@ -113,7 +123,7 @@ class LookViewModel : BaseViewModel() {
     }
 
     private fun isGenderValid(advertiserGender: @UserGender.AnnotationUserGender String?): Boolean {
-        when (PreferenceHelper.getUserProfile()?.lookGender) {
+        when (prefs.getUserProfile().lookGender) {
             UserGender.MALE -> {
                 isGenderValid = advertiserGender == UserGender.MALE
                 return isGenderValid
@@ -135,19 +145,19 @@ class LookViewModel : BaseViewModel() {
         when (userRole) {
             UserRole.DISCOVERER -> {
                 if (phoneNumber != null && advertiserName != null) {
-                    PreferenceHelper.saveContact(name = advertiserName!!, phoneNumber = phoneNumber)
+                    prefs.saveContact(name = advertiserName!!, phoneNumber = phoneNumber)
                 }
             }
             UserRole.ADVERTISER -> {
                 if (phoneNumber != null && discovererName != null) {
-                    PreferenceHelper.saveContact(name = discovererName!!, phoneNumber = phoneNumber)
+                    prefs.saveContact(name = discovererName!!, phoneNumber = phoneNumber)
                 }
             }
         }
     }
 
     fun handleNewIntent(intent: Intent?) {
-        PreferenceHelper.saveContactRequest(null)
+        prefs.saveContactRequest(ContactRequest())
 
         if (intent == null || intent.extras == null) {
             return
@@ -159,7 +169,7 @@ class LookViewModel : BaseViewModel() {
             discovererName = notificationHandler.getDiscovererName()
             discovererPhoneNumber = notificationHandler.getDiscovererPhoneNumber()
             endpointIdSaved = notificationHandler.getEndpointId()
-            state.set(newValue = LookState.SucceededDiscoverIsFoundState(user = PreferenceHelper.getUserProfile()))
+            state.set(newValue = LookState.SucceededDiscoverIsFoundState(user = prefs.getUserProfile()))
         } else {
             state.set(newValue = LookState.DefaultState)
         }
@@ -169,9 +179,5 @@ class LookViewModel : BaseViewModel() {
 //                LookActivity.advertiserPhoneNumber
 //            searchingInProgressText.visibility = View.VISIBLE
 //        }
-    }
-
-    override fun onCleared() {
-        super.onCleared()
     }
 }

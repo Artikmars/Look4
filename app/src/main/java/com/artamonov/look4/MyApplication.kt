@@ -1,12 +1,13 @@
 package com.artamonov.look4
-import android.app.Application
-import com.artamonov.look4.data.prefs.PreferenceHelper
 
+import android.app.Application
+import dagger.hilt.android.HiltAndroidApp
+
+@HiltAndroidApp
 class MyApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        PreferenceHelper.init(this)
         registerActivityLifecycleCallbacks(MyLifecycleCallbacks())
     }
 }
