@@ -17,7 +17,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.os.ParcelFileDescriptor
-import android.provider.Settings
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import androidx.activity.viewModels
@@ -34,16 +33,15 @@ import com.artamonov.look4.utils.ContactUnseenState
 import com.artamonov.look4.utils.LiveDataContactUnseenState.contactAdvertiserUnseenState
 import com.artamonov.look4.utils.UserRole.Companion.ADVERTISER
 import com.artamonov.look4.utils.UserRole.Companion.DISCOVERER
+import com.artamonov.look4.utils.disconnectFromEndpoint
 import com.artamonov.look4.utils.set
 import com.artamonov.look4.utils.setSafeOnClickListener
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.crashlytics.android.Crashlytics
-import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.ConnectionInfo
 import com.google.android.gms.nearby.connection.ConnectionLifecycleCallback
 import com.google.android.gms.nearby.connection.ConnectionResolution
-import com.google.android.gms.nearby.connection.ConnectionsClient
 import com.google.android.gms.nearby.connection.ConnectionsStatusCodes
 import com.google.android.gms.nearby.connection.DiscoveredEndpointInfo
 import com.google.android.gms.nearby.connection.DiscoveryOptions
@@ -71,9 +69,6 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
         private const val REQUEST_CODE_REQUIRED_PERMISSIONS = 1
         private val STRATEGY = P2P_POINT_TO_POINT
         const val LOG_TAG = "Look4"
-        lateinit var deviceId: String
-
-        private lateinit var connectionClient: ConnectionsClient
         private val discOptions = DiscoveryOptions.Builder().setStrategy(STRATEGY).build()
 
         private var user: User? = null
@@ -89,9 +84,6 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        connectionClient = Nearby.getConnectionsClient(this)
-        deviceId = Settings.Secure.getString(applicationContext.contentResolver, Settings.Secure.ANDROID_ID)
-
         lookViewModel.state.observe(this, Observer { bindViewState(it) })
         lookViewModel.user.observe(this, Observer { user = it })
 
@@ -99,7 +91,7 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
         look_back.setOnClickListener { closeActivity() }
 
         no_button.setSafeOnClickListener {
-            lookViewModel.endpointIdSaved?.let { connectionClient.disconnectFromEndpoint(it) }
+            lookViewModel.endpointIdSaved?.disconnectFromEndpoint(connectionClient)
             closeActivity()
         }
 
@@ -192,7 +184,7 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
             }
             is LookState.PhoneNumberReceived -> {
                 Crashlytics.log("State: PhoneNumberReceived")
-                lookViewModel.endpointIdSaved?.let { connectionClient.disconnectFromEndpoint(it) }
+                lookViewModel.endpointIdSaved?.disconnectFromEndpoint(connectionClient)
                 showSnackbarWithAction()
             }
             is LookState.SucceededAdvertiserIsFoundState<*> -> {
@@ -302,7 +294,7 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
     private fun startClient() {
         startTimer()
         populateScanningView()
-        lookViewModel.endpointIdSaved?.let { connectionClient.disconnectFromEndpoint(it) }
+        lookViewModel.endpointIdSaved?.disconnectFromEndpoint(connectionClient)
         endpointDiscoveryCallback?.let {
             connectionClient.startDiscovery(packageName, it, discOptions)
                 ?.addOnSuccessListener {
@@ -329,8 +321,8 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
                 connectionClient.stopAllEndpoints()
                 countdown_view.visibility = GONE
                 lookViewModel.setNoFoundState()
-                Crashlytics.logException(Throwable("No found. Timer has finished"))
                 FirebaseCrashlytics.getInstance().recordException(Throwable("No found. Timer has finished"))
+                Crashlytics.log(prefs.getUserProfile().toString())
                 Crashlytics.log("timer onFinish()")
             }
         }
@@ -399,7 +391,7 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
 
             override fun onDisconnected(p0: String) {
                 showSnackbarError(getString(R.string.look_error_disconnected))
-                lookViewModel.endpointIdSaved?.let { connectionClient.disconnectFromEndpoint(it) }
+                lookViewModel.endpointIdSaved?.disconnectFromEndpoint(connectionClient)
                 Crashlytics.log("onDisconnected: $p0")
             }
         }
@@ -431,7 +423,7 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
     private fun handleFailedResponse(exception: Exception) {
         timer?.cancel()
         Crashlytics.logException(exception)
-        lookViewModel.endpointIdSaved?.let { connectionClient.disconnectFromEndpoint(it) }
+        lookViewModel.endpointIdSaved?.disconnectFromEndpoint(connectionClient)
         connectionClient.stopAllEndpoints()
         lookViewModel.setNoFoundState()
     }

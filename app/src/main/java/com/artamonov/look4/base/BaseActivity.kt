@@ -14,6 +14,7 @@ import com.artamonov.look4.utils.ContactUnseenState
 import com.artamonov.look4.utils.LiveDataContactUnseenState.contactDiscovererUnseenState
 import com.artamonov.look4.utils.NotificationHandler
 import com.artamonov.look4.utils.set
+import com.google.android.gms.nearby.connection.ConnectionsClient
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -24,6 +25,7 @@ abstract class BaseActivity(contentLayoutId: Int) : AppCompatActivity(contentLay
     private var contactState: ContactUnseenState = ContactUnseenState.DisabledState
 
     @Inject lateinit var prefs: PreferenceHelper
+    @Inject lateinit var connectionClient: ConnectionsClient
 
     fun showSnackbarError(resourceId: Int) { Snackbar.make(findViewById(android.R.id.content),
         getString(resourceId), Snackbar.LENGTH_LONG).show() }

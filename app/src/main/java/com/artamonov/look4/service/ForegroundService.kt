@@ -12,7 +12,6 @@ import android.net.Uri
 import android.os.Build
 import android.os.IBinder
 import android.os.ParcelFileDescriptor
-import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
@@ -28,8 +27,8 @@ import com.artamonov.look4.utils.UserGender
 import com.artamonov.look4.utils.UserGender.Companion.FEMALE
 import com.artamonov.look4.utils.UserGender.Companion.MALE
 import com.artamonov.look4.utils.UserRole.Companion.ADVERTISER
+import com.artamonov.look4.utils.disconnectFromEndpoint
 import com.crashlytics.android.Crashlytics
-import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.AdvertisingOptions
 import com.google.android.gms.nearby.connection.ConnectionInfo
 import com.google.android.gms.nearby.connection.ConnectionLifecycleCallback
@@ -43,6 +42,7 @@ import com.google.android.gms.nearby.connection.Strategy.P2P_POINT_TO_POINT
 import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
 import java.nio.charset.Charset
+import java.util.UUID
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -64,14 +64,13 @@ class ForegroundService : Service() {
     private var file: File? = null
     private var filePayload: Payload? = null
     private lateinit var bytePayload: Payload
-    private lateinit var connectionClient: ConnectionsClient
 
     private lateinit var notificationHandler: NotificationHandler
 
     @Inject lateinit var prefs: PreferenceHelper
+    @Inject lateinit var connectionClient: ConnectionsClient
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        connectionClient = Nearby.getConnectionsClient(applicationContext)
         val input = intent.getStringExtra("inputExtra")
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         createNotificationChannel()
@@ -88,10 +87,7 @@ class ForegroundService : Service() {
             .build()
         // do heavy work on a background thread
         // stopSelf();
-        deviceId = Settings.Secure.getString(
-            applicationContext.contentResolver,
-            Settings.Secure.ANDROID_ID
-        )
+        deviceId = UUID.randomUUID().toString()
 
         startServer()
         return START_NOT_STICKY
@@ -120,7 +116,7 @@ class ForegroundService : Service() {
             Crashlytics.log("Advertising has been started")
         }
             ?.addOnFailureListener { e ->
-                disconnectFromEndpoint()
+                endpointIdSaved.disconnectFromEndpoint(connectionClient)
                 isForegroundServiceRunning = false
                 Toast.makeText(this, "$e", Toast.LENGTH_LONG).show()
                 stopForeground(true)
@@ -166,7 +162,7 @@ class ForegroundService : Service() {
                     // We're connected! Can now start sending and receiving data.
 
                     ConnectionsStatusCodes.STATUS_CONNECTION_REJECTED -> {
-                        disconnectFromEndpoint()
+                        endpointIdSaved.disconnectFromEndpoint(connectionClient)
 //                    Toast.makeText(
 //                        applicationContext,
 //                        "Connection attempt to $endpointId was rejected",
@@ -176,7 +172,7 @@ class ForegroundService : Service() {
                     // The connection was rejected by one or both sides.
 
                     ConnectionsStatusCodes.STATUS_ERROR -> {
-                        disconnectFromEndpoint()
+                        endpointIdSaved.disconnectFromEndpoint(connectionClient)
 //                    Toast.makeText(
 //                        applicationContext,
 //                        "Connected attempt to $endpointId failed",
@@ -186,7 +182,7 @@ class ForegroundService : Service() {
                     // The connection broke before it was able to be accepted.
 
                     else -> {
-                        disconnectFromEndpoint()
+                        endpointIdSaved.disconnectFromEndpoint(connectionClient)
 //                    Toast.makeText(
 //                        applicationContext,
 //                        "Unknown status code",
@@ -198,7 +194,7 @@ class ForegroundService : Service() {
             }
 
             override fun onDisconnected(p0: String) {
-                disconnectFromEndpoint()
+                endpointIdSaved.disconnectFromEndpoint(connectionClient)
                 // We've been disconnected from this endpoint. No more data can be
                 // sent or received.
             }
@@ -228,28 +224,22 @@ class ForegroundService : Service() {
 
         override fun onPayloadTransferUpdate(p0: String, p1: PayloadTransferUpdate) {
             require(isGenderValid) { "Gender is not valid" }
-            if (!isGenderValid) {
+            if (!isGenderValid || p1.status != PayloadTransferUpdate.Status.SUCCESS) {
                 return
             }
-            if (p1.status == PayloadTransferUpdate.Status.SUCCESS && p1.totalBytes > 1000 && advertiserPhoneNumber == null &&
+            if (p1.totalBytes > 1000 && advertiserPhoneNumber == null &&
                 p1.payloadId != bytePayload.id && p1.payloadId != filePayload?.id
             ) {
                 //  Toast.makeText(applicationContext, "discovererFilePath: $discovererFilePath", Toast.LENGTH_LONG).show(
                 discovererFilePath = newFile?.toString()
 
                 showPendingContactNotification(2)
-            } else if (p1.status == PayloadTransferUpdate.Status.SUCCESS && advertiserPhoneNumber != null) {
-                showPendingContactNotification(3)
-            }
+            } else advertiserPhoneNumber?.let { showPendingContactNotification(3) }
         }
     }
 
     private fun isAppInForeground(): Boolean {
         return ProcessLifecycleOwner.get().lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
-    }
-
-    private fun disconnectFromEndpoint() {
-        endpointIdSaved?.let { connectionClient.disconnectFromEndpoint(it) }
     }
 
     private fun showPendingContactNotification(notificationId: Int) {

@@ -5,7 +5,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
 import android.view.animation.Animation
 import android.view.animation.RotateAnimation
 import androidx.activity.viewModels
@@ -34,14 +33,12 @@ import com.artamonov.look4.utils.setSafeOnClickListener
 import com.bumptech.glide.Glide
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.MobileAds
-import com.google.android.gms.nearby.Nearby
 import java.io.File
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : BaseActivity(R.layout.activity_main) {
 
 companion object {
-    private lateinit var deviceId: String
     var isDestroyed = false
 }
 
@@ -51,7 +48,6 @@ companion object {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         this.supportActionBar?.hide()
-        deviceId = Settings.Secure.getString(applicationContext.contentResolver, Settings.Secure.ANDROID_ID)
         setAdView()
 
         if (BuildConfig.DEBUG) { current_version_text.text = getString(
@@ -108,7 +104,7 @@ companion object {
             is FetchMainStatus.OfflineState -> {
                 if (serviceWasStopped()) {
                     showSnackbarError(R.string.main_advertising_has_stopped)
-                    Nearby.getConnectionsClient(this).stopAllEndpoints()
+                    connectionClient.stopAllEndpoints()
                     offline_text.text = getString(R.string.main_offline_mode)
                     letter_0_1.clearAnimation()
                 }

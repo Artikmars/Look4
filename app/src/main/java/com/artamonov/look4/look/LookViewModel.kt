@@ -14,6 +14,9 @@ import com.artamonov.look4.utils.LiveDataContactListState.contactListState
 import com.artamonov.look4.utils.LiveDataContactUnseenState.contactDiscovererUnseenState
 import com.artamonov.look4.utils.NotificationHandler
 import com.artamonov.look4.utils.UserGender
+import com.artamonov.look4.utils.UserGender.Companion.ALL
+import com.artamonov.look4.utils.UserGender.Companion.FEMALE
+import com.artamonov.look4.utils.UserGender.Companion.MALE
 import com.artamonov.look4.utils.UserRole
 import com.artamonov.look4.utils.default
 import com.artamonov.look4.utils.isValidPhoneNumber
@@ -83,8 +86,8 @@ class LookViewModel @ViewModelInject constructor(
             UserRole.DISCOVERER -> {
                 when (p1.type) {
                     Payload.Type.BYTES -> {
-                        val byteString = p1.asBytes()?.toString(Charset.defaultCharset())
-                        val textArray = byteString?.split(";")?.toTypedArray()
+                        val textArray = p1.asBytes()?.toString(Charset.defaultCharset())
+                            ?.split(";")?.toTypedArray()
                         when (textArray?.size) {
                             0, 1 -> isGenderValid = true
                             2 -> if (!isGenderValid(textArray[1])) {
@@ -92,7 +95,7 @@ class LookViewModel @ViewModelInject constructor(
                             }
                         }
 
-                        if (isMobileNumber(textArray?.get(0))) {
+                        if (textArray?.get(0).isValidPhoneNumber()) {
                             savePhoneNumberToDB(textArray?.get(0), UserRole.DISCOVERER)
                             contactDiscovererUnseenState.set(newValue = ContactUnseenState.EnabledState)
                             contactListState.set(newValue = ContactsState.UpdatedListState)
@@ -110,29 +113,25 @@ class LookViewModel @ViewModelInject constructor(
                 }
             }
             UserRole.ADVERTISER -> {
-                val receivedContact = p1.asBytes()?.toString(Charset.defaultCharset())
-                val textArray = receivedContact?.split(";")?.toTypedArray()
+                val textArray = p1.asBytes()?.toString(Charset.defaultCharset())
+                    ?.split(";")?.toTypedArray()
                 discovererPhoneNumber = textArray?.get(1)
                 state.set(newValue = LookState.SucceededAdvertiserIsFoundState(user = prefs.getUserProfile()))
             }
         }
     }
 
-    private fun isMobileNumber(string: String?): Boolean {
-        return string?.isValidPhoneNumber() ?: false
-    }
-
     private fun isGenderValid(advertiserGender: @UserGender.AnnotationUserGender String?): Boolean {
         when (prefs.getUserProfile().lookGender) {
-            UserGender.MALE -> {
-                isGenderValid = advertiserGender == UserGender.MALE
+            MALE -> {
+                isGenderValid = advertiserGender == MALE
                 return isGenderValid
             }
-            UserGender.FEMALE -> {
-                isGenderValid = advertiserGender == UserGender.FEMALE
+            FEMALE -> {
+                isGenderValid = advertiserGender == FEMALE
                 return isGenderValid
             }
-            UserGender.ALL -> {
+            ALL -> {
                 isGenderValid = true
                 return isGenderValid
             }
