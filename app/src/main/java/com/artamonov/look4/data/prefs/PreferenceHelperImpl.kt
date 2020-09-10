@@ -35,10 +35,10 @@ class PreferenceHelperImpl
             Gson().fromJson(profile, User::class.java)
         } catch (jse: JsonSyntaxException) {
             jse.printStackTrace()
-            User()
+            return User()
         } catch (e: IllegalStateException) {
             e.printStackTrace()
-            User()
+            return User()
         }
     }
 
@@ -55,18 +55,10 @@ class PreferenceHelperImpl
         }
     }
 
-    override fun updateUserProfile(
-        name: String?,
-        phoneNumber: String?,
-        gender: @UserGender.AnnotationUserGender String?,
-        imagePath: String?
-    ): Boolean {
-        val profile = getUserProfile()
-        name?.let { profile.name = name }
-        phoneNumber?.let { profile.phoneNumber = phoneNumber }
-        imagePath?.let { profile.imagePath = imagePath }
-        gender?.let { profile.gender = gender }
-        return getSharedEditor().putString(USER_PROFILE, Gson().toJson(profile)).commit()
+    override fun updateUserProfile(user: User): Boolean {
+        val updatedProfile = getUserProfile().copy(name = user.name,
+            phoneNumber = user.phoneNumber, imagePath = user.imagePath, gender = user.gender)
+        return getSharedEditor().putString(USER_PROFILE, Gson().toJson(updatedProfile)).commit()
     }
 
     override fun createUserProfile(
@@ -75,30 +67,14 @@ class PreferenceHelperImpl
         imagePath: String,
         gender: @UserGender.AnnotationUserGender String
     ): Boolean {
-        lateinit var profile: User
-        when (gender) {
-            MALE -> {
-                profile = User(
-                    creationDate = System.currentTimeMillis(),
-                    name = name,
-                    phoneNumber = phoneNumber,
-                    gender = gender,
-                    lookGender = FEMALE,
-                    imagePath = imagePath
-                )
-            }
-            FEMALE -> {
-                profile = User(
-                    creationDate = System.currentTimeMillis(),
-                    name = name,
-                    phoneNumber = phoneNumber,
-                    gender = gender,
-                    lookGender = MALE,
-                    imagePath = imagePath
-                )
-            }
-        }
-
+        val profile = User(
+            creationDate = System.currentTimeMillis(),
+            name = name,
+            phoneNumber = phoneNumber,
+            gender = gender,
+            lookGender = if (gender == MALE) FEMALE else MALE,
+            imagePath = imagePath
+        )
         return getSharedEditor().putString(USER_PROFILE, Gson().toJson(profile)).commit()
     }
 
@@ -114,15 +90,13 @@ class PreferenceHelperImpl
     }
 
     override fun updateRole(role: @UserRole.AnnotationUserRole String): Boolean {
-        val user = getUserProfile()
-        user.role = role
-        return getSharedEditor().putString(USER_PROFILE, Gson().toJson(user)).commit()
+        val updatedUser = getUserProfile().copy(role = role)
+        return getSharedEditor().putString(USER_PROFILE, Gson().toJson(updatedUser)).commit()
     }
 
     override fun updateLookGender(lookGender: @UserRole.AnnotationUserRole String): Boolean {
-        val user = getUserProfile()
-        user.lookGender = lookGender
-        return getSharedEditor().putString(USER_PROFILE, Gson().toJson(user)).commit()
+        val updatedUser = getUserProfile().copy(lookGender = lookGender)
+        return getSharedEditor().putString(USER_PROFILE, Gson().toJson(updatedUser)).commit()
     }
 
     override fun userAvailable(): Boolean {

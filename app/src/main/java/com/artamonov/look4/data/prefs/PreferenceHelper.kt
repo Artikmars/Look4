@@ -33,12 +33,7 @@ interface PreferenceHelper {
 
     fun updateRole(role: @UserRole.AnnotationUserRole String): Boolean
 
-    fun updateUserProfile(
-        name: String?,
-        phoneNumber: String?,
-        gender: @UserGender.AnnotationUserGender String?,
-        imagePath: String?
-    ): Boolean
+    fun updateUserProfile(user: User): Boolean
 
     fun userAvailable(): Boolean
 }

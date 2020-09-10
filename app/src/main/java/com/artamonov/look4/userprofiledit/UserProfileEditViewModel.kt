@@ -5,22 +5,25 @@ import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.MutableLiveData
 import com.artamonov.look4.R
 import com.artamonov.look4.base.BaseVM
+import com.artamonov.look4.data.database.User
 import com.artamonov.look4.data.prefs.PreferenceHelper
 import com.artamonov.look4.userprofiledit.models.FetchStatus
 import com.artamonov.look4.userprofiledit.models.ProfileEditAction
 import com.artamonov.look4.userprofiledit.models.ProfileEditEvent
 import com.artamonov.look4.userprofiledit.models.ProfileEditViewState
 import com.artamonov.look4.utils.UserGender
+import com.artamonov.look4.utils.UserGender.Companion.FEMALE
+import com.artamonov.look4.utils.UserGender.Companion.MALE
 import com.artamonov.look4.utils.isValidPhoneNumber
 
 class UserProfileEditViewModel @ViewModelInject constructor(
     private val prefs: PreferenceHelper
 ) : BaseVM<ProfileEditViewState, ProfileEditAction, ProfileEditEvent>() {
     var phoneNumberLayoutErrorLiveData: MutableLiveData<Boolean> = MutableLiveData()
-    private var enteredPhoneNumber: String? = null
-    private var enteredName: String? = null
-    private var imageUri: Uri? = null
-    var checkedRadioButtonId: Int? = null
+    private var newPhoneNumber: String? = null
+    private var newName: String? = null
+    private var newImageUri: Uri? = null
+    private var checkedRadioButtonId: Int? = null
 
     init {
         viewState = ProfileEditViewState(
@@ -32,14 +35,13 @@ class UserProfileEditViewModel @ViewModelInject constructor(
     override fun obtainEvent(viewEvent: ProfileEditEvent) {
         when (viewEvent) {
             ProfileEditEvent.ProfilePhotoClicked -> {
-                imageUri?.let { viewAction = ProfileEditAction.UpdateImage(it) }
+                newImageUri?.let { viewAction = ProfileEditAction.UpdateImage(it) }
             }
-            ProfileEditEvent.SaveClicked -> submitProfile(
-                name = enteredName,
-                phoneNumber = enteredPhoneNumber,
-                imagePath = if (imageUri != null) imageUri.toString() else null,
-                radioButtonId = checkedRadioButtonId
-            )
+            ProfileEditEvent.SaveClicked ->
+                if (shouldUpdate()) submitProfile(
+                User(name = newName ?: viewState.data?.name, phoneNumber = newPhoneNumber
+                    ?: viewState.data?.name, imagePath = if (newImageUri != null) newImageUri.toString()
+                else viewState.data?.imagePath)) else { viewState.copy(fetchStatus = FetchStatus.SucceededState) }
             ProfileEditEvent.CurrentProfileDataLoaded -> viewAction = ProfileEditAction
                 .PopulateCurrentProfileData(
                     name = viewState.data?.name, phoneNumber =
@@ -53,58 +55,41 @@ class UserProfileEditViewModel @ViewModelInject constructor(
         return !name?.trim().isNullOrEmpty() && !phoneNumber?.trim().isNullOrEmpty()
     }
 
-    private fun submitProfile(
-        name: String?,
-        phoneNumber: String?,
-        radioButtonId: Int?,
-        imagePath: String?
-    ) {
+    private fun submitProfile(user: User) {
         viewState = viewState.copy(fetchStatus = FetchStatus.LoadingState)
-        if (!fieldsAreValid(name, phoneNumber)) {
+        if (!fieldsAreValid(user.name, user.phoneNumber)) {
             viewState = viewState.copy(fetchStatus = FetchStatus.PhoneValidationErrorState)
             return
         }
-        val gender = getChosenGender(radioButtonId)
-        val isUpdated = updateUserProfile(name, phoneNumber, gender, imagePath)
-
-        viewState = if (isUpdated) viewState.copy(fetchStatus = FetchStatus.SucceededState)
+        val isUpdated = prefs.updateUserProfile(user.copy(gender = getChosenGender(checkedRadioButtonId)))
+        viewState = if (isUpdated) viewState.copy(fetchStatus = FetchStatus.SucceededState,
+        data = prefs.getUserProfile())
         else viewState.copy(fetchStatus = FetchStatus.ProfileWasNotUpdatedErrorState)
-    }
-
-    private fun updateUserProfile(
-        name: String?,
-        phoneNumber: String?,
-        gender: @UserGender.AnnotationUserGender String?,
-        imagePath: String?
-    ): Boolean {
-        val isUpdated = prefs.updateUserProfile(name, phoneNumber, gender, imagePath)
-        viewState.copy(data = prefs.getUserProfile())
-        return isUpdated
     }
 
     private fun getChosenGender(id: Int?): @UserGender.AnnotationUserGender String? {
         when (id) {
             R.id.radioFemale -> {
-                return UserGender.FEMALE
+                return FEMALE
             }
             R.id.radioMale -> {
-                return UserGender.MALE
+                return MALE
             }
         }
-        return null
+        return viewState.data?.gender
     }
 
     fun phoneNumberChanged(newText: String?) {
-        enteredPhoneNumber = newText?.trim()
-        phoneNumberLayoutErrorLiveData.value = !isPhoneNumberValid(enteredPhoneNumber)
+        newPhoneNumber = newText?.trim()
+        phoneNumberLayoutErrorLiveData.value = !isPhoneNumberValid(newPhoneNumber)
     }
 
     fun nameChanged(newText: String?) {
-        enteredName = newText?.trim()
+        newName = newText?.trim()
     }
 
     fun setImagePath(uri: Uri?) {
-        uri?.let { imageUri = it }
+        uri?.let { newImageUri = it }
     }
 
     fun setCheckedRadioButton(resourceId: Int) {
@@ -113,5 +98,9 @@ class UserProfileEditViewModel @ViewModelInject constructor(
 
     private fun isPhoneNumberValid(phoneNumber: String?): Boolean {
         return phoneNumber?.isValidPhoneNumber() ?: false
+    }
+
+    private fun shouldUpdate(): Boolean {
+        return newName != null || newImageUri != null || newPhoneNumber != null
     }
 }

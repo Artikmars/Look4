@@ -3,7 +3,7 @@ package com.artamonov.look4
 import android.app.Activity
 import android.app.Application
 import android.os.Bundle
-import com.crashlytics.android.Crashlytics
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 
 class MyLifecycleCallbacks : Application.ActivityLifecycleCallbacks {
     override fun onActivityPaused(activity: Activity) {
@@ -22,7 +22,7 @@ class MyLifecycleCallbacks : Application.ActivityLifecycleCallbacks {
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-        Crashlytics.log(activity::class.simpleName)
+        FirebaseCrashlytics.getInstance().log(activity::class.simpleName ?: "")
     }
 
     override fun onActivityResumed(activity: Activity) {

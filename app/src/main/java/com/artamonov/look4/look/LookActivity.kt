@@ -38,7 +38,6 @@ import com.artamonov.look4.utils.set
 import com.artamonov.look4.utils.setSafeOnClickListener
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.crashlytics.android.Crashlytics
 import com.google.android.gms.nearby.connection.ConnectionInfo
 import com.google.android.gms.nearby.connection.ConnectionLifecycleCallback
 import com.google.android.gms.nearby.connection.ConnectionResolution
@@ -50,7 +49,6 @@ import com.google.android.gms.nearby.connection.Payload
 import com.google.android.gms.nearby.connection.PayloadCallback
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate
 import com.google.android.gms.nearby.connection.Strategy.P2P_POINT_TO_POINT
-import com.google.firebase.crashlytics.FirebaseCrashlytics
 import kotlinx.android.synthetic.main.activity_look.*
 
 class LookActivity : BaseActivity(R.layout.activity_look) {
@@ -69,7 +67,7 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
         private const val REQUEST_CODE_REQUIRED_PERMISSIONS = 1
         private val STRATEGY = P2P_POINT_TO_POINT
         const val LOG_TAG = "Look4"
-        private val discOptions = DiscoveryOptions.Builder().setStrategy(STRATEGY).build()
+        private val discOptions by lazy { DiscoveryOptions.Builder().setStrategy(STRATEGY).build() }
 
         private var user: User? = null
         private var timer: CountDownTimer? = null
@@ -114,7 +112,7 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
                         )
                             ?.addOnFailureListener { e ->
                                 showSnackbarError(getString(R.string.look_error_connection_is_lost))
-                                Crashlytics.logException(e)
+                                firebaseCrashlytics.recordException(e)
                                 connectionClient.disconnectFromEndpoint(endpoint)
                                 closeActivity()
                             }?.addOnSuccessListener {
@@ -134,7 +132,7 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
                         lookViewModel.endpointIdSaved!!,
                         Payload.fromBytes("${getUserProfile()?.name};${getUserProfile()?.phoneNumber};${getUserProfile()?.gender}".toByteArray())
                     )?.addOnFailureListener { e ->
-                        Crashlytics.logException(e)
+                        firebaseCrashlytics.recordException(e)
                         showSnackbarError(getString(R.string.look_error_connection_is_lost_try_again))
                         closeActivity()
                     }
@@ -142,7 +140,7 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
                         lookViewModel.endpointIdSaved!!, pFilePayload
                     )?.addOnFailureListener { e ->
                         showSnackbarError(getString(R.string.look_error_connection_is_lost_try_again))
-                        Crashlytics.logException(e)
+                        firebaseCrashlytics.recordException(e)
                     }
 
                     finish()
@@ -171,28 +169,28 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
     private fun bindViewState(viewState: LookState) {
         when (viewState) {
             is LookState.DefaultState -> {
-                Crashlytics.log("State: Default")
+                firebaseCrashlytics.log("State: Default")
                 populateDefaultView()
             }
             is LookState.NoFoundState -> {
-                Crashlytics.log("State: No Found")
+                firebaseCrashlytics.log("State: No Found")
                 populateNoFoundView()
             }
             is LookState.SearchState -> {
-                Crashlytics.log("State: Search")
+                firebaseCrashlytics.log("State: Search")
                 startClient()
             }
             is LookState.PhoneNumberReceived -> {
-                Crashlytics.log("State: PhoneNumberReceived")
+                firebaseCrashlytics.log("State: PhoneNumberReceived")
                 lookViewModel.endpointIdSaved?.disconnectFromEndpoint(connectionClient)
                 showSnackbarWithAction()
             }
             is LookState.SucceededAdvertiserIsFoundState<*> -> {
-                Crashlytics.log("State: SucceededAdvertiserIsFoundState")
+                firebaseCrashlytics.log("State: SucceededAdvertiserIsFoundState")
                 populateSucceedView()
             }
             is LookState.SucceededDiscoverIsFoundState<*> -> {
-                Crashlytics.log("State: SucceededDiscoverIsFoundState")
+                firebaseCrashlytics.log("State: SucceededDiscoverIsFoundState")
                 populateSucceedView()
                 searchingInProgressText.visibility = VISIBLE
                 searchingInProgressText.text = lookViewModel.discovererName
@@ -233,14 +231,14 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
         if (ContextCompat.checkSelfPermission(this, ACCESS_COARSE_LOCATION)
             != PackageManager.PERMISSION_GRANTED
         ) {
-            Crashlytics.log("Permission is missing in checkForPermissions(): $ACCESS_COARSE_LOCATION")
+            firebaseCrashlytics.log("Permission is missing in checkForPermissions(): $ACCESS_COARSE_LOCATION")
             ActivityCompat.requestPermissions(
                 this,
                 arrayOf(ACCESS_COARSE_LOCATION),
                 PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION
             )
         } else {
-            Crashlytics.log("Permission is given in checkForPermissions(): $ACCESS_COARSE_LOCATION")
+            firebaseCrashlytics.log("Permission is given in checkForPermissions(): $ACCESS_COARSE_LOCATION")
             lookViewModel.startDiscovering()
             onNewIntent(intent)
         }
@@ -284,7 +282,7 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
                     permission
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
-                Crashlytics.log("Permission is missing: $permission")
+                firebaseCrashlytics.log("Permission is missing: $permission")
                 return false
             }
         }
@@ -299,7 +297,7 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
             connectionClient.startDiscovery(packageName, it, discOptions)
                 ?.addOnSuccessListener {
                     lookViewModel.updateRole(DISCOVERER)
-                    Crashlytics.log("Discovery has been started")
+                    firebaseCrashlytics.log("Discovery has been started")
                 }?.addOnFailureListener { e ->
                     // We're unable to start discovering.
                     showSnackbarError(getString(R.string.look_error_scanning_can_not_be_started))
@@ -314,18 +312,18 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
         timer = object : CountDownTimer(25000, 1000) {
             override fun onTick(millisUntilFinished: Long) {
                 countdown_view.text = ((25000 - millisUntilFinished) / 1000).toString()
-                Crashlytics.log("onTick(): ${countdown_view.text}")
+                firebaseCrashlytics.log("onTick(): ${countdown_view.text}")
             }
 
             override fun onFinish() {
                 connectionClient.stopAllEndpoints()
                 countdown_view.visibility = GONE
                 lookViewModel.setNoFoundState()
-                FirebaseCrashlytics.getInstance().recordException(Throwable("No found. Timer has finished"))
-                Crashlytics.log(prefs.getUserProfile().toString())
-                Crashlytics.log("timer onFinish()")
+                firebaseCrashlytics.recordException(Throwable("No found. Timer has finished"))
+                firebaseCrashlytics.log(prefs.getUserProfile().toString())
+                firebaseCrashlytics.log("timer onFinish()")
+                }
             }
-        }
         timer?.start()
     }
 
@@ -344,7 +342,7 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
 
             override fun onEndpointLost(endpointId: String) {
                 showSnackbarError(getString(R.string.look_error_disconnected))
-                Crashlytics.log("onEndpointLost: $endpointId")
+                firebaseCrashlytics.log("onEndpointLost: $endpointId")
             }
         }
 
@@ -353,7 +351,7 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
             override fun onConnectionInitiated(p0: String, p1: ConnectionInfo) {
                 connectionClient.acceptConnection(p0, payloadCallback)?.addOnFailureListener { e ->
                     showSnackbarError(getString(R.string.look_error_connection_is_lost_try_again))
-                    Crashlytics.logException(e)
+                    firebaseCrashlytics.recordException(e)
                     closeActivity()
                 }
             }
@@ -362,7 +360,7 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
                 lookViewModel.endpointIdSaved = endpointId
                 when (result.status.statusCode) {
                     ConnectionsStatusCodes.STATUS_OK -> {
-                        Crashlytics.log("endpointId = $endpointId")
+                        firebaseCrashlytics.log("endpointId = $endpointId")
                     }
 
                     ConnectionsStatusCodes.STATUS_CONNECTION_REJECTED -> {
@@ -392,7 +390,7 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
             override fun onDisconnected(p0: String) {
                 showSnackbarError(getString(R.string.look_error_disconnected))
                 lookViewModel.endpointIdSaved?.disconnectFromEndpoint(connectionClient)
-                Crashlytics.log("onDisconnected: $p0")
+                firebaseCrashlytics.log("onDisconnected: $p0")
             }
         }
 
@@ -403,7 +401,7 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
 
         override fun onPayloadTransferUpdate(p0: String, p1: PayloadTransferUpdate) {
             if (p1.status == PayloadTransferUpdate.Status.SUCCESS && p1.totalBytes > 1000) {
-                Crashlytics.log("onPayloadTransferUpdate: ${p1.status} && ${p1.totalBytes}")
+                firebaseCrashlytics.log("onPayloadTransferUpdate: ${p1.status} && ${p1.totalBytes}")
                 if (profile_image.drawable == null && lookViewModel.isGenderValid) {
                     timer?.cancel()
                     lookViewModel.advertiserName?.let {
@@ -422,7 +420,7 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
 
     private fun handleFailedResponse(exception: Exception) {
         timer?.cancel()
-        Crashlytics.logException(exception)
+        firebaseCrashlytics.recordException(exception)
         lookViewModel.endpointIdSaved?.disconnectFromEndpoint(connectionClient)
         connectionClient.stopAllEndpoints()
         lookViewModel.setNoFoundState()

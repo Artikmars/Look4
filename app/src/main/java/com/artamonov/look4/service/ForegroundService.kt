@@ -28,7 +28,6 @@ import com.artamonov.look4.utils.UserGender.Companion.FEMALE
 import com.artamonov.look4.utils.UserGender.Companion.MALE
 import com.artamonov.look4.utils.UserRole.Companion.ADVERTISER
 import com.artamonov.look4.utils.disconnectFromEndpoint
-import com.crashlytics.android.Crashlytics
 import com.google.android.gms.nearby.connection.AdvertisingOptions
 import com.google.android.gms.nearby.connection.ConnectionInfo
 import com.google.android.gms.nearby.connection.ConnectionLifecycleCallback
@@ -39,6 +38,7 @@ import com.google.android.gms.nearby.connection.Payload
 import com.google.android.gms.nearby.connection.PayloadCallback
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate
 import com.google.android.gms.nearby.connection.Strategy.P2P_POINT_TO_POINT
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
 import java.nio.charset.Charset
@@ -69,6 +69,7 @@ class ForegroundService : Service() {
 
     @Inject lateinit var prefs: PreferenceHelper
     @Inject lateinit var connectionClient: ConnectionsClient
+    @Inject lateinit var firebaseCrashlytics: FirebaseCrashlytics
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         val input = intent.getStringExtra("inputExtra")
@@ -113,7 +114,7 @@ class ForegroundService : Service() {
             startForeground(1, notification)
             isForegroundServiceRunning = true
             prefs.updateRole(ADVERTISER)
-            Crashlytics.log("Advertising has been started")
+            firebaseCrashlytics.log("Advertising has been started")
         }
             ?.addOnFailureListener { e ->
                 endpointIdSaved.disconnectFromEndpoint(connectionClient)
