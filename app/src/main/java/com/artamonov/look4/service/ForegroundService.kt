@@ -53,13 +53,13 @@ class ForegroundService : Service() {
     private var discovererPhoneNumber: String? = null
     private var discovererName: String? = null
     private var discovererFilePath: String? = null
-    lateinit var deviceId: String
+    private lateinit var deviceId: String
     private val STRATEGY = P2P_POINT_TO_POINT
     private var isGenderValid: Boolean = true
     private val advOptions: AdvertisingOptions =
         AdvertisingOptions.Builder().setStrategy(STRATEGY).build()
     var notification: Notification? = null
-    lateinit var notificationManager: NotificationManager
+    private lateinit var notificationManager: NotificationManager
     private var newFile: File? = null
     private var file: File? = null
     private var filePayload: Payload? = null

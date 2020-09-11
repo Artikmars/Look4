@@ -30,6 +30,7 @@ import com.artamonov.look4.utils.UserGender.Companion.FEMALE
 import com.artamonov.look4.utils.UserGender.Companion.MALE
 import com.artamonov.look4.utils.default
 import com.artamonov.look4.utils.setSafeOnClickListener
+import com.artamonov.look4.utils.startLookActivity
 import com.bumptech.glide.Glide
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.MobileAds
@@ -48,6 +49,8 @@ companion object {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         this.supportActionBar?.hide()
+
+        handleIntentIfExist(intent)
         setAdView()
 
         if (BuildConfig.DEBUG) { current_version_text.text = getString(
@@ -66,6 +69,8 @@ companion object {
         settings_text.setOnClickListener { viewModel.obtainEvent(MainEvent.OpenSettings) }
         main_look_gender_text.setOnClickListener { viewModel.obtainEvent(MainEvent.ChangeLookGender) }
     }
+
+    private fun handleIntentIfExist(intent: Intent?) = intent?.extras?.let { startLookActivity() }
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     private fun bindViewState(viewState: MainViewState) {

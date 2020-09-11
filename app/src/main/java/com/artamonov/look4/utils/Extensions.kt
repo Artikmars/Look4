@@ -5,6 +5,7 @@ import android.app.ActivityOptions
 import android.content.Intent
 import android.os.Build
 import android.view.View
+import com.artamonov.look4.look.LookActivity
 import com.artamonov.look4.userprofiledit.UserProfileEditActivity
 import com.google.android.gms.nearby.connection.ConnectionsClient
 import java.util.regex.Pattern
@@ -36,6 +37,13 @@ fun Activity.startWebViewActivity() = if (Build.VERSION.SDK_INT >= Build.VERSION
         ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
 } else {
     startActivity(Intent(this, UserProfileEditActivity::class.java))
+}
+
+fun Activity.startLookActivity() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+    startActivity(Intent(this, LookActivity::class.java),
+        ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
+} else {
+    startActivity(Intent(this, LookActivity::class.java))
 }
 
 fun Int.setVisibility(state: Boolean?) = if (state != null && state) View.VISIBLE else View.GONE

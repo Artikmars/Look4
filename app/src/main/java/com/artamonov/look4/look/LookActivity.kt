@@ -75,11 +75,6 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
 
     private val lookViewModel: LookViewModel by viewModels()
 
-    override fun onNewIntent(intent: Intent?) {
-        super.onNewIntent(intent)
-        lookViewModel.handleNewIntent(intent)
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         lookViewModel.state.observe(this, Observer { bindViewState(it) })
@@ -149,6 +144,7 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
         }
 
         checkForPermissions()
+        lookViewModel.handleNewIntent(intent)
 
 //        disconnectButton.setOnClickListener {
 //            connClient.apply {

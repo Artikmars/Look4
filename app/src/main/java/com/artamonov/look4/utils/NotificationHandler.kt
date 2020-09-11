@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import com.artamonov.look4.data.database.ContactRequest
 import com.artamonov.look4.look.LookActivity
+import com.artamonov.look4.main.MainActivity
 
 class NotificationHandler() {
 
@@ -46,7 +47,7 @@ class NotificationHandler() {
     fun getEndpointId() = this.endpointIdSaved
 
     fun createIntent(context: Context): Intent {
-        val intent = Intent(context, LookActivity::class.java)
+        val intent = Intent(context, MainActivity::class.java)
         intent.putExtra(EXTRA_DISCOVERER_NAME, discovererName)
         intent.putExtra(EXTRA_DISCOVERER_PHONE_NUMBER, discovererPhoneNumber)
         intent.putExtra(EXTRA_DISCOVERER_FILE_PATH, discovererFilePath)

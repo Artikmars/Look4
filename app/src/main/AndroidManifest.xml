@@ -56,7 +56,6 @@
             android:screenOrientation="portrait" />
         <activity
             android:name=".look.LookActivity"
-            android:launchMode="singleTask"
             android:parentActivityName=".main.MainActivity"
             android:screenOrientation="portrait" />
     </application>
