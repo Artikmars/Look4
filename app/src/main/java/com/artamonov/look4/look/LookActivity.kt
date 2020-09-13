@@ -14,8 +14,8 @@ import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
+import android.os.Build.VERSION_CODES.M
 import android.os.Bundle
-import android.os.CountDownTimer
 import android.os.ParcelFileDescriptor
 import android.view.View.GONE
 import android.view.View.VISIBLE
@@ -49,31 +49,35 @@ import com.google.android.gms.nearby.connection.Payload
 import com.google.android.gms.nearby.connection.PayloadCallback
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate
 import com.google.android.gms.nearby.connection.Strategy.P2P_POINT_TO_POINT
+import java.util.concurrent.TimeUnit
 import kotlinx.android.synthetic.main.activity_look.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class LookActivity : BaseActivity(R.layout.activity_look) {
 
     companion object {
-        private val REQUIRED_PERMISSIONS = arrayOf(
-            BLUETOOTH,
-            BLUETOOTH_ADMIN,
-            ACCESS_WIFI_STATE,
-            CHANGE_WIFI_STATE,
-            ACCESS_COARSE_LOCATION,
-            ACCESS_FINE_LOCATION,
-            READ_EXTERNAL_STORAGE
-        )
-
-        private const val REQUEST_CODE_REQUIRED_PERMISSIONS = 1
-        private val STRATEGY = P2P_POINT_TO_POINT
         const val LOG_TAG = "Look4"
-        private val discOptions by lazy { DiscoveryOptions.Builder().setStrategy(STRATEGY).build() }
-
-        private var user: User? = null
-        private var timer: CountDownTimer? = null
+        private const val REQUEST_CODE_REQUIRED_PERMISSIONS = 1
     }
 
+    private val requiredPermissions = arrayOf(
+        BLUETOOTH,
+        BLUETOOTH_ADMIN,
+        ACCESS_WIFI_STATE,
+        CHANGE_WIFI_STATE,
+        ACCESS_COARSE_LOCATION,
+        ACCESS_FINE_LOCATION,
+        READ_EXTERNAL_STORAGE
+    )
+    private val strategy = P2P_POINT_TO_POINT
+    private val discOptions by lazy { DiscoveryOptions.Builder().setStrategy(strategy).build() }
+    private var user: User? = null
     private val lookViewModel: LookViewModel by viewModels()
+    var job: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -157,7 +161,7 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
 
     override fun onDestroy() {
         super.onDestroy()
-        timer = null
+        job?.cancel()
         endpointDiscoveryCallback = null
         connectionLifecycleCallback = null
     }
@@ -215,9 +219,9 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onStart() {
         super.onStart()
-        if (!hasPermissions(this, REQUIRED_PERMISSIONS)) {
+        if (!hasPermissions(this, requiredPermissions)) {
             requestPermissions(
-                REQUIRED_PERMISSIONS,
+                requiredPermissions,
                 REQUEST_CODE_REQUIRED_PERMISSIONS
             )
         }
@@ -303,24 +307,21 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
         }
     }
 
-    @Synchronized
     private fun startTimer() {
-        timer = object : CountDownTimer(25000, 1000) {
-            override fun onTick(millisUntilFinished: Long) {
-                countdown_view.text = ((25000 - millisUntilFinished) / 1000).toString()
+        job = CoroutineScope(Dispatchers.Main).launch {
+            val totalSeconds = TimeUnit.MILLISECONDS.toSeconds(25000)
+            for (second in 0..totalSeconds) {
+                countdown_view.text = second.toString()
                 firebaseCrashlytics.log("onTick(): ${countdown_view.text}")
+                delay(1000)
             }
-
-            override fun onFinish() {
-                connectionClient.stopAllEndpoints()
-                countdown_view.visibility = GONE
-                lookViewModel.setNoFoundState()
-                firebaseCrashlytics.recordException(Throwable("No found. Timer has finished"))
-                firebaseCrashlytics.log(prefs.getUserProfile().toString())
-                firebaseCrashlytics.log("timer onFinish()")
-                }
-            }
-        timer?.start()
+            connectionClient.stopAllEndpoints()
+            countdown_view.visibility = GONE
+            lookViewModel.setNoFoundState()
+            firebaseCrashlytics.recordException(Throwable("No found. Timer has finished"))
+            firebaseCrashlytics.log(prefs.getUserProfile().toString())
+            firebaseCrashlytics.log("timer onFinish()")
+        }
     }
 
     private var endpointDiscoveryCallback: EndpointDiscoveryCallback? =
@@ -399,10 +400,9 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
             if (p1.status == PayloadTransferUpdate.Status.SUCCESS && p1.totalBytes > 1000) {
                 firebaseCrashlytics.log("onPayloadTransferUpdate: ${p1.status} && ${p1.totalBytes}")
                 if (profile_image.drawable == null && lookViewModel.isGenderValid) {
-                    timer?.cancel()
+                    job?.cancel()
                     lookViewModel.advertiserName?.let {
-                        searchingInProgressText.text =
-                            lookViewModel.advertiserName
+                        searchingInProgressText.text = lookViewModel.advertiserName
                     }
                     populateSucceedView()
                     Glide.with(applicationContext)
@@ -415,7 +415,7 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
     }
 
     private fun handleFailedResponse(exception: Exception) {
-        timer?.cancel()
+        job?.cancel()
         firebaseCrashlytics.recordException(exception)
         lookViewModel.endpointIdSaved?.disconnectFromEndpoint(connectionClient)
         connectionClient.stopAllEndpoints()
