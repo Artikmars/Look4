@@ -11,7 +11,6 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
 import android.os.ParcelFileDescriptor
-import android.view.View.GONE
 import android.view.View.VISIBLE
 import androidx.activity.viewModels
 import androidx.core.app.ActivityCompat
@@ -280,7 +279,7 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
                 delay(1000)
             }
             connectionClient.stopAllEndpoints()
-            countdown_view.visibility = GONE
+            countdown_view.text = ""
             lookViewModel.setNoFoundState()
             firebaseCrashlytics.recordException(Throwable("No found. Timer has finished"))
             firebaseCrashlytics.log(prefs.getUserProfile().toString())

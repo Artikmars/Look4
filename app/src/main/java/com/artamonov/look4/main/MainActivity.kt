@@ -76,12 +76,8 @@ companion object {
             }
             is FetchMainStatus.OnLookClickedState -> {
                 if (serviceWasStopped()) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                        startActivity(Intent(this, LookActivity::class.java),
-                            ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
-                    } else {
-                        startActivity(Intent(this, LookActivity::class.java))
-                    }
+                    startActivity(Intent(this, LookActivity::class.java),
+                        ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
                 }
             }
             is FetchMainStatus.LoadingState -> {

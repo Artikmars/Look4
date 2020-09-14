@@ -1,26 +1,22 @@
 package com.artamonov.look4
 
 import android.app.Activity
-import android.app.ActivityOptions
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import com.artamonov.look4.base.BaseActivity
-import com.artamonov.look4.main.MainActivity
 import com.artamonov.look4.utils.PostTextChangeWatcher
 import com.artamonov.look4.utils.UserGender
 import com.artamonov.look4.utils.UserGender.Companion.FEMALE
 import com.artamonov.look4.utils.UserGender.Companion.MALE
 import com.artamonov.look4.utils.isValidPhoneNumber
+import com.artamonov.look4.utils.startMainActivity
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.github.dhaval2404.imagepicker.ImagePicker
 import kotlinx.android.synthetic.main.activity_welcome.*
 
 const val PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 5545
-const val PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION = 5493
-const val PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 5969
 var selectedImage: Uri? = null
 var enteredPhoneNumber: String? = null
 
@@ -31,9 +27,10 @@ class WelcomeActivity : BaseActivity(R.layout.activity_welcome) {
 
         if (prefs.userAvailable()) {
             startMainActivity()
-            return
+            finish()
         }
-        this.supportActionBar?.hide()
+
+        supportActionBar?.hide()
 
         etPhoneNumber.addTextChangedListener(PostTextChangeWatcher { phoneNumberChanged(it) })
 
@@ -41,7 +38,9 @@ class WelcomeActivity : BaseActivity(R.layout.activity_welcome) {
             if (fieldsAreValid()) {
                 val isSaved = prefs.createUserProfile(name = etName.text.toString(), phoneNumber =
                 etPhoneNumber.text.toString(), imagePath = selectedImage.toString(), gender = getChosenGender())
-                if (isSaved) { startMainActivity() }
+                if (isSaved) {
+                    startMainActivity()
+                    finish() }
             } else {
                 showSnackbarError(R.string.error_blank_fields)
             }
@@ -110,16 +109,6 @@ class WelcomeActivity : BaseActivity(R.layout.activity_welcome) {
                 //   Toast.makeText(this, "Task Cancelled", Toast.LENGTH_SHORT).show()
             }
         }
-    }
-
-    private fun startMainActivity() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            startActivity(Intent(this, MainActivity::class.java),
-                ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
-        } else {
-            startActivity(Intent(this, MainActivity::class.java))
-        }
-        finish()
     }
 
     private fun fieldsAreValid(): Boolean {
