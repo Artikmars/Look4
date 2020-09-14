@@ -80,6 +80,10 @@ fun AppCompatActivity.unblockInput() {
     window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
 }
 
+fun AppCompatActivity.keepScreenOn() = window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+fun AppCompatActivity.unKeepScreenOn() = window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
 fun AppCompatActivity.blockInputForTask(task: () -> Unit) {
     blockInput()
     task.invoke()

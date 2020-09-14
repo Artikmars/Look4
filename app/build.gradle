@@ -14,8 +14,8 @@ android {
         applicationId "com.artamonov.look4"
         minSdkVersion 23
         targetSdkVersion 30
-        versionCode 26
-        versionName "0.31"
+        versionCode 27
+        versionName "0.32"
         multiDexEnabled true
         vectorDrawables.useSupportLibrary = true
 

@@ -24,8 +24,10 @@ import com.artamonov.look4.utils.LiveDataContactUnseenState.contactAdvertiserUns
 import com.artamonov.look4.utils.UserRole.Companion.ADVERTISER
 import com.artamonov.look4.utils.UserRole.Companion.DISCOVERER
 import com.artamonov.look4.utils.disconnectFromEndpoint
+import com.artamonov.look4.utils.keepScreenOn
 import com.artamonov.look4.utils.set
 import com.artamonov.look4.utils.setSafeOnClickListener
+import com.artamonov.look4.utils.unKeepScreenOn
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.google.android.gms.nearby.connection.ConnectionInfo
@@ -273,13 +275,18 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
     private fun startTimer() {
         job = CoroutineScope(Dispatchers.Main).launch {
             val totalSeconds = TimeUnit.MILLISECONDS.toSeconds(25000)
+            keepScreenOn()
             for (second in 0..totalSeconds) {
                 countdown_view.text = second.toString()
                 firebaseCrashlytics.log("onTick(): ${countdown_view.text}")
                 delay(1000)
             }
             connectionClient.stopAllEndpoints()
+            unKeepScreenOn()
+
+            // Make count down view gone when on no found state
             countdown_view.text = ""
+
             lookViewModel.setNoFoundState()
             firebaseCrashlytics.recordException(Throwable("No found. Timer has finished"))
             firebaseCrashlytics.log(prefs.getUserProfile().toString())
@@ -379,6 +386,11 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
 
     private fun handleFailedResponse(exception: Exception) {
         job?.cancel()
+        unKeepScreenOn()
+
+        // Make count down view gone when on no found state
+        countdown_view.text = ""
+
         firebaseCrashlytics.recordException(exception)
         lookViewModel.endpointIdSaved?.disconnectFromEndpoint(connectionClient)
         connectionClient.stopAllEndpoints()
