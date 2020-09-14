@@ -7,8 +7,7 @@ import com.artamonov.look4.data.prefs.PreferenceHelperImpl.Consts.CONTACT_LIST
 import com.artamonov.look4.data.prefs.PreferenceHelperImpl.Consts.CONTACT_REQUEST
 import com.artamonov.look4.data.prefs.PreferenceHelperImpl.Consts.USER_PROFILE
 import com.artamonov.look4.utils.UserGender
-import com.artamonov.look4.utils.UserGender.Companion.FEMALE
-import com.artamonov.look4.utils.UserGender.Companion.MALE
+import com.artamonov.look4.utils.UserGender.Companion.ALL
 import com.artamonov.look4.utils.UserRole
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
@@ -79,7 +78,7 @@ class PreferenceHelperImpl
             name = name,
             phoneNumber = phoneNumber,
             gender = gender,
-            lookGender = if (gender == MALE) FEMALE else MALE,
+            lookGender = ALL,
             imagePath = imagePath
         )
         return getSharedEditor().putString(USER_PROFILE, Gson().toJson(profile)).commit()
