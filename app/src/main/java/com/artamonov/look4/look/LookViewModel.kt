@@ -50,7 +50,7 @@ class LookViewModel @ViewModelInject constructor(
     var endpointIdSaved: String? = null
     private var file: File? = null
     var newFile: File? = null
-    private lateinit var notificationHandler: NotificationHandler
+    private var notificationHandler: NotificationHandler? = null
     val state = MutableLiveData<LookState>().default(initialValue = LookState.DefaultState)
     val user: MutableLiveData<User> = MutableLiveData()
 
@@ -155,6 +155,10 @@ class LookViewModel @ViewModelInject constructor(
         }
     }
 
+    fun isIntentValid(): Boolean {
+        return notificationHandler?.isNotificationValid() ?: false
+    }
+
     fun handleNewIntent(intent: Intent?) {
         prefs.saveContactRequest(ContactRequest())
 
@@ -163,11 +167,11 @@ class LookViewModel @ViewModelInject constructor(
         }
         notificationHandler = NotificationHandler(intent)
 
-        if (notificationHandler.isNotificationValid()) {
-            discovererFilePath = notificationHandler.getDiscovererFilePath()
-            discovererName = notificationHandler.getDiscovererName()
-            discovererPhoneNumber = notificationHandler.getDiscovererPhoneNumber()
-            endpointIdSaved = notificationHandler.getEndpointId()
+        if (notificationHandler?.isNotificationValid() == true) {
+            discovererFilePath = notificationHandler?.getDiscovererFilePath()
+            discovererName = notificationHandler?.getDiscovererName()
+            discovererPhoneNumber = notificationHandler?.getDiscovererPhoneNumber()
+            endpointIdSaved = notificationHandler?.getEndpointId()
             state.set(newValue = LookState.SucceededDiscoverIsFoundState(user = prefs.getUserProfile()))
         } else {
             state.set(newValue = LookState.DefaultState)

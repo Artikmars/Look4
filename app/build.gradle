@@ -12,10 +12,10 @@ android {
 
     defaultConfig {
         applicationId "com.artamonov.look4"
-        minSdkVersion 19
+        minSdkVersion 23
         targetSdkVersion 30
-        versionCode 21
-        versionName "0.27.1"
+        versionCode 22
+        versionName "0.28"
         multiDexEnabled true
         vectorDrawables.useSupportLibrary = true
 

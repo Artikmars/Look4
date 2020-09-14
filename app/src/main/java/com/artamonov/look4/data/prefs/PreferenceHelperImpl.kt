@@ -13,6 +13,7 @@ import com.artamonov.look4.utils.UserRole
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import com.google.gson.reflect.TypeToken
+import java.lang.NullPointerException
 import java.lang.reflect.Type
 import javax.inject.Inject
 
@@ -39,6 +40,9 @@ class PreferenceHelperImpl
         } catch (e: IllegalStateException) {
             e.printStackTrace()
             return User()
+        } catch (e: NullPointerException) {
+            e.printStackTrace()
+            return User()
         }
     }
 
@@ -50,6 +54,9 @@ class PreferenceHelperImpl
             jse.printStackTrace()
             arrayListOf()
         } catch (e: IllegalStateException) {
+            e.printStackTrace()
+            arrayListOf()
+        } catch (e: NullPointerException) {
             e.printStackTrace()
             arrayListOf()
         }
@@ -122,6 +129,9 @@ class PreferenceHelperImpl
             jse.printStackTrace()
             ContactRequest()
         } catch (e: IllegalStateException) {
+            e.printStackTrace()
+            ContactRequest()
+        } catch (e: NullPointerException) {
             e.printStackTrace()
             ContactRequest()
         }

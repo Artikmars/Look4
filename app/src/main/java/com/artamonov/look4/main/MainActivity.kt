@@ -8,9 +8,7 @@ import android.os.Bundle
 import android.view.animation.Animation
 import android.view.animation.RotateAnimation
 import androidx.activity.viewModels
-import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.Observer
 import com.artamonov.look4.BuildConfig
 import com.artamonov.look4.R
 import com.artamonov.look4.base.BaseActivity
@@ -45,7 +43,6 @@ companion object {
 
     private val viewModel: MainViewModel by viewModels()
 
-    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         this.supportActionBar?.hide()
@@ -60,8 +57,8 @@ companion object {
 
         current_version_text.setOnClickListener { viewModel.obtainEvent(MainEvent.SendEmail) }
 
-        viewModel.viewStates().observe(this, Observer { bindViewState(it) })
-        viewModel.viewEffects().observe(this, Observer { bindViewAction(it) })
+        viewModel.viewStates().observe(this, { bindViewState(it) })
+        viewModel.viewEffects().observe(this, { bindViewAction(it) })
 
         look_text.setOnClickListener { viewModel.obtainEvent(MainEvent.DiscoveringIsStarted) }
         offline_text.setSafeOnClickListener { viewModel.obtainEvent(MainEvent.ChangeStatus) }
@@ -72,7 +69,6 @@ companion object {
 
     private fun handleIntentIfExist(intent: Intent?) = intent?.extras?.let { startLookActivity() }
 
-    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     private fun bindViewState(viewState: MainViewState) {
         when (viewState.fetchStatus) {
             is FetchMainStatus.DefaultState -> {
@@ -91,28 +87,19 @@ companion object {
             is FetchMainStatus.LoadingState -> {
             }
             is FetchMainStatus.OnContactsClickedState -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    startActivity(Intent(this, ContactsActivity::class.java),
-                        ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
-                } else {
-                    startActivity(Intent(this, ContactsActivity::class.java))
-                }
+                startActivity(Intent(this, ContactsActivity::class.java),
+                    ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
             }
             is FetchMainStatus.OnSettingsClickedState -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    startActivity(Intent(this, SettingsActivity::class.java),
-                        ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
-                } else {
-                    startActivity(Intent(this, SettingsActivity::class.java))
-                }
+                startActivity(Intent(this, SettingsActivity::class.java),
+                    ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
             }
             is FetchMainStatus.OfflineState -> {
-                if (serviceWasStopped()) {
+                    stopService(Intent(this, ForegroundService::class.java))
                     showSnackbarError(R.string.main_advertising_has_stopped)
                     connectionClient.stopAllEndpoints()
                     offline_text.text = getString(R.string.main_offline_mode)
                     letter_0_1.clearAnimation()
-                }
             }
             is FetchMainStatus.OnlineState -> {
                 startService()
@@ -145,7 +132,6 @@ companion object {
         MainActivity.isDestroyed = false
     }
 
-    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     private fun animateDot() {
         Glide.with(this).load(R.drawable.ic_black_o).into(letter_0_1)
 
@@ -176,10 +162,9 @@ companion object {
         adView.loadAd(adRequest)
     }
 
-    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     override fun onResume() {
         super.onResume()
-        contactAdvertiserUnseenState.observe(this, Observer { state ->
+        contactAdvertiserUnseenState.observe(this, { state ->
             when (state) {
                 ContactUnseenState.EnabledState -> {
                     showSnackbarWithAction()

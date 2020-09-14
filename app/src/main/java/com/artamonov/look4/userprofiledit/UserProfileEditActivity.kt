@@ -37,8 +37,8 @@ class UserProfileEditActivity : BaseActivity(R.layout.activity_user_profile_edit
 
         viewModel = ViewModelProvider(this).get(UserProfileEditViewModel::class.java)
 
-        viewModel.viewStates().observe(this, Observer { bindViewState(it) })
-        viewModel.viewEffects().observe(this, Observer { bindViewActions(it) })
+        viewModel.viewStates().observe(this, { bindViewState(it) })
+        viewModel.viewEffects().observe(this, { bindViewActions(it) })
 
         viewModel.obtainEvent(ProfileEditEvent.ScreenShown)
         checkForPermissions()

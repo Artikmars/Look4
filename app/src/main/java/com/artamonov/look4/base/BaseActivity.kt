@@ -1,15 +1,21 @@
 package com.artamonov.look4.base
 
 import android.app.ActivityOptions
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
-import android.os.Build
+import android.content.IntentFilter
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.artamonov.look4.R
 import com.artamonov.look4.contacts.ContactsActivity
 import com.artamonov.look4.data.prefs.PreferenceHelper
+import com.artamonov.look4.main.MainActivity
+import com.artamonov.look4.service.ForegroundService.Companion.ADVERTISING_FAILED
+import com.artamonov.look4.service.ForegroundService.Companion.ADVERTISING_FAILED_EVENT
 import com.artamonov.look4.utils.ContactUnseenState
 import com.artamonov.look4.utils.LiveDataContactUnseenState.contactDiscovererUnseenState
 import com.artamonov.look4.utils.NotificationHandler
@@ -19,6 +25,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import kotlinx.android.synthetic.main.activity_main.*
 
 @AndroidEntryPoint
 abstract class BaseActivity(contentLayoutId: Int) : AppCompatActivity(contentLayoutId) {
@@ -29,22 +36,26 @@ abstract class BaseActivity(contentLayoutId: Int) : AppCompatActivity(contentLay
     @Inject lateinit var connectionClient: ConnectionsClient
     @Inject lateinit var firebaseCrashlytics: FirebaseCrashlytics
 
-    fun showSnackbarError(resourceId: Int) { Snackbar.make(findViewById(android.R.id.content),
-        getString(resourceId), Snackbar.LENGTH_LONG).show() }
+    fun showSnackbarError(resourceId: Int) { Snackbar.make(
+        findViewById(android.R.id.content),
+        getString(resourceId), Snackbar.LENGTH_LONG
+    ).show() }
 
-    fun showSnackbarError(stringMsg: String) { Snackbar.make(findViewById(android.R.id.content),
-        stringMsg, Snackbar.LENGTH_LONG).show() }
+    fun showSnackbarError(stringMsg: String) { Snackbar.make(
+        findViewById(android.R.id.content),
+        stringMsg, Snackbar.LENGTH_LONG
+    ).show() }
 
     fun showSnackbarWithAction() {
-        val snackbar = Snackbar.make(findViewById(android.R.id.content),
-            getString(R.string.look_you_received_phone_number), Snackbar.LENGTH_LONG)
+        val snackbar = Snackbar.make(
+            findViewById(android.R.id.content),
+            getString(R.string.look_you_received_phone_number), Snackbar.LENGTH_LONG
+        )
             .setAction(getString(R.string.look_view)) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    startActivity(Intent(this, ContactsActivity::class.java),
-                        ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
-                } else {
-                    startActivity(Intent(this, ContactsActivity::class.java))
-                }
+                startActivity(
+                    Intent(this, ContactsActivity::class.java),
+                    ActivityOptions.makeSceneTransitionAnimation(this).toBundle()
+                )
             }
         snackbar.show()
     }
@@ -67,11 +78,33 @@ abstract class BaseActivity(contentLayoutId: Int) : AppCompatActivity(contentLay
     }
 
     override fun onResume() {
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+            mMessageReceiver, IntentFilter(ADVERTISING_FAILED_EVENT))
         super.onResume()
         if (prefs.getContactRequest().name != null) {
             val notificationHandler = NotificationHandler()
-            startActivity(notificationHandler.createIntent(this,
-                prefs.getContactRequest()))
+            startActivity(
+                notificationHandler.createIntent(
+                    this,
+                    prefs.getContactRequest()
+                )
+            )
+        }
+    }
+
+    override fun onPause() {
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver)
+        super.onPause()
+    }
+
+    private val mMessageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent) {
+            // Get extra data included in the Intent
+            val message = intent.getStringExtra(ADVERTISING_FAILED)
+            message?.let { showSnackbarError(message) }
+            if (this@BaseActivity is MainActivity) {
+                offline_text.text = getString(R.string.main_offline_mode)
+            }
         }
     }
 }

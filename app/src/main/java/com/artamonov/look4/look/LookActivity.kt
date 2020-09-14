@@ -2,29 +2,20 @@ package com.artamonov.look4.look
 
 import android.Manifest.permission.ACCESS_COARSE_LOCATION
 import android.Manifest.permission.ACCESS_FINE_LOCATION
-import android.Manifest.permission.ACCESS_WIFI_STATE
-import android.Manifest.permission.BLUETOOTH
-import android.Manifest.permission.BLUETOOTH_ADMIN
-import android.Manifest.permission.CHANGE_WIFI_STATE
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
+import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.graphics.drawable.Drawable
 import android.net.Uri
-import android.os.Build
-import android.os.Build.VERSION_CODES.M
 import android.os.Bundle
 import android.os.ParcelFileDescriptor
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import androidx.activity.viewModels
-import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.Observer
-import com.artamonov.look4.PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION
 import com.artamonov.look4.R
 import com.artamonov.look4.base.BaseActivity
 import com.artamonov.look4.data.database.User
@@ -65,10 +56,6 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
     }
 
     private val requiredPermissions = arrayOf(
-        BLUETOOTH,
-        BLUETOOTH_ADMIN,
-        ACCESS_WIFI_STATE,
-        CHANGE_WIFI_STATE,
         ACCESS_COARSE_LOCATION,
         ACCESS_FINE_LOCATION,
         READ_EXTERNAL_STORAGE
@@ -81,8 +68,8 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        lookViewModel.state.observe(this, Observer { bindViewState(it) })
-        lookViewModel.user.observe(this, Observer { user = it })
+        lookViewModel.state.observe(this, { bindViewState(it) })
+        lookViewModel.user.observe(this, { user = it })
 
         searchBtn.setOnClickListener { startClient() }
         look_back.setOnClickListener { closeActivity() }
@@ -148,7 +135,6 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
         }
 
         checkForPermissions()
-        lookViewModel.handleNewIntent(intent)
 
 //        disconnectButton.setOnClickListener {
 //            connClient.apply {
@@ -200,14 +186,10 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
     }
 
     private fun closeActivity() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            startActivity(
-                Intent(this, MainActivity::class.java),
-                ActivityOptions.makeSceneTransitionAnimation(this).toBundle()
-            )
-        } else {
-            startActivity(Intent(this, MainActivity::class.java))
-        }
+        startActivity(
+            Intent(this, MainActivity::class.java),
+            ActivityOptions.makeSceneTransitionAnimation(this).toBundle()
+        )
 
         finish()
     }
@@ -216,31 +198,15 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
         return prefs.getUserProfile()
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
-    override fun onStart() {
-        super.onStart()
-        if (!hasPermissions(this, requiredPermissions)) {
-            requestPermissions(
-                requiredPermissions,
-                REQUEST_CODE_REQUIRED_PERMISSIONS
-            )
-        }
-    }
-
     private fun checkForPermissions() {
-        if (ContextCompat.checkSelfPermission(this, ACCESS_COARSE_LOCATION)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
+        if (!hasPermissions(this, requiredPermissions)) {
             firebaseCrashlytics.log("Permission is missing in checkForPermissions(): $ACCESS_COARSE_LOCATION")
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(ACCESS_COARSE_LOCATION),
-                PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION
-            )
+            ActivityCompat.requestPermissions(this, requiredPermissions,
+                REQUEST_CODE_REQUIRED_PERMISSIONS)
         } else {
             firebaseCrashlytics.log("Permission is given in checkForPermissions(): $ACCESS_COARSE_LOCATION")
-            lookViewModel.startDiscovering()
-            onNewIntent(intent)
+            lookViewModel.handleNewIntent(intent)
+            if (!lookViewModel.isIntentValid()) { lookViewModel.startDiscovering() }
         }
     }
 
@@ -250,13 +216,14 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
         grantResults: IntArray
     ) {
         when (requestCode) {
-            PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION -> {
+            REQUEST_CODE_REQUIRED_PERMISSIONS -> {
                 // If request is cancelled, the result arrays are empty.
-                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                if ((grantResults.isNotEmpty() && grantResults[0] == PERMISSION_GRANTED) &&
+                    grantResults[1] == PERMISSION_GRANTED && grantResults[2] == PERMISSION_GRANTED) {
                     // permission was granted, yay! Do the
                     // contacts-related task you need to do.
-                    lookViewModel.startDiscovering()
-                    onNewIntent(intent)
+                    lookViewModel.handleNewIntent(intent)
+                    if (!lookViewModel.isIntentValid()) { lookViewModel.startDiscovering() }
                 } else {
                     // permission denied, boo! Disable the
                     // functionality that depends on this permission.
@@ -277,10 +244,7 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
     /** Returns true if the app was granted all the permissions. Otherwise, returns false.  */
     private fun hasPermissions(context: Context, permissions: Array<String>): Boolean {
         for (permission in permissions) {
-            if (ContextCompat.checkSelfPermission(
-                    context,
-                    permission
-                ) != PackageManager.PERMISSION_GRANTED
+            if (ContextCompat.checkSelfPermission(context, permission) != PERMISSION_GRANTED
             ) {
                 firebaseCrashlytics.log("Permission is missing: $permission")
                 return false

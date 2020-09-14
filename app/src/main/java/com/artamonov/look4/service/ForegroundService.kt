@@ -17,6 +17,7 @@ import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.artamonov.look4.R
 import com.artamonov.look4.data.database.ContactRequest
 import com.artamonov.look4.data.prefs.PreferenceHelper
@@ -71,7 +72,20 @@ class ForegroundService : Service() {
     @Inject lateinit var connectionClient: ConnectionsClient
     @Inject lateinit var firebaseCrashlytics: FirebaseCrashlytics
 
+    override fun onCreate() {
+        super.onCreate()
+        isForegroundServiceRunning = true
+    }
+
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
+        deviceId = UUID.randomUUID().toString()
+        startServer(intent)
+        // do heavy work on a background thread
+        // stopSelf();
+        return START_NOT_STICKY
+    }
+
+    private fun createNotification(intent: Intent): Notification {
         val input = intent.getStringExtra("inputExtra")
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         createNotificationChannel()
@@ -80,18 +94,12 @@ class ForegroundService : Service() {
             this, 0,
             notificationIntent, FLAG_UPDATE_CURRENT
         )
-        notification = NotificationCompat.Builder(this, CHANNEL_ID)
+        return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(getString(R.string.main_online_mode))
             .setSmallIcon(R.drawable.ic_o_1)
             .setContentText(input)
             .setContentIntent(pendingIntent)
             .build()
-        // do heavy work on a background thread
-        // stopSelf();
-        deviceId = UUID.randomUUID().toString()
-
-        startServer()
-        return START_NOT_STICKY
     }
 
     override fun onBind(intent: Intent): IBinder? {
@@ -99,28 +107,24 @@ class ForegroundService : Service() {
     }
 
     override fun onDestroy() {
+        super.onDestroy()
         connectionClient.stopAllEndpoints()
         isForegroundServiceRunning = false
-        super.onDestroy()
     }
 
-    private fun startServer() {
-        connectionClient.startAdvertising(
-            deviceId,
-            packageName,
-            connectionLifecycleCallback,
+    private fun startServer(intent: Intent) {
+        connectionClient.startAdvertising(deviceId, packageName, connectionLifecycleCallback,
             advOptions
         )?.addOnSuccessListener {
-            startForeground(1, notification)
-            isForegroundServiceRunning = true
+            startForeground(1, createNotification(intent))
             prefs.updateRole(ADVERTISER)
             firebaseCrashlytics.log("Advertising has been started")
-        }
-            ?.addOnFailureListener { e ->
-                endpointIdSaved.disconnectFromEndpoint(connectionClient)
-                isForegroundServiceRunning = false
+        }?.addOnFailureListener { e ->
+            val broadcastIntent = Intent(ADVERTISING_FAILED_EVENT)
+            broadcastIntent.putExtra(ADVERTISING_FAILED, e)
+            LocalBroadcastManager.getInstance(this).sendBroadcast(broadcastIntent)
+            endpointIdSaved.disconnectFromEndpoint(connectionClient)
                 Toast.makeText(this, "$e", Toast.LENGTH_LONG).show()
-                stopForeground(true)
                 stopSelf()
             }
     }
@@ -305,5 +309,7 @@ class ForegroundService : Service() {
     companion object {
         const val CHANNEL_ID = "ForegroundServiceChannel"
         var isForegroundServiceRunning: Boolean = false
+        const val ADVERTISING_FAILED = "ADVERTISING_FAILED"
+        const val ADVERTISING_FAILED_EVENT = "ADVERTISING_FAILED_EVENT"
     }
 }
