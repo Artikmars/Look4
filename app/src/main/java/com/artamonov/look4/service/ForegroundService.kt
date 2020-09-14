@@ -110,6 +110,8 @@ class ForegroundService : Service() {
         super.onDestroy()
         connectionClient.stopAllEndpoints()
         isForegroundServiceRunning = false
+        val broadcastIntent = Intent(SERVICE_IS_DESTROYED)
+        LocalBroadcastManager.getInstance(this).sendBroadcast(broadcastIntent)
     }
 
     private fun startServer(intent: Intent) {
@@ -118,6 +120,8 @@ class ForegroundService : Service() {
         )?.addOnSuccessListener {
             startForeground(1, createNotification(intent))
             prefs.updateRole(ADVERTISER)
+            val broadcastIntent = Intent(ADVERTISING_SUCCEEDED_EVENT)
+            LocalBroadcastManager.getInstance(this).sendBroadcast(broadcastIntent)
             firebaseCrashlytics.log("Advertising has been started")
         }?.addOnFailureListener { e ->
             val broadcastIntent = Intent(ADVERTISING_FAILED_EVENT)
@@ -311,5 +315,7 @@ class ForegroundService : Service() {
         var isForegroundServiceRunning: Boolean = false
         const val ADVERTISING_FAILED = "ADVERTISING_FAILED"
         const val ADVERTISING_FAILED_EVENT = "ADVERTISING_FAILED_EVENT"
+        const val ADVERTISING_SUCCEEDED_EVENT = "ADVERTISING_SUCCEEDED_EVENT"
+        const val SERVICE_IS_DESTROYED = "SERVICE_IS_DESTROYED"
     }
 }

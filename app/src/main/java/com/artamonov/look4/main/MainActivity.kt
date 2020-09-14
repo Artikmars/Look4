@@ -1,6 +1,5 @@
 package com.artamonov.look4.main
 
-import android.app.ActivityOptions
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -12,23 +11,24 @@ import androidx.core.content.ContextCompat
 import com.artamonov.look4.BuildConfig
 import com.artamonov.look4.R
 import com.artamonov.look4.base.BaseActivity
-import com.artamonov.look4.contacts.ContactsActivity
-import com.artamonov.look4.look.LookActivity
 import com.artamonov.look4.main.models.FetchMainStatus
 import com.artamonov.look4.main.models.MainAction
 import com.artamonov.look4.main.models.MainEvent
 import com.artamonov.look4.main.models.MainViewState
 import com.artamonov.look4.service.ForegroundService
-import com.artamonov.look4.settings.SettingsActivity
 import com.artamonov.look4.utils.ContactUnseenState
 import com.artamonov.look4.utils.LiveDataContactUnseenState.contactAdvertiserUnseenState
 import com.artamonov.look4.utils.LogHandler
 import com.artamonov.look4.utils.UserGender.Companion.ALL
 import com.artamonov.look4.utils.UserGender.Companion.FEMALE
 import com.artamonov.look4.utils.UserGender.Companion.MALE
+import com.artamonov.look4.utils.blockInput
+import com.artamonov.look4.utils.colourMainButtonsToGrey
 import com.artamonov.look4.utils.default
 import com.artamonov.look4.utils.setSafeOnClickListener
+import com.artamonov.look4.utils.startContactsActivity
 import com.artamonov.look4.utils.startLookActivity
+import com.artamonov.look4.utils.startSettingsActivity
 import com.bumptech.glide.Glide
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.MobileAds
@@ -71,39 +71,23 @@ companion object {
 
     private fun bindViewState(viewState: MainViewState) {
         when (viewState.fetchStatus) {
-            is FetchMainStatus.DefaultState -> {
-                setLookGenderText(viewState.data?.lookGender)
-            }
+            is FetchMainStatus.DefaultState -> { setLookGenderText(viewState.data?.lookGender) }
             is FetchMainStatus.OnLookClickedState -> {
-                if (serviceWasStopped()) {
-                    startActivity(Intent(this, LookActivity::class.java),
-                        ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
-                }
+                stopService()
+                startLookActivity()
             }
-            is FetchMainStatus.LoadingState -> {
-            }
-            is FetchMainStatus.OnContactsClickedState -> {
-                startActivity(Intent(this, ContactsActivity::class.java),
-                    ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
-            }
-            is FetchMainStatus.OnSettingsClickedState -> {
-                startActivity(Intent(this, SettingsActivity::class.java),
-                    ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
-            }
+            is FetchMainStatus.LoadingState -> { }
+            is FetchMainStatus.OnContactsClickedState -> { startContactsActivity() }
+            is FetchMainStatus.OnSettingsClickedState -> { startSettingsActivity() }
             is FetchMainStatus.OfflineState -> {
-                    stopService(Intent(this, ForegroundService::class.java))
-                    showSnackbarError(R.string.main_advertising_has_stopped)
-                    connectionClient.stopAllEndpoints()
-                    offline_text.text = getString(R.string.main_offline_mode)
-                    letter_0_1.clearAnimation()
+                stopService(Intent(this, ForegroundService::class.java))
+                colourMainButtonsToGrey()
+                blockInput()
             }
             is FetchMainStatus.OnlineState -> {
                 startService()
-                showSnackbarError(R.string.main_advertising_has_started)
-                animateDot()
-                look_text.isEnabled = true
-                look_text.isClickable = true
-                offline_text.text = getString(R.string.main_online_mode)
+                colourMainButtonsToGrey()
+                blockInput()
             }
             is FetchMainStatus.LookGenderManState -> {
                 main_look_gender_text.text = getString(R.string.main_man)
@@ -128,7 +112,7 @@ companion object {
         MainActivity.isDestroyed = false
     }
 
-    private fun animateDot() {
+    fun animateDot() {
         Glide.with(this).load(R.drawable.ic_black_o).into(letter_0_1)
 
         val rotate = RotateAnimation(
@@ -181,11 +165,9 @@ companion object {
         ContextCompat.startForegroundService(this, serviceIntent)
     }
 
-    private fun serviceWasStopped(): Boolean {
-        return if (ForegroundService.isForegroundServiceRunning) {
+    private fun stopService() {
+        if (ForegroundService.isForegroundServiceRunning) {
             stopService(Intent(this, ForegroundService::class.java))
-        } else {
-            true
         }
     }
 

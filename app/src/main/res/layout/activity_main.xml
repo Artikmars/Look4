@@ -41,18 +41,6 @@
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/ic_black_o" />
 
-    <ImageView
-        android:id="@+id/black_dot"
-        android:layout_width="15dp"
-        android:layout_height="15dp"
-        android:visibility="gone"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.597"
-        app:layout_constraintStart_toStartOf="parent"
-        app:srcCompat="@drawable/ic_black_dot"
-        tools:layout_editor_absoluteY="120dp" />
-
-
     <TextView
         android:id="@+id/look_text"
         android:layout_width="wrap_content"
