@@ -7,7 +7,9 @@ import android.view.View
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import com.artamonov.look4.AboutUsActivity
 import com.artamonov.look4.R
+import com.artamonov.look4.WebViewActivity
 import com.artamonov.look4.contacts.ContactsActivity
 import com.artamonov.look4.look.LookActivity
 import com.artamonov.look4.main.MainActivity
@@ -30,7 +32,7 @@ fun Activity.startUserProfileEditActivity() =
         ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
 
 fun Activity.startAboutUsActivity() =
-    startActivity(Intent(this, UserProfileEditActivity::class.java),
+    startActivity(Intent(this, AboutUsActivity::class.java),
         ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
 
 fun Activity.startSettingsActivity() =
@@ -38,7 +40,7 @@ fun Activity.startSettingsActivity() =
         ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
 
 fun Activity.startWebViewActivity() =
-    startActivity(Intent(this, UserProfileEditActivity::class.java),
+    startActivity(Intent(this, WebViewActivity::class.java),
         ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
 
 fun Activity.startLookActivity() =
