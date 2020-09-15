@@ -59,3 +59,15 @@ fun Activity.populateSucceedView() {
     found_view.visibility = VISIBLE
     Crashlytics.log("Succeed view is populated")
 }
+
+fun Activity.populatePendingView() {
+    countdown_view.visibility = GONE
+    talk_in_person_text.visibility = GONE
+    look_divider.visibility = GONE
+    searchBtn.visibility = GONE
+    no_button.visibility = GONE
+    yes_button.visibility = GONE
+    profile_image.visibility = VISIBLE
+    found_view.visibility = VISIBLE
+    Crashlytics.log("Succeed view is populated")
+}

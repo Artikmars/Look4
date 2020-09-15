@@ -25,6 +25,11 @@
     <string name="look_search_again">Почати пошук ще раз</string>
     <string name="look_you_received_phone_number">Контакт збережений!</string>
     <string name="look_view">Відкрити</string>
+    <string name="look_pending">Чекайте на відповідь …</string>
+    <string name="look_disconnect_warning_title">Ви впевнені що хочете перервати з\'єднання?</string>
+    <string name="look_disconnect_warning">В цьому випадку ви не зможете отримати номер партнера</string>
+
+
 
     <string name="look_error_connection_is_lost">З\'єднання втрачено. Напишіть першою (-им)!</string>
     <string name="look_error_connection_is_lost_try_again">З\'єднання втрачено. Спробуйте знову</string>

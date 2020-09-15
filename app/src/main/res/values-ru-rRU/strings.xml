@@ -25,6 +25,9 @@
     <string name="look_search_again">Начать поиск заново</string>
     <string name="look_you_received_phone_number">Контакт сохранён!</string>
     <string name="look_view">Открыть</string>
+    <string name="look_pending">Ждите ответа …</string>
+    <string name="look_disconnect_warning_title">Вы уверены что хотите прервать соединение?</string>
+    <string name="look_disconnect_warning">В этом случае вы не сможете получить номер партнера</string>
 
     <string name="look_error_connection_is_lost">Соединение потеряно. Напишите первой(ым)!</string>
     <string name="look_error_connection_is_lost_try_again">Соединение потеряно. Попробуйте снова</string>

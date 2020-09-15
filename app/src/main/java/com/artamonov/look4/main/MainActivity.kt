@@ -29,6 +29,7 @@ import com.artamonov.look4.utils.setSafeOnClickListener
 import com.artamonov.look4.utils.startContactsActivity
 import com.artamonov.look4.utils.startLookActivity
 import com.artamonov.look4.utils.startSettingsActivity
+import com.artamonov.look4.utils.updateMainUIState
 import com.bumptech.glide.Glide
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.MobileAds
@@ -144,6 +145,7 @@ companion object {
 
     override fun onResume() {
         super.onResume()
+        updateMainUIState()
         contactAdvertiserUnseenState.observe(this, { state ->
             when (state) {
                 ContactUnseenState.EnabledState -> {

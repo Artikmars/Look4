@@ -13,6 +13,7 @@ import com.artamonov.look4.WebViewActivity
 import com.artamonov.look4.contacts.ContactsActivity
 import com.artamonov.look4.look.LookActivity
 import com.artamonov.look4.main.MainActivity
+import com.artamonov.look4.service.ForegroundService
 import com.artamonov.look4.settings.SettingsActivity
 import com.artamonov.look4.userprofiledit.UserProfileEditActivity
 import com.google.android.gms.nearby.connection.ConnectionsClient
@@ -78,6 +79,16 @@ fun AppCompatActivity.colourMainButtonsToNormal() {
 
 fun AppCompatActivity.unblockInput() {
     window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
+}
+
+fun AppCompatActivity.updateMainUIState() {
+    unblockInput()
+    colourMainButtonsToNormal()
+    if (ForegroundService.isForegroundServiceRunning) {
+        offline_text.text = getString(R.string.main_online_mode)
+    } else {
+        offline_text.text = getString(R.string.main_offline_mode)
+    }
 }
 
 fun AppCompatActivity.keepScreenOn() = window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)

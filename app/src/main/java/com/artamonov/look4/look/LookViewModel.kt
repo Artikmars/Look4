@@ -33,8 +33,13 @@ sealed class LookState {
     class SucceededAdvertiserIsFoundState<User>(val user: User) : LookState()
     class SucceededDiscoverIsFoundState<User>(val user: User) : LookState()
     object NoFoundState : LookState()
+    object PendingState : LookState()
     object PhoneNumberReceived : LookState()
     object ErrorState : LookState()
+}
+
+sealed class LookAction {
+    object ShowDialog : LookAction()
 }
 
 class LookViewModel @ViewModelInject constructor(
@@ -52,6 +57,7 @@ class LookViewModel @ViewModelInject constructor(
     var newFile: File? = null
     private var notificationHandler: NotificationHandler? = null
     val state = MutableLiveData<LookState>().default(initialValue = LookState.DefaultState)
+    val action = MutableLiveData<LookAction>()
     val user: MutableLiveData<User> = MutableLiveData()
 
     init {
@@ -79,6 +85,10 @@ class LookViewModel @ViewModelInject constructor(
 
     fun setNoFoundState() {
         state.set(newValue = LookState.NoFoundState)
+    }
+
+    fun setPendingState() {
+        state.set(newValue = LookState.PendingState)
     }
 
     fun handlePayload(p1: Payload) {
@@ -182,5 +192,13 @@ class LookViewModel @ViewModelInject constructor(
 //                LookActivity.advertiserPhoneNumber
 //            searchingInProgressText.visibility = View.VISIBLE
 //        }
+    }
+
+    fun showWarningIfPending(): Boolean {
+        if (state.value == LookState.PendingState) {
+            action.set(LookAction.ShowDialog)
+            return true
+        }
+        return false
     }
 }

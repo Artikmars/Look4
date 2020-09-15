@@ -30,6 +30,9 @@
     <string name="look_countdown_default_value" translatable="false">1</string>
     <string name="look_you_received_phone_number">Your new contact has been saved!</string>
     <string name="look_view">View</string>
+    <string name="look_pending">Waiting …</string>
+    <string name="look_disconnect_warning_title">Are you sure you want to disconnect?</string>
+    <string name="look_disconnect_warning">You will not get a contact back from your partner</string>
 
     <string name="look_error_connection_is_lost">Connection has been lost. Write first!</string>
     <string name="look_error_connection_is_lost_try_again">Connection has been lost. Try again later</string>
