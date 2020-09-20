@@ -73,7 +73,7 @@ abstract class BaseActivity(contentLayoutId: Int) : AppCompatActivity(contentLay
             contactState = state
             when (state) {
                 ContactUnseenState.EnabledState -> {
-                    showToast()
+                    showSnackbarError(R.string.look_you_received_phone_number)
                     contactDiscovererUnseenState.set(newValue = ContactUnseenState.DisabledState)
                 }
             }

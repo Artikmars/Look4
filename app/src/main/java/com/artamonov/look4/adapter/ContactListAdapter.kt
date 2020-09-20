@@ -51,7 +51,7 @@ class ContactListAdapter(
             view.contact_phone_number.setOnClickListener { v ->
                 val myClipboard = v.context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
 
-                val myClip = ClipData.newPlainText("label", view.contact_phone_number.text.toString())
+                val myClip = ClipData.newPlainText("label", view.contact_phone_number.text)
                 myClipboard.setPrimaryClip(myClip)
                 Toast.makeText(v.context, "Copied to clipboard.", Toast.LENGTH_SHORT).show()
             }

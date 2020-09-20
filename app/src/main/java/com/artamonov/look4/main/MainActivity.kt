@@ -146,6 +146,11 @@ companion object {
     override fun onResume() {
         super.onResume()
         updateMainUIState()
+        if (ForegroundService.isForegroundServiceRunning) {
+            animateDot()
+        } else {
+            letter_0_1.clearAnimation()
+        }
         contactAdvertiserUnseenState.observe(this, { state ->
             when (state) {
                 ContactUnseenState.EnabledState -> {
