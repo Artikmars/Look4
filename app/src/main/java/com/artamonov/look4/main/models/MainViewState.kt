@@ -18,7 +18,9 @@ sealed class FetchMainStatus {
     object LookGenderManState : FetchMainStatus()
     object LookGenderWomenState : FetchMainStatus()
     object LookGenderAllState : FetchMainStatus()
-    object OnlineState : FetchMainStatus()
-    object OfflineState : FetchMainStatus()
+    object OnlineEnabledState : FetchMainStatus()
+    object OfflineEnabledState : FetchMainStatus()
+    object EnablingOnlineState : FetchMainStatus()
+    object EnablingOfflineState : FetchMainStatus()
     object ErrorState : FetchMainStatus()
 }

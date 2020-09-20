@@ -1,13 +1,12 @@
 package com.artamonov.look4.main
 
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.view.animation.Animation
-import android.view.animation.RotateAnimation
 import androidx.activity.viewModels
-import androidx.core.content.ContextCompat
 import com.artamonov.look4.BuildConfig
 import com.artamonov.look4.R
 import com.artamonov.look4.base.BaseActivity
@@ -15,32 +14,34 @@ import com.artamonov.look4.main.models.FetchMainStatus
 import com.artamonov.look4.main.models.MainAction
 import com.artamonov.look4.main.models.MainEvent
 import com.artamonov.look4.main.models.MainViewState
-import com.artamonov.look4.service.ForegroundService
+import com.artamonov.look4.service.ForegroundService.Companion.ADVERTISING_FAILED_EVENT
+import com.artamonov.look4.service.ForegroundService.Companion.ADVERTISING_SUCCEEDED_EVENT
+import com.artamonov.look4.service.ForegroundService.Companion.SERVICE_IS_DESTROYED
 import com.artamonov.look4.utils.ContactUnseenState
 import com.artamonov.look4.utils.LiveDataContactUnseenState.contactAdvertiserUnseenState
 import com.artamonov.look4.utils.LogHandler
 import com.artamonov.look4.utils.UserGender.Companion.ALL
 import com.artamonov.look4.utils.UserGender.Companion.FEMALE
 import com.artamonov.look4.utils.UserGender.Companion.MALE
-import com.artamonov.look4.utils.blockInput
-import com.artamonov.look4.utils.colourMainButtonsToGrey
+import com.artamonov.look4.utils.animateDot
 import com.artamonov.look4.utils.default
+import com.artamonov.look4.utils.registerBroadcastReceiver
+import com.artamonov.look4.utils.setAdView
 import com.artamonov.look4.utils.setSafeOnClickListener
+import com.artamonov.look4.utils.showSnackbarError
+import com.artamonov.look4.utils.showSnackbarWithAction
 import com.artamonov.look4.utils.startContactsActivity
 import com.artamonov.look4.utils.startLookActivity
+import com.artamonov.look4.utils.startService
 import com.artamonov.look4.utils.startSettingsActivity
-import com.artamonov.look4.utils.updateMainUIState
+import com.artamonov.look4.utils.stopService
+import com.artamonov.look4.utils.unblockInput
+import com.artamonov.look4.utils.unregisterBroadcastReceiver
 import com.bumptech.glide.Glide
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.MobileAds
 import java.io.File
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : BaseActivity(R.layout.activity_main) {
-
-companion object {
-    var isDestroyed = false
-}
 
     private val viewModel: MainViewModel by viewModels()
 
@@ -48,6 +49,7 @@ companion object {
         super.onCreate(savedInstanceState)
         this.supportActionBar?.hide()
 
+        registerBroadcastReceiver(mMessageReceiver)
         handleIntentIfExist(intent)
         setAdView()
 
@@ -60,6 +62,8 @@ companion object {
 
         viewModel.viewStates().observe(this, { bindViewState(it) })
         viewModel.viewEffects().observe(this, { bindViewAction(it) })
+
+        Glide.with(this).load(R.drawable.ic_black_o).into(letter_0_1)
 
         look_text.setOnClickListener { viewModel.obtainEvent(MainEvent.DiscoveringIsStarted) }
         offline_text.setSafeOnClickListener { viewModel.obtainEvent(MainEvent.ChangeStatus) }
@@ -80,15 +84,20 @@ companion object {
             is FetchMainStatus.LoadingState -> { }
             is FetchMainStatus.OnContactsClickedState -> { startContactsActivity() }
             is FetchMainStatus.OnSettingsClickedState -> { startSettingsActivity() }
-            is FetchMainStatus.OfflineState -> {
-                stopService(Intent(this, ForegroundService::class.java))
-                colourMainButtonsToGrey()
-                blockInput()
+            is FetchMainStatus.EnablingOfflineState -> { stopService() }
+            is FetchMainStatus.EnablingOnlineState -> { startService() }
+            is FetchMainStatus.OnlineEnabledState -> {
+                offline_text.text = getString(R.string.main_online_mode)
+                letter_0_1.animateDot(this)
+                unblockInput()
+                showSnackbarError(R.string.main_advertising_has_started)
             }
-            is FetchMainStatus.OnlineState -> {
-                startService()
-                colourMainButtonsToGrey()
-                blockInput()
+            is FetchMainStatus.OfflineEnabledState -> {
+                connectionClient.stopAllEndpoints()
+                offline_text.text = getString(R.string.main_offline_mode)
+                letter_0_1.clearAnimation()
+                unblockInput()
+                showSnackbarError(R.string.main_advertising_has_stopped)
             }
             is FetchMainStatus.LookGenderManState -> {
                 main_look_gender_text.text = getString(R.string.main_man)
@@ -108,27 +117,6 @@ companion object {
         }
     }
 
-    override fun onStart() {
-        super.onStart()
-        MainActivity.isDestroyed = false
-    }
-
-    fun animateDot() {
-        Glide.with(this).load(R.drawable.ic_black_o).into(letter_0_1)
-
-        val rotate = RotateAnimation(
-            0F, 360F,
-            Animation.RELATIVE_TO_SELF, 0.5f,
-            Animation.RELATIVE_TO_SELF, 0.5f
-        )
-
-        rotate.duration = 3000
-        rotate.repeatCount = Animation.INFINITE
-        rotate.fillAfter = true
-        rotate.setInterpolator(this, android.R.anim.linear_interpolator)
-        letter_0_1.startAnimation(rotate)
-    }
-
     private fun setLookGenderText(lookGender: String?) {
         when (lookGender) {
             MALE -> main_look_gender_text.text = getString(R.string.main_man)
@@ -137,20 +125,8 @@ companion object {
         }
     }
 
-    private fun setAdView() {
-        MobileAds.initialize(this)
-        val adRequest = AdRequest.Builder().build()
-        adView.loadAd(adRequest)
-    }
-
     override fun onResume() {
         super.onResume()
-        updateMainUIState()
-        if (ForegroundService.isForegroundServiceRunning) {
-            animateDot()
-        } else {
-            letter_0_1.clearAnimation()
-        }
         contactAdvertiserUnseenState.observe(this, { state ->
             when (state) {
                 ContactUnseenState.EnabledState -> {
@@ -163,19 +139,7 @@ companion object {
 
     override fun onDestroy() {
         super.onDestroy()
-        MainActivity.isDestroyed = true
-    }
-
-    private fun startService() {
-        val serviceIntent = Intent(this, ForegroundService::class.java)
-        serviceIntent.putExtra("inputExtra", getString(R.string.main_advertising_title))
-        ContextCompat.startForegroundService(this, serviceIntent)
-    }
-
-    private fun stopService() {
-        if (ForegroundService.isForegroundServiceRunning) {
-            stopService(Intent(this, ForegroundService::class.java))
-        }
+        unregisterBroadcastReceiver(mMessageReceiver)
     }
 
     private fun sendEmail(log: File) {
@@ -200,5 +164,17 @@ companion object {
         val path = Uri.fromFile(log)
         emailIntent.putExtra(Intent.EXTRA_STREAM, path)
         startActivity(Intent.createChooser(emailIntent, "Send email..."))
+    }
+
+    private val mMessageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent) {
+            // Get extra data included in the Intent
+            when (intent.action) {
+                ADVERTISING_SUCCEEDED_EVENT -> { viewModel.obtainEvent(MainEvent.OnlineIsEnabled) }
+                ADVERTISING_FAILED_EVENT, SERVICE_IS_DESTROYED -> {
+                    viewModel.obtainEvent(MainEvent.OfflineIsEnabled)
+                }
+            }
+        }
     }
 }

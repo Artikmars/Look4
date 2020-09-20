@@ -2,11 +2,16 @@ package com.artamonov.look4.utils
 
 import android.app.Activity
 import android.app.ActivityOptions
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
-import android.view.View
+import android.content.IntentFilter
 import android.view.WindowManager
+import android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.artamonov.look4.AboutUsActivity
 import com.artamonov.look4.R
 import com.artamonov.look4.WebViewActivity
@@ -14,9 +19,15 @@ import com.artamonov.look4.contacts.ContactsActivity
 import com.artamonov.look4.look.LookActivity
 import com.artamonov.look4.main.MainActivity
 import com.artamonov.look4.service.ForegroundService
+import com.artamonov.look4.service.ForegroundService.Companion.ADVERTISING_FAILED_EVENT
+import com.artamonov.look4.service.ForegroundService.Companion.ADVERTISING_SUCCEEDED_EVENT
+import com.artamonov.look4.service.ForegroundService.Companion.SERVICE_IS_DESTROYED
 import com.artamonov.look4.settings.SettingsActivity
 import com.artamonov.look4.userprofiledit.UserProfileEditActivity
+import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.nearby.connection.ConnectionsClient
+import com.google.android.material.snackbar.BaseTransientBottomBar.LENGTH_LONG
+import com.google.android.material.snackbar.Snackbar
 import java.util.regex.Pattern
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -56,9 +67,8 @@ fun Activity.startMainActivity() =
     startActivity(Intent(this, MainActivity::class.java))
 
 fun AppCompatActivity.blockInput() {
-    window.setFlags(
-        WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
-        WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
+    window.setFlags(FLAG_NOT_TOUCHABLE, FLAG_NOT_TOUCHABLE)
+    colourMainButtonsToGrey()
 }
 
 fun AppCompatActivity.colourMainButtonsToGrey() {
@@ -78,7 +88,8 @@ fun AppCompatActivity.colourMainButtonsToNormal() {
 }
 
 fun AppCompatActivity.unblockInput() {
-    window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
+    window.clearFlags(FLAG_NOT_TOUCHABLE)
+    colourMainButtonsToNormal()
 }
 
 fun AppCompatActivity.updateMainUIState() {
@@ -91,6 +102,12 @@ fun AppCompatActivity.updateMainUIState() {
     }
 }
 
+fun AppCompatActivity.setAdView() = adView.loadAd(AdRequest.Builder().build())
+
+fun ImageView.animateDot(context: Context) {
+    this.startAnimation(LookRotateAnimation(context).init())
+}
+
 fun AppCompatActivity.keepScreenOn() = window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
 fun AppCompatActivity.unKeepScreenOn() = window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -101,4 +118,46 @@ fun AppCompatActivity.blockInputForTask(task: () -> Unit) {
     unblockInput()
 }
 
-fun Int.setVisibility(state: Boolean?) = if (state != null && state) View.VISIBLE else View.GONE
+fun AppCompatActivity.startService() {
+    if (ForegroundService.isForegroundServiceRunning) { return }
+    val serviceIntent = Intent(this, ForegroundService::class.java)
+    serviceIntent.putExtra("inputExtra", getString(R.string.main_advertising_title))
+    ContextCompat.startForegroundService(this, serviceIntent)
+    blockInput()
+}
+
+fun AppCompatActivity.stopService() {
+    if (!ForegroundService.isForegroundServiceRunning) { return }
+    stopService(Intent(this, ForegroundService::class.java))
+    blockInput()
+}
+
+fun AppCompatActivity.showSnackbarError(resourceId: Int) {
+    Snackbar.make(findViewById(android.R.id.content),
+    getString(resourceId), Snackbar.LENGTH_LONG).show()
+}
+
+fun AppCompatActivity.showSnackbarError(stringMsg: String?) {
+    stringMsg?.let { Snackbar.make(findViewById(android.R.id.content), stringMsg, LENGTH_LONG)
+        .show() } }
+
+fun AppCompatActivity.showSnackbarWithAction() {
+    val snackbar = Snackbar.make(
+        findViewById(android.R.id.content),
+        getString(R.string.look_you_received_phone_number), LENGTH_LONG)
+        .setAction(getString(R.string.look_view)) { startContactsActivity() }
+    snackbar.show()
+}
+
+fun AppCompatActivity.registerBroadcastReceiver(mMessageReceiver: BroadcastReceiver) {
+    val filter = IntentFilter(ADVERTISING_FAILED_EVENT)
+    filter.addAction(ADVERTISING_SUCCEEDED_EVENT)
+    filter.addAction(SERVICE_IS_DESTROYED)
+    LocalBroadcastManager.getInstance(this).registerReceiver(
+        mMessageReceiver, IntentFilter(filter)
+    )
+}
+
+fun AppCompatActivity.unregisterBroadcastReceiver(mMessageReceiver: BroadcastReceiver) {
+    LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver)
+}

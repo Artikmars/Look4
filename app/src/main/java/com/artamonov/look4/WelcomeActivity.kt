@@ -10,6 +10,7 @@ import com.artamonov.look4.utils.UserGender
 import com.artamonov.look4.utils.UserGender.Companion.FEMALE
 import com.artamonov.look4.utils.UserGender.Companion.MALE
 import com.artamonov.look4.utils.isValidPhoneNumber
+import com.artamonov.look4.utils.showSnackbarError
 import com.artamonov.look4.utils.startMainActivity
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions

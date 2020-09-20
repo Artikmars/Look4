@@ -6,6 +6,8 @@ sealed class MainEvent {
     object ChangeStatus : MainEvent()
     object OpenContacts : MainEvent()
     object OpenSettings : MainEvent()
+    object OnlineIsEnabled : MainEvent()
+    object OfflineIsEnabled : MainEvent()
     object ChangeLookGender : MainEvent()
     object SendEmail : MainEvent()
     object NoButtonClicked : MainEvent()

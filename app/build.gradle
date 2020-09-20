@@ -14,8 +14,8 @@ android {
         applicationId "com.artamonov.look4"
         minSdkVersion 23
         targetSdkVersion 30
-        versionCode 28
-        versionName "0.33"
+        versionCode 29
+        versionName "0.34"
         multiDexEnabled true
         vectorDrawables.useSupportLibrary = true
 
@@ -87,5 +87,5 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.11.0'
-    implementation 'com.google.android.gms:play-services-ads:19.3.0'
+    implementation 'com.google.android.gms:play-services-ads:19.4.0'
 }

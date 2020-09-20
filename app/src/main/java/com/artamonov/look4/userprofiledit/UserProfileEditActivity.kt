@@ -23,6 +23,7 @@ import com.artamonov.look4.userprofiledit.models.ProfileEditEvent
 import com.artamonov.look4.userprofiledit.models.ProfileEditViewState
 import com.artamonov.look4.utils.PostTextChangeWatcher
 import com.artamonov.look4.utils.UserGender
+import com.artamonov.look4.utils.showSnackbarError
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.github.dhaval2404.imagepicker.ImagePicker

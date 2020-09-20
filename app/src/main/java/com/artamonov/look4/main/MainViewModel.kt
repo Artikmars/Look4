@@ -25,6 +25,12 @@ class MainViewModel @ViewModelInject constructor(
             MainEvent.ChangeStatus -> {
                 changeAdvertisingStatus()
             }
+            MainEvent.OnlineIsEnabled -> {
+                viewState = viewState.copy(fetchStatus = FetchMainStatus.OnlineEnabledState)
+            }
+            MainEvent.OfflineIsEnabled -> {
+                viewState = viewState.copy(fetchStatus = FetchMainStatus.OfflineEnabledState)
+            }
             MainEvent.OpenContacts -> {
                 viewState = viewState.copy(fetchStatus = FetchMainStatus.OnContactsClickedState)
             }
@@ -49,8 +55,8 @@ class MainViewModel @ViewModelInject constructor(
 
     private fun changeAdvertisingStatus() {
         viewState = when (ForegroundService.isForegroundServiceRunning) {
-            true -> viewState.copy(fetchStatus = FetchMainStatus.OfflineState)
-            false -> viewState.copy(fetchStatus = FetchMainStatus.OnlineState)
+            true -> viewState.copy(fetchStatus = FetchMainStatus.EnablingOfflineState)
+            false -> viewState.copy(fetchStatus = FetchMainStatus.EnablingOnlineState)
         }
     }
 

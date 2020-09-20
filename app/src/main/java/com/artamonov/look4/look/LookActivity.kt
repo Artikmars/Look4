@@ -24,6 +24,8 @@ import com.artamonov.look4.utils.disconnectFromEndpoint
 import com.artamonov.look4.utils.keepScreenOn
 import com.artamonov.look4.utils.set
 import com.artamonov.look4.utils.setSafeOnClickListener
+import com.artamonov.look4.utils.showSnackbarError
+import com.artamonov.look4.utils.showSnackbarWithAction
 import com.artamonov.look4.utils.startMainActivity
 import com.artamonov.look4.utils.unKeepScreenOn
 import com.bumptech.glide.Glide
