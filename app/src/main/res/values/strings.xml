@@ -46,6 +46,7 @@
     <string name="settings_about_us">About Us</string>
     <string name="settings_privacy_policy">Privacy Policy</string>
     <string name="contacts_placeholder">Nothing so far</string>
+    <string name="contacts_copied_to_clipboard">Copied to clipboard</string>
     <string name="profile_edit_photo">Photo</string>
     <string name="profile_edit_enter_your_name">Enter your name</string>
     <string name="profile_edit_enter_your_phone_number">Enter your phone number</string>

@@ -41,6 +41,7 @@
     <string name="settings_about_us">О нас</string>
     <string name="settings_privacy_policy">Политика конфиденциальности</string>
     <string name="contacts_placeholder">Пока пусто</string>
+    <string name="contacts_copied_to_clipboard">Скопировано в буфер обмена</string>
     <string name="profile_edit_photo">Фото</string>
     <string name="profile_edit_enter_your_name">Введите своё имя</string>
     <string name="profile_edit_enter_your_phone_number">Введите свой номер телефона</string>

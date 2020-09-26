@@ -43,6 +43,7 @@
     <string name="settings_about_us">Про нас</string>
     <string name="settings_privacy_policy">Політика конфіденційності</string>
     <string name="contacts_placeholder">Поки порожньо</string>
+    <string name="contacts_copied_to_clipboard">Скопійовано в буфер обміну</string>
     <string name="profile_edit_photo">Фото</string>
     <string name="profile_edit_enter_your_name">Введіть своє ім\'я</string>
     <string name="profile_edit_enter_your_phone_number">Введіть свій номер телефону</string>
