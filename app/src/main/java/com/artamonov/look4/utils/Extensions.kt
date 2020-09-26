@@ -6,11 +6,18 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.view.Gravity
 import android.view.WindowManager
 import android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.getSystemService
+import androidx.core.content.res.ResourcesCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.artamonov.look4.AboutUsActivity
 import com.artamonov.look4.R
@@ -26,6 +33,7 @@ import com.artamonov.look4.settings.SettingsActivity
 import com.artamonov.look4.userprofiledit.UserProfileEditActivity
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.nearby.connection.ConnectionsClient
+import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.google.android.material.snackbar.BaseTransientBottomBar.LENGTH_LONG
 import com.google.android.material.snackbar.Snackbar
 import java.util.regex.Pattern
@@ -40,28 +48,40 @@ fun String?.disconnectFromEndpoint(connectionClient: ConnectionsClient) = this?.
 }
 
 fun Activity.startUserProfileEditActivity() =
-    startActivity(Intent(this, UserProfileEditActivity::class.java),
-        ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
+    startActivity(
+        Intent(this, UserProfileEditActivity::class.java),
+        ActivityOptions.makeSceneTransitionAnimation(this).toBundle()
+    )
 
 fun Activity.startAboutUsActivity() =
-    startActivity(Intent(this, AboutUsActivity::class.java),
-        ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
+    startActivity(
+        Intent(this, AboutUsActivity::class.java),
+        ActivityOptions.makeSceneTransitionAnimation(this).toBundle()
+    )
 
 fun Activity.startSettingsActivity() =
-    startActivity(Intent(this, SettingsActivity::class.java),
-        ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
+    startActivity(
+        Intent(this, SettingsActivity::class.java),
+        ActivityOptions.makeSceneTransitionAnimation(this).toBundle()
+    )
 
 fun Activity.startWebViewActivity() =
-    startActivity(Intent(this, WebViewActivity::class.java),
-        ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
+    startActivity(
+        Intent(this, WebViewActivity::class.java),
+        ActivityOptions.makeSceneTransitionAnimation(this).toBundle()
+    )
 
 fun Activity.startLookActivity() =
-    startActivity(Intent(this, LookActivity::class.java),
-        ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
+    startActivity(
+        Intent(this, LookActivity::class.java),
+        ActivityOptions.makeSceneTransitionAnimation(this).toBundle()
+    )
 
 fun Activity.startContactsActivity() =
-    startActivity(Intent(this, ContactsActivity::class.java),
-        ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
+    startActivity(
+        Intent(this, ContactsActivity::class.java),
+        ActivityOptions.makeSceneTransitionAnimation(this).toBundle()
+    )
 
 fun Activity.startMainActivity() =
     startActivity(Intent(this, MainActivity::class.java))
@@ -133,8 +153,17 @@ fun AppCompatActivity.stopService() {
 }
 
 fun AppCompatActivity.showSnackbarError(resourceId: Int) {
-    Snackbar.make(findViewById(android.R.id.content),
-    getString(resourceId), Snackbar.LENGTH_LONG).show()
+    Snackbar.make(
+        findViewById(android.R.id.content),
+        getString(resourceId), Snackbar.LENGTH_LONG
+    ).show()
+}
+
+fun AppCompatActivity.getSnackbar(resourceId: Int): Snackbar {
+    return Snackbar.make(
+        findViewById(android.R.id.content),
+        getString(resourceId), Snackbar.LENGTH_LONG
+    )
 }
 
 fun AppCompatActivity.showSnackbarError(stringMsg: String?) {
@@ -144,9 +173,30 @@ fun AppCompatActivity.showSnackbarError(stringMsg: String?) {
 fun AppCompatActivity.showSnackbarWithAction() {
     val snackbar = Snackbar.make(
         findViewById(android.R.id.content),
-        getString(R.string.look_you_received_phone_number), LENGTH_LONG)
+        getString(R.string.look_you_received_phone_number), LENGTH_LONG
+    )
         .setAction(getString(R.string.look_view)) { startContactsActivity() }
     snackbar.show()
+}
+
+fun Context.getMissingInternetSnackbar(snackbar: Snackbar?): Snackbar? {
+    snackbar?.let {
+        val view = snackbar.view
+        val params = view.layoutParams as FrameLayout.LayoutParams
+        params.gravity = Gravity.TOP
+        view.layoutParams = params
+        view.background = ContextCompat.getDrawable(this, R.drawable.snackbar_custom)
+        snackbar.animationMode = BaseTransientBottomBar.ANIMATION_MODE_FADE
+        val mainTextView =
+            view.findViewById(com.google.android.material.R.id.snackbar_text) as TextView
+        mainTextView.setCompoundDrawablesRelativeWithIntrinsicBounds(
+            R.drawable.ic_no_connection, 0, 0, 0
+        )
+        mainTextView.compoundDrawablePadding = 20
+        val font = ResourcesCompat.getFont(this, R.font.semibold)
+        mainTextView.typeface = font
+        return snackbar
+    } ?: return null
 }
 
 fun AppCompatActivity.registerBroadcastReceiver(mMessageReceiver: BroadcastReceiver) {
@@ -160,4 +210,19 @@ fun AppCompatActivity.registerBroadcastReceiver(mMessageReceiver: BroadcastRecei
 
 fun AppCompatActivity.unregisterBroadcastReceiver(mMessageReceiver: BroadcastReceiver) {
     LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver)
+}
+
+fun Context.isNetworkNotAvailable(): Boolean {
+    val connectivityManager = this.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val nw = connectivityManager.activeNetwork ?: return true
+        val actNw = connectivityManager.getNetworkCapabilities(nw) ?: return true
+        return when {
+            actNw.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> false
+            actNw.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> false
+            // for other device how are able to connect with Ethernet
+            actNw.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> false
+            // for check internet over Bluetooth
+            actNw.hasTransport(NetworkCapabilities.TRANSPORT_BLUETOOTH) -> false
+            else -> true
+        }
 }

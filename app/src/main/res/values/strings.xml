@@ -65,5 +65,8 @@
 
     <string name="service_new_request">You have received a contact request</string>
 
+    <string name="network_error_unknown">No Internet connection</string>
+
+
 
 </resources>

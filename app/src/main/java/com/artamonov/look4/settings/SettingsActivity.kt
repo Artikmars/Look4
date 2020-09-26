@@ -3,6 +3,9 @@ package com.artamonov.look4.settings
 import android.os.Bundle
 import com.artamonov.look4.R
 import com.artamonov.look4.base.BaseActivity
+import com.artamonov.look4.utils.getMissingInternetSnackbar
+import com.artamonov.look4.utils.getSnackbar
+import com.artamonov.look4.utils.isNetworkNotAvailable
 import com.artamonov.look4.utils.startAboutUsActivity
 import com.artamonov.look4.utils.startUserProfileEditActivity
 import com.artamonov.look4.utils.startWebViewActivity
@@ -14,7 +17,12 @@ class SettingsActivity : BaseActivity(R.layout.activity_settings) {
         super.onCreate(savedInstanceState)
         settings_profile.setOnClickListener { startUserProfileEditActivity() }
         settings_about_us.setOnClickListener { startAboutUsActivity() }
-        settings_privacy_policy.setOnClickListener { startWebViewActivity() }
+        settings_privacy_policy.setOnClickListener {
+            if (isNetworkNotAvailable()) {
+                getMissingInternetSnackbar(getSnackbar(R.string.network_error_unknown))?.show()
+                return@setOnClickListener
+            }
+            startWebViewActivity() }
         settings_back.setOnClickListener { onBackPressed() }
     }
 }

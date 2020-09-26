@@ -33,7 +33,7 @@ class ContactsViewModel @ViewModelInject constructor(
         }
     }
 
-    fun getContactList(): ArrayList<User> {
-        return prefs.getContactList()
+    fun getContactList(): List<User> {
+        return prefs.getContactList().distinctBy { it.phoneNumber }
     }
 }

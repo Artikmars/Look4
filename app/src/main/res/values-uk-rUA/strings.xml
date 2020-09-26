@@ -59,4 +59,7 @@
 
     <string name="service_new_request">Ви отримали новий запит на обмін контактами</string>
     <string name="welcome_processinng_image_error">Помилка при обробці фото</string>
+
+    <string name="network_error_unknown">Перевірте Інтернет-з\'єднання</string>
+
 </resources>
