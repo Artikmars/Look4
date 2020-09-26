@@ -11,8 +11,8 @@
     <string name="main_man">Чоловіки</string>
     <string name="main_woman">Жінки</string>
     <string name="main_all">Всі</string>
-    <string name="main_gender_female">Жіночий</string>
-    <string name="main_gender_male">Чоловічий</string>
+    <string name="main_gender_female">Жінка</string>
+    <string name="main_gender_male">Чоловік</string>
     <string name="settings_title">Налаштування</string>
     <string name="contacts_title">Контакти</string>
     <string name="look_found_label">Знайдено: 1/1</string>

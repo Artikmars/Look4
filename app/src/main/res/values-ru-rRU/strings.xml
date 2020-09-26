@@ -11,8 +11,8 @@
     <string name="main_man">Мужчины</string>
     <string name="main_woman">Женщины</string>
     <string name="main_all">Все</string>
-    <string name="main_gender_female">Женский</string>
-    <string name="main_gender_male">Мужской</string>
+    <string name="main_gender_female">Женщина</string>
+    <string name="main_gender_male">Мужчина</string>
     <string name="settings_title">Настройки</string>
     <string name="contacts_title">Контакты</string>
     <string name="look_found_label">Найдено: 1/1</string>

@@ -6,7 +6,6 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.core.content.res.TypedArrayUtils.getString
 import androidx.recyclerview.widget.RecyclerView
 import com.artamonov.look4.R
@@ -55,7 +54,7 @@ class ContactListAdapter(
 
                 val myClip = ClipData.newPlainText("label", view.contact_phone_number.text)
                 myClipboard.setPrimaryClip(myClip)
-                Snackbar.make(v,  v.context.resources.getString(R.string.contacts_copied_to_clipboard),
+                Snackbar.make(v, v.context.resources.getString(R.string.contacts_copied_to_clipboard),
                     Snackbar.LENGTH_SHORT).show()
             }
 
