@@ -8,6 +8,8 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.net.Uri
+import android.os.Build
 import android.view.Gravity
 import android.view.WindowManager
 import android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
@@ -17,9 +19,11 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.getSystemService
+import androidx.core.content.ContextCompat.startActivity
 import androidx.core.content.res.ResourcesCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.artamonov.look4.AboutUsActivity
+import com.artamonov.look4.BuildConfig
 import com.artamonov.look4.R
 import com.artamonov.look4.WebViewActivity
 import com.artamonov.look4.contacts.ContactsActivity
@@ -225,4 +229,28 @@ fun Context.isNetworkNotAvailable(): Boolean {
             actNw.hasTransport(NetworkCapabilities.TRANSPORT_BLUETOOTH) -> false
             else -> true
         }
+}
+
+fun Context.sendEmail() {
+    val emailIntent = Intent(
+        Intent.ACTION_SENDTO,
+        Uri.fromParts("mailto", "artamonov06@gmail.com", null)
+    )
+    emailIntent.putExtra(Intent.EXTRA_SUBJECT, "Look4 - logs")
+
+    emailIntent.putExtra(
+        Intent.EXTRA_TEXT,
+        "Device model: " +
+                Build.MODEL +
+                " (" +
+                Build.PRODUCT +
+                ")\n" +
+                "Android version: " +
+                Build.VERSION.RELEASE +
+                "\nApp Version: " +
+                BuildConfig.VERSION_NAME
+    )
+    val path = Uri.fromFile(LogHandler.saveLogsToFile(this))
+    emailIntent.putExtra(Intent.EXTRA_STREAM, path)
+    startActivity(Intent.createChooser(emailIntent, "Send email..."))
 }

@@ -3,15 +3,11 @@ package com.artamonov.look4.main
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.viewModels
-import com.artamonov.look4.BuildConfig
 import com.artamonov.look4.R
 import com.artamonov.look4.base.BaseActivity
 import com.artamonov.look4.main.models.FetchMainStatus
-import com.artamonov.look4.main.models.MainAction
 import com.artamonov.look4.main.models.MainEvent
 import com.artamonov.look4.main.models.MainViewState
 import com.artamonov.look4.service.ForegroundService.Companion.ADVERTISING_FAILED_EVENT
@@ -19,7 +15,6 @@ import com.artamonov.look4.service.ForegroundService.Companion.ADVERTISING_SUCCE
 import com.artamonov.look4.service.ForegroundService.Companion.SERVICE_IS_DESTROYED
 import com.artamonov.look4.utils.ContactUnseenState
 import com.artamonov.look4.utils.LiveDataContactUnseenState.contactAdvertiserUnseenState
-import com.artamonov.look4.utils.LogHandler
 import com.artamonov.look4.utils.UserGender.Companion.ALL
 import com.artamonov.look4.utils.UserGender.Companion.FEMALE
 import com.artamonov.look4.utils.UserGender.Companion.MALE
@@ -38,7 +33,6 @@ import com.artamonov.look4.utils.stopService
 import com.artamonov.look4.utils.unblockInput
 import com.artamonov.look4.utils.unregisterBroadcastReceiver
 import com.bumptech.glide.Glide
-import java.io.File
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : BaseActivity(R.layout.activity_main) {
@@ -53,15 +47,7 @@ class MainActivity : BaseActivity(R.layout.activity_main) {
         handleIntentIfExist(intent)
         setAdView()
 
-        if (BuildConfig.DEBUG) { current_version_text.text = getString(
-            R.string.main_version,
-            BuildConfig.VERSION_NAME
-        ) }
-
-        current_version_text.setOnClickListener { viewModel.obtainEvent(MainEvent.SendEmail) }
-
         viewModel.viewStates().observe(this, { bindViewState(it) })
-        viewModel.viewEffects().observe(this, { bindViewAction(it) })
 
         Glide.with(this).load(R.drawable.ic_black_o).into(letter_0_1)
 
@@ -111,12 +97,6 @@ class MainActivity : BaseActivity(R.layout.activity_main) {
         }
     }
 
-    private fun bindViewAction(viewAction: MainAction) {
-        when (viewAction) {
-            is MainAction.SendEmail -> { sendEmail(LogHandler.saveLogsToFile(this)) }
-        }
-    }
-
     private fun setLookGenderText(lookGender: String?) {
         when (lookGender) {
             MALE -> main_look_gender_text.text = getString(R.string.main_man)
@@ -140,30 +120,6 @@ class MainActivity : BaseActivity(R.layout.activity_main) {
     override fun onDestroy() {
         super.onDestroy()
         unregisterBroadcastReceiver(mMessageReceiver)
-    }
-
-    private fun sendEmail(log: File) {
-        val emailIntent = Intent(
-            Intent.ACTION_SENDTO,
-            Uri.fromParts("mailto", "artamonov06@gmail.com", null)
-        )
-        emailIntent.putExtra(Intent.EXTRA_SUBJECT, "Look4 - logs")
-
-        emailIntent.putExtra(
-            Intent.EXTRA_TEXT,
-            "Device model: " +
-                    Build.MODEL +
-                    " (" +
-                    Build.PRODUCT +
-                    ")\n" +
-                    "Android version: " +
-                    Build.VERSION.RELEASE +
-                    "\nApp Version: " +
-                    BuildConfig.VERSION_NAME
-        )
-        val path = Uri.fromFile(log)
-        emailIntent.putExtra(Intent.EXTRA_STREAM, path)
-        startActivity(Intent.createChooser(emailIntent, "Send email..."))
     }
 
     private val mMessageReceiver: BroadcastReceiver = object : BroadcastReceiver() {

@@ -13,7 +13,6 @@
     <string name="main_all">All</string>
     <string name="main_gender_female">Female</string>
     <string name="main_gender_male">Male</string>
-    <string name="main_version" translatable="false">v. %1$s</string>
 
     <string name="settings_title">Settings</string>
 
@@ -45,6 +44,9 @@
     <string name="settings_remove_ad">Remove Ad</string>
     <string name="settings_about_us">About Us</string>
     <string name="settings_privacy_policy">Privacy Policy</string>
+    <string name="settings_version" translatable="false">Look4 v%1$s</string>
+    <string name="settings_debug_version" translatable="false">Look4 DEBUG v%1$s</string>
+
     <string name="contacts_placeholder">Nothing so far</string>
     <string name="contacts_copied_to_clipboard">Copied to clipboard</string>
     <string name="profile_edit_photo">Photo</string>
