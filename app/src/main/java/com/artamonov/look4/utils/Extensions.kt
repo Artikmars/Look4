@@ -44,6 +44,7 @@ import java.util.regex.Pattern
 import kotlinx.android.synthetic.main.activity_main.*
 
 private val PHONE_NUMBER = Pattern.compile("""^\+?(?:[0-9] ?){6,14}[0-9]${'$'}""")
+const val IS_FAQ = "IS_FAQ"
 
 fun String?.isValidPhoneNumber() = if (this != null) PHONE_NUMBER.matcher(this).matches() else false
 
@@ -69,11 +70,11 @@ fun Activity.startSettingsActivity() =
         ActivityOptions.makeSceneTransitionAnimation(this).toBundle()
     )
 
-fun Activity.startWebViewActivity() =
-    startActivity(
-        Intent(this, WebViewActivity::class.java),
-        ActivityOptions.makeSceneTransitionAnimation(this).toBundle()
-    )
+fun Activity.startWebViewActivity(isFaq: Boolean) {
+    val intent = Intent(this, WebViewActivity::class.java)
+    intent.putExtra(IS_FAQ, isFaq)
+    startActivity(intent, ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
+}
 
 fun Activity.startLookActivity() =
     startActivity(

@@ -41,6 +41,7 @@
     <string name="look_error_rejected">Connection attempt was rejected</string>
 
     <string name="profile_edit_title">Profile</string>
+    <string name="settings_faq" translatable="false">FAQ</string>
     <string name="settings_remove_ad">Remove Ad</string>
     <string name="settings_about_us">About Us</string>
     <string name="settings_privacy_policy">Privacy Policy</string>
@@ -56,7 +57,7 @@
     <string name="welcome_submit">Submit</string>
     <string name="welcome_processinng_image_error">Error while processing your photo</string>
 
-    <string name="about_us_description" translatable="false">Igor Artamonov - idea, concept, design, publishing and marketing\nEmail: artamonov.igor@gmail.com\nAndrii Artamonov - Android Developer\nLinkedIn: https://www.linkedin.com/in/andrii-artamonov/\nEmail: artamonov06@gmail.com\n© 2020 Igor Artamonov, Andrii Artamonov, Look4</string>
+    <string name="about_us_description">Igor Artamonov - idea, concept, design and marketing\nEmail: artamonov.igor@gmail.com\nAndrii Artamonov - Android Developer\nLinkedIn: https://www.linkedin.com/in/andrii-artamonov/\nEmail: artamonov06@gmail.com\n© 2020 Igor Artamonov, Andrii Artamonov, Look4</string>
 
     <string name="error_general">An error occurred. Please, try again</string>
     <string name="error_blank_fields">Please, do not leave fields blank</string>
@@ -69,6 +70,7 @@
 
     <string name="network_error_unknown">No Internet connection</string>
 
-
+    <string name="faq_link">file:///android_asset/faq_eng.html</string>
+    <string name="privacy_policy_link" translatable="false">file:///android_asset/privacy_policy.html</string>
 
 </resources>

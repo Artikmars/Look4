@@ -35,7 +35,6 @@
                 android:id="@+id/web_view_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/settings_privacy_policy"
                 android:textColor="@color/black"
                 android:textSize="18sp"
                 android:textStyle="bold"

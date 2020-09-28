@@ -50,6 +50,8 @@
     <string name="profile_edit_save">Зберегти</string>
     <string name="welcome_submit">Готово</string>
 
+    <string name="about_us_description">Ігор Артамонов - ідея, концепт, дизайн і маркетинг\nEmail: artamonov.igor@gmail.com\Андрій Артамонов - Android розробник\nLinkedIn: https://www.linkedin.com/in/andrii-artamonov/\nEmail: artamonov06@gmail.com\n© 2020 Ігор Артамонов, Андрій Артамонов, Look4</string>
+
     <string name="error_general">Виникла помилка. Спробуйте пізніше</string>
     <string name="error_blank_fields">Будь ласка, не залишайте поля порожніми</string>
     <string name="error_permissions_are_not_granted_for_discovering">Ви повинні надати необхідні дозволи для початку пошуку</string>
@@ -61,5 +63,8 @@
     <string name="welcome_processinng_image_error">Помилка при обробці фото</string>
 
     <string name="network_error_unknown">Перевірте Інтернет-з\'єднання</string>
+
+    <string name="faq_link">file:///android_asset/faq_ukr.html</string>
+
 
 </resources>

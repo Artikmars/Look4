@@ -23,20 +23,26 @@
         android:theme="@style/AppTheme">
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713"/>
-        <activity android:name=".WebViewActivity"
-            android:screenOrientation="portrait"/>
-        <activity android:name=".AboutUsActivity"
-            android:screenOrientation="portrait"/>
-        <activity android:name=".contacts.ContactsActivity"
-            android:screenOrientation="portrait"
-            android:parentActivityName=".main.MainActivity"/>
-        <activity android:name=".userprofiledit.UserProfileEditActivity"
-            android:screenOrientation="portrait"/>
-        <activity android:name=".settings.SettingsActivity"
+            android:value="ca-app-pub-3940256099942544~3347511713" />
+        <activity
+            android:name=".WebViewActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".AboutUsActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".contacts.ContactsActivity"
             android:parentActivityName=".main.MainActivity"
-            android:screenOrientation="portrait"/>
-        <activity android:name=".WelcomeActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".userprofiledit.UserProfileEditActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".settings.SettingsActivity"
+            android:parentActivityName=".main.MainActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".WelcomeActivity"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
