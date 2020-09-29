@@ -18,14 +18,13 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.core.content.ContextCompat.getSystemService
-import androidx.core.content.ContextCompat.startActivity
 import androidx.core.content.res.ResourcesCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.artamonov.look4.AboutUsActivity
 import com.artamonov.look4.BuildConfig
 import com.artamonov.look4.R
 import com.artamonov.look4.WebViewActivity
+import com.artamonov.look4.WelcomeActivity
 import com.artamonov.look4.contacts.ContactsActivity
 import com.artamonov.look4.look.LookActivity
 import com.artamonov.look4.main.MainActivity
@@ -44,7 +43,7 @@ import java.util.regex.Pattern
 import kotlinx.android.synthetic.main.activity_main.*
 
 private val PHONE_NUMBER = Pattern.compile("""^\+?(?:[0-9] ?){6,14}[0-9]${'$'}""")
-const val IS_FAQ = "IS_FAQ"
+const val FAQ_TYPE = "FAQ_TYPE"
 
 fun String?.isValidPhoneNumber() = if (this != null) PHONE_NUMBER.matcher(this).matches() else false
 
@@ -70,9 +69,15 @@ fun Activity.startSettingsActivity() =
         ActivityOptions.makeSceneTransitionAnimation(this).toBundle()
     )
 
-fun Activity.startWebViewActivity(isFaq: Boolean) {
+fun Activity.startWelcomeActivity() =
+    startActivity(
+        Intent(this, WelcomeActivity::class.java),
+        ActivityOptions.makeSceneTransitionAnimation(this).toBundle()
+    )
+
+fun Activity.startWebViewActivity(faqType: String) {
     val intent = Intent(this, WebViewActivity::class.java)
-    intent.putExtra(IS_FAQ, isFaq)
+    intent.putExtra(FAQ_TYPE, faqType)
     startActivity(intent, ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
 }
 
@@ -89,7 +94,8 @@ fun Activity.startContactsActivity() =
     )
 
 fun Activity.startMainActivity() =
-    startActivity(Intent(this, MainActivity::class.java))
+    startActivity(Intent(this, MainActivity::class.java),
+        ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
 
 fun AppCompatActivity.blockInput() {
     window.setFlags(FLAG_NOT_TOUCHABLE, FLAG_NOT_TOUCHABLE)

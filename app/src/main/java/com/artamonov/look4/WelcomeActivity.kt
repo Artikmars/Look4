@@ -25,12 +25,6 @@ class WelcomeActivity : BaseActivity(R.layout.activity_welcome) {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        if (prefs.userAvailable()) {
-            startMainActivity()
-            finish()
-        }
-
         supportActionBar?.hide()
 
         etPhoneNumber.addTextChangedListener(PostTextChangeWatcher { phoneNumberChanged(it) })

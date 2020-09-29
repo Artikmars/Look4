@@ -4,7 +4,8 @@ import android.os.Bundle
 import com.artamonov.look4.BuildConfig
 import com.artamonov.look4.R
 import com.artamonov.look4.base.BaseActivity
-import com.artamonov.look4.utils.sendEmail
+import com.artamonov.look4.utils.WebViewType.DEFAULT_FAQ
+import com.artamonov.look4.utils.WebViewType.PRIVACY_POLICY
 import com.artamonov.look4.utils.startAboutUsActivity
 import com.artamonov.look4.utils.startUserProfileEditActivity
 import com.artamonov.look4.utils.startWebViewActivity
@@ -17,9 +18,9 @@ class SettingsActivity : BaseActivity(R.layout.activity_settings) {
         settings_profile.setOnClickListener { startUserProfileEditActivity() }
         settings_about_us.setOnClickListener { startAboutUsActivity() }
         settings_privacy_policy.setOnClickListener {
-            startWebViewActivity(false) }
+            startWebViewActivity(PRIVACY_POLICY) }
         settings_faq.setOnClickListener {
-            startWebViewActivity(true)
+            startWebViewActivity(DEFAULT_FAQ)
         }
         settings_back.setOnClickListener { onBackPressed() }
         if (BuildConfig.DEBUG) {
@@ -27,7 +28,5 @@ class SettingsActivity : BaseActivity(R.layout.activity_settings) {
         } else {
             settings_current_version.text = getString(R.string.settings_version, BuildConfig.VERSION_NAME)
         }
-
-        settings_current_version.setOnClickListener { sendEmail() }
     }
 }

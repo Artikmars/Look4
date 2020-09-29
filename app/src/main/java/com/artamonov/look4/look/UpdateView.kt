@@ -4,7 +4,7 @@ import android.app.Activity
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import com.artamonov.look4.R
-import com.crashlytics.android.Crashlytics
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import kotlinx.android.synthetic.main.activity_look.*
 
 fun Activity.populateDefaultView() {
@@ -18,7 +18,7 @@ fun Activity.populateDefaultView() {
     found_view.visibility = GONE
     searchingInProgressText.visibility = GONE
     countdown_view.visibility = GONE
-    Crashlytics.log("Default view is populated")
+    FirebaseCrashlytics.getInstance().log("Default view is populated")
 }
 
 fun Activity.populateScanningView() {
@@ -31,7 +31,7 @@ fun Activity.populateScanningView() {
     found_view.visibility = GONE
     searchingInProgressText.visibility = GONE
     countdown_view.visibility = VISIBLE
-    Crashlytics.log("Scanning view is populated")
+    FirebaseCrashlytics.getInstance().log("Scanning view is populated")
 }
 fun Activity.populateNoFoundView() {
     searchingInProgressText.text = resources.getString(R.string.look_no_found)
@@ -45,7 +45,7 @@ fun Activity.populateNoFoundView() {
     look_divider.visibility = VISIBLE
     searchBtn.visibility = VISIBLE
     searchingInProgressText.visibility = VISIBLE
-    Crashlytics.log("No found view is populated")
+    FirebaseCrashlytics.getInstance().log("No found view is populated")
 }
 
 fun Activity.populateSucceedView() {
@@ -57,7 +57,7 @@ fun Activity.populateSucceedView() {
     yes_button.visibility = VISIBLE
     profile_image.visibility = VISIBLE
     found_view.visibility = VISIBLE
-    Crashlytics.log("Succeed view is populated")
+    FirebaseCrashlytics.getInstance().log("Succeed view is populated")
 }
 
 fun Activity.populatePendingView() {
@@ -69,5 +69,5 @@ fun Activity.populatePendingView() {
     yes_button.visibility = GONE
     profile_image.visibility = VISIBLE
     found_view.visibility = VISIBLE
-    Crashlytics.log("Succeed view is populated")
+    FirebaseCrashlytics.getInstance().log("Succeed view is populated")
 }

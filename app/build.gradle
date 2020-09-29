@@ -14,8 +14,8 @@ android {
         applicationId "com.artamonov.look4"
         minSdkVersion 23
         targetSdkVersion 30
-        versionCode 33
-        versionName "0.38"
+        versionCode 34
+        versionName "0.40"
         multiDexEnabled true
         vectorDrawables.useSupportLibrary = true
 
@@ -54,7 +54,6 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.0-alpha07'
     implementation 'androidx.preference:preference:1.1.1'
 
-    implementation "com.crashlytics.sdk.android:crashlytics:2.10.1"
     implementation "com.github.bumptech.glide:glide:4.9.0"
     implementation 'com.github.dhaval2404:imagepicker:1.7.1'
     implementation 'com.google.android.material:material:1.1.0'

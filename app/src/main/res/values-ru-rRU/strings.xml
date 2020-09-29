@@ -63,6 +63,8 @@
 
     <string name="network_error_unknown">Проверьте Интернет-соединение</string>
 
+    <string name="faq_accept">Понятно</string>
     <string name="faq_link">file:///android_asset/faq_rus.html</string>
+    <string name="splash_faq_link">file:///android_asset/splash_faq_rus.html</string>
 
 </resources>

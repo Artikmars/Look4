@@ -70,7 +70,9 @@
 
     <string name="network_error_unknown">No Internet connection</string>
 
+    <string name="faq_accept">OK</string>
     <string name="faq_link">file:///android_asset/faq_eng.html</string>
+    <string name="splash_faq_link">file:///android_asset/splash_faq_eng.html</string>
     <string name="privacy_policy_link" translatable="false">file:///android_asset/privacy_policy.html</string>
 
 </resources>
