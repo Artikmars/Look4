@@ -1,6 +1,7 @@
 package com.artamonov.look4.look
 
 import android.content.Intent
+import android.util.Log
 import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
@@ -170,6 +171,8 @@ class LookViewModel @ViewModelInject constructor(
     }
 
     fun handleNewIntent(intent: Intent?) {
+        Log.v("Look4", "Look model: handleNewIntent")
+
         prefs.saveContactRequest(ContactRequest())
 
         if (intent == null || intent.extras == null) {
@@ -178,12 +181,14 @@ class LookViewModel @ViewModelInject constructor(
         notificationHandler = NotificationHandler(intent)
 
         if (notificationHandler?.isNotificationValid() == true) {
+            Log.v("Look4", "Look model: notificationHandler?.isNotificationValid() == true : $notificationHandler")
             discovererFilePath = notificationHandler?.getDiscovererFilePath()
             discovererName = notificationHandler?.getDiscovererName()
             discovererPhoneNumber = notificationHandler?.getDiscovererPhoneNumber()
             endpointIdSaved = notificationHandler?.getEndpointId()
             state.set(newValue = LookState.SucceededDiscoverIsFoundState(user = prefs.getUserProfile()))
         } else {
+            Log.v("Look4", "Look model: notificationHandler?.isNotificationValid() == false")
             state.set(newValue = LookState.DefaultState)
         }
 //        else if (LookActivity.advertiserPhoneNumber != null) {

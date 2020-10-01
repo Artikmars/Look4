@@ -58,14 +58,14 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
 
     companion object {
         const val LOG_TAG = "Look4"
-        private const val REQUEST_CODE_REQUIRED_PERMISSIONS = 1
-    }
-
-    private val requiredPermissions = arrayOf(
+        const val REQUEST_CODE_REQUIRED_PERMISSIONS = 1
+        val requiredPermissions = arrayOf(
         ACCESS_COARSE_LOCATION,
         ACCESS_FINE_LOCATION,
         READ_EXTERNAL_STORAGE
-    )
+        )
+    }
+
     private val strategy = P2P_POINT_TO_POINT
     private val discOptions by lazy { DiscoveryOptions.Builder().setStrategy(strategy).build() }
     private var user: User? = null

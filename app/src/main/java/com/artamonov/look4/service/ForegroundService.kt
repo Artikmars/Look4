@@ -93,7 +93,7 @@ class ForegroundService : Service() {
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         soundUri = Uri.parse(
             ContentResolver.SCHEME_ANDROID_RESOURCE + "://" +
-                    packageName + "/raw/look4_notification_sound.mp3"
+                    packageName + "/" + R.raw.look4_notification_sound
         )
         createNotificationChannel()
         val notificationIntent = Intent(this, MainActivity::class.java)
@@ -105,8 +105,8 @@ class ForegroundService : Service() {
             .setContentTitle(getString(R.string.main_online_mode))
             .setSmallIcon(R.drawable.ic_o_1)
             .setContentText(input)
-            .setContentIntent(pendingIntent)
             .setSound(soundUri)
+            .setContentIntent(pendingIntent)
             .build()
     }
 
@@ -292,6 +292,7 @@ class ForegroundService : Service() {
             .setSmallIcon(R.drawable.ic_o_2)
             .setContentText(getString(R.string.service_new_request))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setSound(soundUri)
             // Set the intent that will fire when the user taps the notification
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)

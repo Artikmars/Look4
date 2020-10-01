@@ -1,12 +1,20 @@
 package com.artamonov.look4.main
 
+import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.viewModels
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.core.content.PermissionChecker.PERMISSION_GRANTED
 import com.artamonov.look4.R
 import com.artamonov.look4.base.BaseActivity
+import com.artamonov.look4.look.LookActivity.Companion.REQUEST_CODE_REQUIRED_PERMISSIONS
+import com.artamonov.look4.look.LookActivity.Companion.requiredPermissions
 import com.artamonov.look4.main.models.FetchMainStatus
 import com.artamonov.look4.main.models.MainEvent
 import com.artamonov.look4.main.models.MainViewState
@@ -52,13 +60,16 @@ class MainActivity : BaseActivity(R.layout.activity_main) {
         Glide.with(this).load(R.drawable.ic_black_o).into(letter_0_1)
 
         look_text.setOnClickListener { viewModel.obtainEvent(MainEvent.DiscoveringIsStarted) }
-        offline_text.setSafeOnClickListener { viewModel.obtainEvent(MainEvent.ChangeStatus) }
+        offline_text.setSafeOnClickListener { checkForPermissions() }
         contacts_text.setOnClickListener { viewModel.obtainEvent(MainEvent.OpenContacts) }
         settings_text.setOnClickListener { viewModel.obtainEvent(MainEvent.OpenSettings) }
         main_look_gender_text.setOnClickListener { viewModel.obtainEvent(MainEvent.ChangeLookGender) }
     }
 
-    private fun handleIntentIfExist(intent: Intent?) = intent?.extras?.let { startLookActivity() }
+    private fun handleIntentIfExist(intent: Intent?) = intent?.extras?.let {
+        Log.v("Look4", "main model: handleIntentIfExist: ${intent.extras}")
+        startLookActivity()
+    }
 
     private fun bindViewState(viewState: MainViewState) {
         when (viewState.fetchStatus) {
@@ -122,8 +133,64 @@ class MainActivity : BaseActivity(R.layout.activity_main) {
         unregisterBroadcastReceiver(mMessageReceiver)
     }
 
+    private fun checkForPermissions() {
+        if (!hasPermissions(this, requiredPermissions)) {
+            firebaseCrashlytics.log("Permission is missing in checkForPermissions(): ${Manifest.permission.ACCESS_COARSE_LOCATION}")
+            ActivityCompat.requestPermissions(this, requiredPermissions,
+                REQUEST_CODE_REQUIRED_PERMISSIONS
+            )
+        } else {
+            firebaseCrashlytics.log("Permission is given in checkForPermissions(): ${Manifest.permission.ACCESS_COARSE_LOCATION}")
+            viewModel.obtainEvent(MainEvent.ChangeStatus)
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        when (requestCode) {
+            REQUEST_CODE_REQUIRED_PERMISSIONS -> {
+                // If request is cancelled, the result arrays are empty.
+                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) &&
+                    grantResults[1] == PackageManager.PERMISSION_GRANTED && grantResults[2] == PackageManager.PERMISSION_GRANTED
+                ) {
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+                    viewModel.obtainEvent(MainEvent.ChangeStatus)
+                } else {
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                    showSnackbarError(R.string.error_permissions_are_not_granted_for_discovering)
+                }
+                return
+            }
+
+            // Add other 'when' lines to check for other
+            // permissions this app might request.
+            else -> {
+                // Ignore all other requests.
+            }
+        }
+    }
+
+    /** Returns true if the app was granted all the permissions. Otherwise, returns false.  */
+    private fun hasPermissions(context: Context, permissions: Array<String>): Boolean {
+        for (permission in permissions) {
+            if (ContextCompat.checkSelfPermission(context, permission) != PERMISSION_GRANTED
+            ) {
+                firebaseCrashlytics.log("Permission is missing: $permission")
+                return false
+            }
+        }
+        return true
+    }
+
     private val mMessageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent) {
+            Log.v("Look4", "onReceive: $intent")
+            Log.v("Look4", "onReceive intent.action: : ${intent.action}")
             // Get extra data included in the Intent
             when (intent.action) {
                 ADVERTISING_SUCCEEDED_EVENT -> { viewModel.obtainEvent(MainEvent.OnlineIsEnabled) }
