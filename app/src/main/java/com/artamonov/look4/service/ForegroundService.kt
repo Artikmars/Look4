@@ -6,8 +6,10 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.PendingIntent.FLAG_UPDATE_CURRENT
 import android.app.Service
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
 import android.net.Uri
 import android.os.Build
 import android.os.IBinder
@@ -65,6 +67,7 @@ class ForegroundService : Service() {
     private var file: File? = null
     private var filePayload: Payload? = null
     private lateinit var bytePayload: Payload
+    private var soundUri: Uri? = null
 
     private lateinit var notificationHandler: NotificationHandler
 
@@ -88,6 +91,10 @@ class ForegroundService : Service() {
     private fun createNotification(intent: Intent): Notification {
         val input = intent.getStringExtra("inputExtra")
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        soundUri = Uri.parse(
+            ContentResolver.SCHEME_ANDROID_RESOURCE + "://" +
+                    packageName + "/raw/look4_notification_sound.mp3"
+        )
         createNotificationChannel()
         val notificationIntent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(
@@ -99,6 +106,7 @@ class ForegroundService : Service() {
             .setSmallIcon(R.drawable.ic_o_1)
             .setContentText(input)
             .setContentIntent(pendingIntent)
+            .setSound(soundUri)
             .build()
     }
 
@@ -115,7 +123,8 @@ class ForegroundService : Service() {
     }
 
     private fun startServer(intent: Intent) {
-        connectionClient.startAdvertising(deviceId, packageName, connectionLifecycleCallback,
+        connectionClient.startAdvertising(
+            deviceId, packageName, connectionLifecycleCallback,
             advOptions
         )?.addOnSuccessListener {
             startForeground(1, createNotification(intent))
@@ -254,14 +263,16 @@ class ForegroundService : Service() {
     private fun showPendingContactNotification(notificationId: Int) {
         requireNotNull(endpointIdSaved) { "Endpoint ID is null" }
         // Create an explicit intent for an Activity in your app
-        notificationHandler = NotificationHandler(discovererName, discovererPhoneNumber,
+        notificationHandler = NotificationHandler(
+            discovererName, discovererPhoneNumber,
             discovererFilePath, advertiserPhoneNumber, endpointIdSaved!!
         )
 
         val intent = notificationHandler.createIntent(this)
 
         prefs.saveContactRequest(
-            ContactRequest(name = discovererName, phoneNumber = discovererPhoneNumber,
+            ContactRequest(
+                name = discovererName, phoneNumber = discovererPhoneNumber,
                 filePath = discovererFilePath, advertiserPhoneNumber = advertiserPhoneNumber,
                 endpointId = endpointIdSaved
             )
@@ -293,19 +304,31 @@ class ForegroundService : Service() {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val serviceChannel = NotificationChannel(CHANNEL_ID, "Foreground Service Channel",
+            val serviceChannel = NotificationChannel(
+                CHANNEL_ID, "Foreground Service Channel",
                 NotificationManager.IMPORTANCE_DEFAULT
             )
             serviceChannel.enableVibration(true)
+            val audioAttributes = AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .setUsage(AudioAttributes.USAGE_ALARM)
+                .build()
+            serviceChannel.setSound(soundUri, audioAttributes)
             notificationManager.createNotificationChannel(serviceChannel)
         }
     }
 
     private fun isGenderValid(advertiserGender: @UserGender.AnnotationUserGender String?): Boolean {
-        when (prefs.getUserProfile().lookGender) { MALE -> {
-            return advertiserGender == MALE }
-            FEMALE -> { return advertiserGender == FEMALE }
-            UserGender.ALL -> { return true }
+        when (prefs.getUserProfile().lookGender) {
+            MALE -> {
+                return advertiserGender == MALE
+            }
+            FEMALE -> {
+                return advertiserGender == FEMALE
+            }
+            UserGender.ALL -> {
+                return true
+            }
         }
         return true
     }
