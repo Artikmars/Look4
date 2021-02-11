@@ -57,7 +57,7 @@
     <string name="welcome_submit">Submit</string>
     <string name="welcome_processinng_image_error">Error while processing your photo</string>
 
-    <string name="about_us_description">Igor Artamonov - idea, concept, design and marketing\nEmail: artamonov.igor@gmail.com\nAndrii Artamonov - Android Developer\nLinkedIn: https://www.linkedin.com/in/andrii-artamonov/\nEmail: artamonov06@gmail.com\n© 2020 Igor Artamonov, Andrii Artamonov, Look4</string>
+    <string name="about_us_description">Igor Artamonov – idea, concept, design and marketing\nEmail: artamonov.igor@gmail.com\nAndrii Artamonov - Android Developer\nLinkedIn: https://www.linkedin.com/in/andrii-artamonov/\nEmail: artamonov06@gmail.com\n© 2020&#8211;2021 Igor Artamonov, Andrii Artamonov, Look4</string>
 
     <string name="error_general">An error occurred. Please, try again</string>
     <string name="error_blank_fields">Please, do not leave fields blank</string>
