@@ -29,28 +29,18 @@
         app:srcCompat="@drawable/ic_black_o" />
 
     <TextView
-        android:id="@+id/look_text"
+        android:id="@+id/offline_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="20dp"
-        android:text="@string/look_search"
+        android:layout_marginStart="40dp"
+        android:layout_marginBottom="4dp"
+        android:text="@string/main_offline_mode"
         android:textColor="@color/black"
         android:textSize="20sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/letter_0_1"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
-        android:id="@+id/offline_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="20dp"
-        android:text="@string/main_offline_mode"
-        android:textColor="@color/black"
-        android:textSize="20sp"
-        app:layout_constraintBottom_toTopOf="@+id/letter_0_1"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/contacts_text"
@@ -61,6 +51,7 @@
         android:textColor="@color/black"
         android:textSize="20sp"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/letter_0_1"
         app:layout_constraintTop_toTopOf="parent" />
 

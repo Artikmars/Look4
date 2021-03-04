@@ -6,9 +6,10 @@ import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ApplicationComponent
+import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
-@InstallIn(ApplicationComponent::class)
+@InstallIn(SingletonComponent::class)
 @Module
 abstract class PreferenceModule {
 

@@ -59,7 +59,7 @@ class MainActivity : BaseActivity(R.layout.activity_main) {
 
         Glide.with(this).load(R.drawable.ic_black_o).into(letter_0_1)
 
-        look_text.setOnClickListener { viewModel.obtainEvent(MainEvent.DiscoveringIsStarted) }
+       // look_text.setOnClickListener { viewModel.obtainEvent(MainEvent.DiscoveringIsStarted) }
         offline_text.setSafeOnClickListener { checkForPermissions() }
         contacts_text.setOnClickListener { viewModel.obtainEvent(MainEvent.OpenContacts) }
         settings_text.setOnClickListener { viewModel.obtainEvent(MainEvent.OpenSettings) }

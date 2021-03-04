@@ -45,7 +45,7 @@ import com.google.android.gms.nearby.connection.EndpointDiscoveryCallback
 import com.google.android.gms.nearby.connection.Payload
 import com.google.android.gms.nearby.connection.PayloadCallback
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate
-import com.google.android.gms.nearby.connection.Strategy.P2P_POINT_TO_POINT
+import com.google.android.gms.nearby.connection.Strategy.P2P_STAR
 import java.util.concurrent.TimeUnit
 import kotlinx.android.synthetic.main.activity_look.*
 import kotlinx.coroutines.CoroutineScope
@@ -66,7 +66,7 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
         )
     }
 
-    private val strategy = P2P_POINT_TO_POINT
+    private val strategy = P2P_STAR
     private val discOptions by lazy { DiscoveryOptions.Builder().setStrategy(strategy).build() }
     private var user: User? = null
     private val lookViewModel: LookViewModel by viewModels()

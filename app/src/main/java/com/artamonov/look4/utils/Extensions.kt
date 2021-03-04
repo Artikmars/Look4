@@ -103,7 +103,6 @@ fun AppCompatActivity.blockInput() {
 }
 
 fun AppCompatActivity.colourMainButtonsToGrey() {
-    look_text.setTextColor(ContextCompat.getColor(this, R.color.lightGrey))
     offline_text.setTextColor(ContextCompat.getColor(this, R.color.lightGrey))
     contacts_text.setTextColor(ContextCompat.getColor(this, R.color.lightGrey))
     settings_text.setTextColor(ContextCompat.getColor(this, R.color.lightGrey))
@@ -111,7 +110,6 @@ fun AppCompatActivity.colourMainButtonsToGrey() {
 }
 
 fun AppCompatActivity.colourMainButtonsToNormal() {
-    look_text.setTextColor(ContextCompat.getColor(this, R.color.black))
     offline_text.setTextColor(ContextCompat.getColor(this, R.color.black))
     contacts_text.setTextColor(ContextCompat.getColor(this, R.color.black))
     settings_text.setTextColor(ContextCompat.getColor(this, R.color.black))

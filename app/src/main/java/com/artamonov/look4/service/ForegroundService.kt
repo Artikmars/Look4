@@ -24,23 +24,14 @@ import com.artamonov.look4.R
 import com.artamonov.look4.data.database.ContactRequest
 import com.artamonov.look4.data.prefs.PreferenceHelper
 import com.artamonov.look4.look.LookActivity.Companion.LOG_TAG
+import com.artamonov.look4.look.populateScanningView
 import com.artamonov.look4.main.MainActivity
-import com.artamonov.look4.utils.NotificationHandler
-import com.artamonov.look4.utils.UserGender
+import com.artamonov.look4.utils.*
 import com.artamonov.look4.utils.UserGender.Companion.FEMALE
 import com.artamonov.look4.utils.UserGender.Companion.MALE
 import com.artamonov.look4.utils.UserRole.Companion.ADVERTISER
-import com.artamonov.look4.utils.disconnectFromEndpoint
-import com.google.android.gms.nearby.connection.AdvertisingOptions
-import com.google.android.gms.nearby.connection.ConnectionInfo
-import com.google.android.gms.nearby.connection.ConnectionLifecycleCallback
-import com.google.android.gms.nearby.connection.ConnectionResolution
-import com.google.android.gms.nearby.connection.ConnectionsClient
-import com.google.android.gms.nearby.connection.ConnectionsStatusCodes
-import com.google.android.gms.nearby.connection.Payload
-import com.google.android.gms.nearby.connection.PayloadCallback
-import com.google.android.gms.nearby.connection.PayloadTransferUpdate
-import com.google.android.gms.nearby.connection.Strategy.P2P_POINT_TO_POINT
+import com.google.android.gms.nearby.connection.*
+import com.google.android.gms.nearby.connection.Strategy.P2P_STAR
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
@@ -57,10 +48,11 @@ class ForegroundService : Service() {
     private var discovererName: String? = null
     private var discovererFilePath: String? = null
     private lateinit var deviceId: String
-    private val STRATEGY = P2P_POINT_TO_POINT
+    private val STRATEGY = P2P_STAR
     private var isGenderValid: Boolean = true
     private val advOptions: AdvertisingOptions =
         AdvertisingOptions.Builder().setStrategy(STRATEGY).build()
+    private val discOptions by lazy { DiscoveryOptions.Builder().setStrategy(STRATEGY).build() }
     var notification: Notification? = null
     private lateinit var notificationManager: NotificationManager
     private var newFile: File? = null
@@ -83,6 +75,7 @@ class ForegroundService : Service() {
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         deviceId = UUID.randomUUID().toString()
         startServer(intent)
+        startClient()
         // do heavy work on a background thread
         // stopSelf();
         return START_NOT_STICKY
@@ -141,6 +134,34 @@ class ForegroundService : Service() {
                 stopSelf()
             }
     }
+
+
+    private fun startClient() {
+        endpointDiscoveryCallback?.let {
+            connectionClient.startDiscovery(packageName, it, discOptions)
+                ?.addOnSuccessListener {
+                    firebaseCrashlytics.log("Discovery has been started")
+                }?.addOnFailureListener { e ->
+                    // We're unable to start discovering.
+                }
+        }
+    }
+
+
+    private var endpointDiscoveryCallback: EndpointDiscoveryCallback? =
+        object : EndpointDiscoveryCallback() {
+            override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
+                    connectionClient.requestConnection("test", endpointId, connectionLifecycleCallback)
+                        ?.addOnFailureListener { e ->
+                            // We're unable to connect.
+                        }
+            }
+
+            override fun onEndpointLost(endpointId: String) {
+                firebaseCrashlytics.log("onEndpointLost: $endpointId")
+            }
+        }
+
 
     private val connectionLifecycleCallback: ConnectionLifecycleCallback =
         object : ConnectionLifecycleCallback() {
