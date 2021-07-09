@@ -2,7 +2,6 @@ package com.artamonov.look4.look
 
 import android.content.Intent
 import android.util.Log
-import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.artamonov.look4.base.BaseViewModel
@@ -23,10 +22,12 @@ import com.artamonov.look4.utils.default
 import com.artamonov.look4.utils.isValidPhoneNumber
 import com.artamonov.look4.utils.set
 import com.google.android.gms.nearby.connection.Payload
+import dagger.hilt.android.lifecycle.HiltViewModel
 import java.io.File
 import java.nio.charset.Charset
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 sealed class LookState {
     object DefaultState : LookState()
@@ -43,7 +44,8 @@ sealed class LookAction {
     object ShowDialog : LookAction()
 }
 
-class LookViewModel @ViewModelInject constructor(
+@HiltViewModel
+class LookViewModel @Inject constructor(
     private val prefs: PreferenceHelper
 ) : BaseViewModel() {
 

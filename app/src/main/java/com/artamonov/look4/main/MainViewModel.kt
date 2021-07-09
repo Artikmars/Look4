@@ -12,8 +12,11 @@ import com.artamonov.look4.service.ForegroundService
 import com.artamonov.look4.utils.UserGender.Companion.ALL
 import com.artamonov.look4.utils.UserGender.Companion.FEMALE
 import com.artamonov.look4.utils.UserGender.Companion.MALE
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class MainViewModel @ViewModelInject constructor(
+@HiltViewModel
+class MainViewModel @Inject constructor(
     private val prefs: PreferenceHelper
 ) : BaseVM<MainViewState, MainAction, MainEvent>() {
 

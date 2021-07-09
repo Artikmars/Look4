@@ -1,7 +1,6 @@
 package com.artamonov.look4.userprofiledit
 
 import android.net.Uri
-import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.MutableLiveData
 import com.artamonov.look4.R
 import com.artamonov.look4.base.BaseVM
@@ -15,8 +14,11 @@ import com.artamonov.look4.utils.UserGender
 import com.artamonov.look4.utils.UserGender.Companion.FEMALE
 import com.artamonov.look4.utils.UserGender.Companion.MALE
 import com.artamonov.look4.utils.isValidPhoneNumber
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class UserProfileEditViewModel @ViewModelInject constructor(
+@HiltViewModel
+class UserProfileEditViewModel @Inject constructor(
     private val prefs: PreferenceHelper
 ) : BaseVM<ProfileEditViewState, ProfileEditAction, ProfileEditEvent>() {
     var phoneNumberLayoutErrorLiveData: MutableLiveData<Boolean> = MutableLiveData()
