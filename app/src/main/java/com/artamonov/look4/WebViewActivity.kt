@@ -3,17 +3,21 @@ package com.artamonov.look4
 import android.os.Bundle
 import androidx.core.view.isVisible
 import com.artamonov.look4.base.BaseActivity
+import com.artamonov.look4.databinding.ActivityWebViewBinding
 import com.artamonov.look4.utils.FAQ_TYPE
 import com.artamonov.look4.utils.WebViewType.DEFAULT_FAQ
 import com.artamonov.look4.utils.WebViewType.PRIVACY_POLICY
 import com.artamonov.look4.utils.startMainActivity
 import com.artamonov.look4.utils.startWelcomeActivity
-import kotlinx.android.synthetic.main.activity_web_view.*
 
-class WebViewActivity : BaseActivity(R.layout.activity_web_view) {
+class WebViewActivity : BaseActivity() {
+
+    private lateinit var binding: ActivityWebViewBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        binding = ActivityWebViewBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         val webViewTypeIntent = intent.getStringExtra(FAQ_TYPE)
 
@@ -23,27 +27,27 @@ class WebViewActivity : BaseActivity(R.layout.activity_web_view) {
         }
 
         if (webViewTypeIntent == null) {
-            web_view_title.isVisible = false
-            web_view_back.isVisible = false
+            binding.webViewTitle.isVisible = false
+            binding.webViewBack.isVisible = false
         }
 
-        web_view_back.setOnClickListener { onBackPressed() }
-        webView.loadUrl(getString(R.string.splash_faq_link))
+        binding.webViewBack.setOnClickListener { onBackPressed() }
+        binding.webView.loadUrl(getString(R.string.splash_faq_link))
 
         when (webViewTypeIntent) {
                 DEFAULT_FAQ -> {
-                    ok_button.isVisible = false
-                    webView.loadUrl(getString(R.string.faq_link))
+                    binding.okButton.isVisible = false
+                    binding.webView.loadUrl(getString(R.string.faq_link))
                 }
                 PRIVACY_POLICY -> {
-                    ok_button.isVisible = false
-                    web_view_title.isVisible = false
-                    web_view_title.text = getString(R.string.settings_privacy_policy)
-                    webView.loadUrl(getString(R.string.privacy_policy_link))
+                    binding.okButton.isVisible = false
+                    binding.webViewTitle.isVisible = false
+                    binding.webViewTitle.text = getString(R.string.settings_privacy_policy)
+                    binding.webView.loadUrl(getString(R.string.privacy_policy_link))
                 }
             }
 
-        ok_button.setOnClickListener {
+        binding.okButton.setOnClickListener {
             finish()
             startWelcomeActivity()
         }

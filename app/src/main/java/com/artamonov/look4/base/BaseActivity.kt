@@ -13,10 +13,9 @@ import com.google.android.gms.nearby.connection.ConnectionsClient
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
-import kotlinx.android.synthetic.main.activity_main.*
 
 @AndroidEntryPoint
-abstract class BaseActivity(contentLayoutId: Int) : AppCompatActivity(contentLayoutId) {
+abstract class BaseActivity : AppCompatActivity() {
 
     private var contactState: ContactUnseenState = ContactUnseenState.DisabledState
 

@@ -6,12 +6,11 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.content.res.TypedArrayUtils.getString
 import androidx.recyclerview.widget.RecyclerView
 import com.artamonov.look4.R
 import com.artamonov.look4.data.database.User
+import com.artamonov.look4.databinding.ContactItemBinding
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.android.synthetic.main.contact_item.view.*
 
 class ContactListAdapter(
     private val mDataSource: AdapterDataSource<User>,
@@ -40,25 +39,25 @@ class ContactListAdapter(
 
     inner class ViewHolder(v: View) : RecyclerView.ViewHolder(v) {
 
-        private var view: View = v
+        val binding = ContactItemBinding.bind(v)
         private var contactItem: User? = null
 
         fun bindItem(item: User?) {
             this.contactItem = item
 
-            view.contact_name.text = contactItem?.name
-            view.contact_phone_number.text = contactItem?.phoneNumber
+            binding.contactName.text = contactItem?.name
+            binding.contactPhoneNumber.text = contactItem?.phoneNumber
 
-            view.contact_phone_number.setOnClickListener { v ->
+            binding.contactPhoneNumber.setOnClickListener { v ->
                 val myClipboard = v.context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
 
-                val myClip = ClipData.newPlainText("label", view.contact_phone_number.text)
+                val myClip = ClipData.newPlainText("label", binding.contactPhoneNumber.text)
                 myClipboard.setPrimaryClip(myClip)
                 Snackbar.make(v, v.context.resources.getString(R.string.contacts_copied_to_clipboard),
                     Snackbar.LENGTH_SHORT).show()
             }
 
-            view.contact_delete_icon.setOnClickListener {
+            binding.contactDeleteIcon.setOnClickListener {
                 listener.onItemClick(adapterPosition)
             }
         }

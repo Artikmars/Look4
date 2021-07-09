@@ -13,6 +13,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker.PERMISSION_GRANTED
 import com.artamonov.look4.R
 import com.artamonov.look4.base.BaseActivity
+import com.artamonov.look4.databinding.ActivityMainBinding
 import com.artamonov.look4.look.LookActivity.Companion.REQUEST_CODE_REQUIRED_PERMISSIONS
 import com.artamonov.look4.look.LookActivity.Companion.requiredPermissions
 import com.artamonov.look4.main.models.FetchMainStatus
@@ -41,14 +42,16 @@ import com.artamonov.look4.utils.stopService
 import com.artamonov.look4.utils.unblockInput
 import com.artamonov.look4.utils.unregisterBroadcastReceiver
 import com.bumptech.glide.Glide
-import kotlinx.android.synthetic.main.activity_main.*
 
-class MainActivity : BaseActivity(R.layout.activity_main) {
+class MainActivity : BaseActivity() {
 
+    private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
         this.supportActionBar?.hide()
 
         registerBroadcastReceiver(mMessageReceiver)
@@ -57,13 +60,13 @@ class MainActivity : BaseActivity(R.layout.activity_main) {
 
         viewModel.viewStates().observe(this, { bindViewState(it) })
 
-        Glide.with(this).load(R.drawable.ic_black_o).into(letter_0_1)
+        Glide.with(this).load(R.drawable.ic_black_o).into(binding.letter01)
 
        // look_text.setOnClickListener { viewModel.obtainEvent(MainEvent.DiscoveringIsStarted) }
-        offline_text.setSafeOnClickListener { checkForPermissions() }
-        contacts_text.setOnClickListener { viewModel.obtainEvent(MainEvent.OpenContacts) }
-        settings_text.setOnClickListener { viewModel.obtainEvent(MainEvent.OpenSettings) }
-        main_look_gender_text.setOnClickListener { viewModel.obtainEvent(MainEvent.ChangeLookGender) }
+        binding.offlineText.setSafeOnClickListener { checkForPermissions() }
+        binding.contactsText.setOnClickListener { viewModel.obtainEvent(MainEvent.OpenContacts) }
+        binding.settingsText.setOnClickListener { viewModel.obtainEvent(MainEvent.OpenSettings) }
+        binding.mainLookGenderText.setOnClickListener { viewModel.obtainEvent(MainEvent.ChangeLookGender) }
     }
 
     private fun handleIntentIfExist(intent: Intent?) = intent?.extras?.let {
@@ -84,35 +87,37 @@ class MainActivity : BaseActivity(R.layout.activity_main) {
             is FetchMainStatus.EnablingOfflineState -> { stopService() }
             is FetchMainStatus.EnablingOnlineState -> { startService() }
             is FetchMainStatus.OnlineEnabledState -> {
-                offline_text.text = getString(R.string.main_online_mode)
-                letter_0_1.animateDot(this)
+                binding.offlineText.text = getString(R.string.main_online_mode)
+                binding.letter01.animateDot(this)
                 unblockInput()
                 showSnackbarError(R.string.main_advertising_has_started)
             }
             is FetchMainStatus.OfflineEnabledState -> {
                 connectionClient.stopAllEndpoints()
-                offline_text.text = getString(R.string.main_offline_mode)
-                letter_0_1.clearAnimation()
+                binding.offlineText.text = getString(R.string.main_offline_mode)
+                binding.letter01.clearAnimation()
                 unblockInput()
                 showSnackbarError(R.string.main_advertising_has_stopped)
             }
             is FetchMainStatus.LookGenderManState -> {
-                main_look_gender_text.text = getString(R.string.main_man)
+                binding.mainLookGenderText.text = getString(R.string.main_man)
             }
             is FetchMainStatus.LookGenderWomenState -> {
-                main_look_gender_text.text = getString(R.string.main_woman)
+                binding.mainLookGenderText.text = getString(R.string.main_woman)
             }
             is FetchMainStatus.LookGenderAllState -> {
-                main_look_gender_text.text = getString(R.string.main_all)
+                binding.mainLookGenderText.text = getString(R.string.main_all)
             }
         }
     }
 
     private fun setLookGenderText(lookGender: String?) {
-        when (lookGender) {
-            MALE -> main_look_gender_text.text = getString(R.string.main_man)
-            FEMALE -> main_look_gender_text.text = getString(R.string.main_woman)
-            ALL -> main_look_gender_text.text = getString(R.string.main_all)
+        binding.mainLookGenderText.apply {
+            when (lookGender) {
+                MALE -> text = getString(R.string.main_man)
+                FEMALE -> text = getString(R.string.main_woman)
+                ALL -> text = getString(R.string.main_all)
+            }
         }
     }
 

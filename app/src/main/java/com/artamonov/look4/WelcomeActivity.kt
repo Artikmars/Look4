@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import com.artamonov.look4.base.BaseActivity
+import com.artamonov.look4.databinding.ActivityWelcomeBinding
 import com.artamonov.look4.utils.PostTextChangeWatcher
 import com.artamonov.look4.utils.UserGender
 import com.artamonov.look4.utils.UserGender.Companion.FEMALE
@@ -15,38 +16,48 @@ import com.artamonov.look4.utils.startMainActivity
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.github.dhaval2404.imagepicker.ImagePicker
-import kotlinx.android.synthetic.main.activity_welcome.*
 
 const val PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 5545
 var selectedImage: Uri? = null
 var enteredPhoneNumber: String? = null
 
-class WelcomeActivity : BaseActivity(R.layout.activity_welcome) {
+class WelcomeActivity : BaseActivity() {
+
+    private lateinit var binding: ActivityWelcomeBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        binding = ActivityWelcomeBinding.inflate(layoutInflater)
+        setContentView(binding.root)
         supportActionBar?.hide()
 
-        etPhoneNumber.addTextChangedListener(PostTextChangeWatcher { phoneNumberChanged(it) })
+        binding.etPhoneNumber.addTextChangedListener(PostTextChangeWatcher { phoneNumberChanged(it) })
 
-        submit_button.setOnClickListener {
+        binding.submitButton.setOnClickListener {
             if (fieldsAreValid()) {
-                val isSaved = prefs.createUserProfile(name = etName.text.toString(), phoneNumber =
-                etPhoneNumber.text.toString(), imagePath = selectedImage.toString(), gender = getChosenGender())
+                val isSaved = prefs.createUserProfile(
+                    name = binding.etName.text.toString(),
+                    phoneNumber =
+                    binding.etPhoneNumber.text.toString(),
+                    imagePath = selectedImage.toString(),
+                    gender = getChosenGender()
+                )
                 if (isSaved) {
                     startMainActivity()
-                    finish() }
+                    finish()
+                }
             } else {
                 showSnackbarError(R.string.error_blank_fields)
             }
         }
 
-        welcome_add_image.setOnClickListener {
-            dispatchTakePictureIntent() }
+        binding.welcomeAddImage.setOnClickListener {
+            dispatchTakePictureIntent()
+        }
     }
 
     private fun getChosenGender(): @UserGender.AnnotationUserGender String {
-        when (welcome_radioGroup.checkedRadioButtonId) {
+        when (binding.welcomeRadioGroup.checkedRadioButtonId) {
             R.id.welcome_radioFemale -> {
                 return FEMALE
             }
@@ -76,9 +87,10 @@ class WelcomeActivity : BaseActivity(R.layout.activity_welcome) {
 
     private fun showPhoneNumberWarning(state: Boolean) {
         if (state) {
-            etPhoneNumberLayout.error = resources.getString(R.string.welcome_phone_number_warning)
+            binding.etPhoneNumberLayout.error =
+                resources.getString(R.string.welcome_phone_number_warning)
         } else {
-            etPhoneNumberLayout.error = null
+            binding.etPhoneNumberLayout.error = null
         }
     }
 
@@ -95,7 +107,8 @@ class WelcomeActivity : BaseActivity(R.layout.activity_welcome) {
         when (resultCode) {
             Activity.RESULT_OK -> {
                 selectedImage = data?.data
-                Glide.with(this).load(selectedImage).apply(RequestOptions.circleCropTransform()).into(welcome_add_image)
+                Glide.with(this).load(selectedImage).apply(RequestOptions.circleCropTransform())
+                    .into(binding.welcomeAddImage)
             }
             ImagePicker.RESULT_ERROR -> {
                 showSnackbarError(getString(R.string.welcome_processinng_image_error))
@@ -107,7 +120,8 @@ class WelcomeActivity : BaseActivity(R.layout.activity_welcome) {
     }
 
     private fun fieldsAreValid(): Boolean {
-        return !etName.text?.trim().isNullOrEmpty() && enteredPhoneNumber?.isValidPhoneNumber()
+        return !binding.etName.text?.trim()
+            .isNullOrEmpty() && enteredPhoneNumber?.isValidPhoneNumber()
                 ?: false && selectedImage != null
     }
 }

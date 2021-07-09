@@ -16,6 +16,7 @@ import androidx.core.view.isVisible
 import com.artamonov.look4.R
 import com.artamonov.look4.base.BaseActivity
 import com.artamonov.look4.data.database.User
+import com.artamonov.look4.databinding.ActivityLookBinding
 import com.artamonov.look4.utils.ContactUnseenState
 import com.artamonov.look4.utils.LiveDataContactUnseenState.contactAdvertiserUnseenState
 import com.artamonov.look4.utils.UserRole.Companion.ADVERTISER
@@ -47,14 +48,13 @@ import com.google.android.gms.nearby.connection.PayloadCallback
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate
 import com.google.android.gms.nearby.connection.Strategy.P2P_STAR
 import java.util.concurrent.TimeUnit
-import kotlinx.android.synthetic.main.activity_look.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class LookActivity : BaseActivity(R.layout.activity_look) {
+class LookActivity : BaseActivity() {
 
     companion object {
         const val LOG_TAG = "Look4"
@@ -66,6 +66,7 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
         )
     }
 
+    private lateinit var binding: ActivityLookBinding
     private val strategy = P2P_STAR
     private val discOptions by lazy { DiscoveryOptions.Builder().setStrategy(strategy).build() }
     private var user: User? = null
@@ -74,19 +75,21 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        binding = ActivityLookBinding.inflate(layoutInflater)
+        setContentView(binding.root)
         lookViewModel.state.observe(this, { bindViewState(it) })
         lookViewModel.action.observe(this, { bindViewAction(it) })
         lookViewModel.user.observe(this, { user = it })
 
-        searchBtn.setOnClickListener { startClient() }
-        look_back.setOnClickListener { onBackPressed() }
+        binding.searchBtn.setOnClickListener { startClient() }
+        binding.lookBack.setOnClickListener { onBackPressed() }
 
-        no_button.setSafeOnClickListener {
+        binding.noButton.setSafeOnClickListener {
             lookViewModel.endpointIdSaved?.disconnectFromEndpoint(connectionClient)
             closeActivity()
         }
 
-        yes_button.setSafeOnClickListener {
+        binding.yesButton.setSafeOnClickListener {
             requireNotNull(lookViewModel.endpointIdSaved) { "Endpoint is null" }
             when (prefs.getUserProfile().role) {
                 ADVERTISER -> {
@@ -179,11 +182,11 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
         when (viewState) {
             is LookState.DefaultState -> {
                 firebaseCrashlytics.log("State: Default")
-                populateDefaultView()
+                binding.populateDefaultView()
             }
             is LookState.NoFoundState -> {
                 firebaseCrashlytics.log("State: No Found")
-                populateNoFoundView()
+                binding.populateNoFoundView()
             }
             is LookState.SearchState -> {
                 firebaseCrashlytics.log("State: Search")
@@ -196,20 +199,20 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
             }
             is LookState.SucceededAdvertiserIsFoundState<*> -> {
                 firebaseCrashlytics.log("State: SucceededAdvertiserIsFoundState")
-                populateSucceedView()
+                binding.populateSucceedView()
             }
             is LookState.SucceededDiscoverIsFoundState<*> -> {
                 firebaseCrashlytics.log("State: SucceededDiscoverIsFoundState")
-                populateSucceedView()
-                searchingInProgressText.isVisible = true
-                searchingInProgressText.text = lookViewModel.discovererName
-                profile_image.setImageDrawable(Drawable.createFromPath(lookViewModel.discovererFilePath))
+                binding.populateSucceedView()
+                binding.searchingInProgressText.isVisible = true
+                binding.searchingInProgressText.text = lookViewModel.discovererName
+                binding.profileImage.setImageDrawable(Drawable.createFromPath(lookViewModel.discovererFilePath))
             }
             is LookState.PendingState -> {
                 firebaseCrashlytics.log("State: PendingState")
-                populatePendingView()
-                searchingInProgressText.isVisible = true
-                searchingInProgressText.text = getString(R.string.look_pending)
+                binding.populatePendingView()
+                binding.searchingInProgressText.isVisible = true
+                binding.searchingInProgressText.text = getString(R.string.look_pending)
             }
         }
     }
@@ -280,15 +283,15 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
 
     private fun startClient() {
         startTimer()
-        populateScanningView()
+        binding.populateScanningView()
         lookViewModel.endpointIdSaved?.disconnectFromEndpoint(connectionClient)
         connectionClient.stopAllEndpoints()
         endpointDiscoveryCallback?.let {
             connectionClient.startDiscovery(packageName, it, discOptions)
-                ?.addOnSuccessListener {
+                .addOnSuccessListener {
                     lookViewModel.updateRole(DISCOVERER)
                     firebaseCrashlytics.log("Discovery has been started")
-                }?.addOnFailureListener { e ->
+                }.addOnFailureListener { e ->
                     // We're unable to start discovering.
                     showSnackbarError(getString(R.string.look_error_scanning_can_not_be_started))
                     handleFailedResponse(e)
@@ -302,8 +305,8 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
             val totalSeconds = TimeUnit.MILLISECONDS.toSeconds(25000)
             keepScreenOn()
             for (second in 0..totalSeconds) {
-                countdown_view.text = second.toString()
-                firebaseCrashlytics.log("onTick(): ${countdown_view.text}")
+                binding.countdownView.text = second.toString()
+                firebaseCrashlytics.log("onTick(): ${binding.countdownView.text}")
                 delay(1000)
             }
             connectionClient.stopDiscovery()
@@ -311,7 +314,7 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
             unKeepScreenOn()
 
             // Make count down view gone when on no found state
-            countdown_view.text = ""
+            binding.countdownView.text = ""
 
             lookViewModel.setNoFoundState()
             firebaseCrashlytics.recordException(Throwable("No found. Timer has finished"))
@@ -325,7 +328,7 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
             override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
                 if (user?.name != null && connectionLifecycleCallback != null) {
                     connectionClient.requestConnection(user?.name!!, endpointId, connectionLifecycleCallback!!)
-                        ?.addOnFailureListener { e ->
+                        .addOnFailureListener { e ->
                             handleFailedResponse(e)
                             showSnackbarError(getString(R.string.look_error_connection_is_lost_try_again))
                         }
@@ -381,7 +384,7 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
                 unKeepScreenOn()
 
                 // Make count down view gone when on no found state
-                countdown_view.text = ""
+                binding.countdownView.text = ""
 
                 lookViewModel.endpointIdSaved?.disconnectFromEndpoint(connectionClient)
                 connectionClient.stopAllEndpoints()
@@ -398,16 +401,16 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
         override fun onPayloadTransferUpdate(p0: String, p1: PayloadTransferUpdate) {
             if (p1.status == PayloadTransferUpdate.Status.SUCCESS && p1.totalBytes > 1000) {
                 firebaseCrashlytics.log("onPayloadTransferUpdate: ${p1.status} && ${p1.totalBytes}")
-                if (profile_image.drawable == null && lookViewModel.isGenderValid) {
+                if (binding.profileImage.drawable == null && lookViewModel.isGenderValid) {
                     job?.cancel()
                     lookViewModel.advertiserName?.let {
-                        searchingInProgressText.text = lookViewModel.advertiserName
+                        binding.searchingInProgressText.text = lookViewModel.advertiserName
                     }
-                    populateSucceedView()
+                    binding.populateSucceedView()
                     Glide.with(applicationContext)
                         .load(lookViewModel.newFile).diskCacheStrategy(DiskCacheStrategy.NONE)
                         .skipMemoryCache(true)
-                        .into(profile_image)
+                        .into(binding.profileImage)
                 }
             }
         }
@@ -420,7 +423,7 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
         unKeepScreenOn()
 
         // Make count down view gone when on no found state
-        countdown_view.text = ""
+        binding.countdownView.text = ""
 
         firebaseCrashlytics.recordException(exception)
         lookViewModel.setNoFoundState()
