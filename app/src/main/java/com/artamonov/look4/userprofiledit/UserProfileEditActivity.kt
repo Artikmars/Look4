@@ -7,11 +7,10 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
-import android.view.View.GONE
-import android.view.View.VISIBLE
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.artamonov.look4.PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE
@@ -79,17 +78,17 @@ class UserProfileEditActivity : BaseActivity(R.layout.activity_user_profile_edit
     private fun bindViewState(viewState: ProfileEditViewState) {
         when (viewState.fetchStatus) {
             FetchStatus.LoadingState -> {
-                user_edit_progress_bar.visibility = VISIBLE
+                user_edit_progress_bar.isVisible = true
             }
             FetchStatus.SucceededState -> {
                 finish()
             }
             FetchStatus.PhoneValidationErrorState -> {
-                user_edit_progress_bar.visibility = GONE
+                user_edit_progress_bar.isVisible = false
                 showSnackbarError(R.string.error_blank_fields)
             }
             FetchStatus.ProfileWasNotUpdatedErrorState -> {
-                user_edit_progress_bar.visibility = GONE
+                user_edit_progress_bar.isVisible = false
                 showSnackbarError(R.string.error_general)
             }
         }
@@ -98,7 +97,7 @@ class UserProfileEditActivity : BaseActivity(R.layout.activity_user_profile_edit
     private fun bindViewActions(viewAction: ProfileEditAction) {
         when (viewAction) {
             is ProfileEditAction.ShowSnackbar -> {
-                user_edit_progress_bar.visibility = VISIBLE
+                user_edit_progress_bar.isVisible = true
             }
             is ProfileEditAction.UpdateImage -> {
                 updateImage(viewAction.uri)

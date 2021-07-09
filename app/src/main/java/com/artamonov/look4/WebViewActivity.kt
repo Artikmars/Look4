@@ -1,7 +1,7 @@
 package com.artamonov.look4
 
 import android.os.Bundle
-import android.view.View.GONE
+import androidx.core.view.isVisible
 import com.artamonov.look4.base.BaseActivity
 import com.artamonov.look4.utils.FAQ_TYPE
 import com.artamonov.look4.utils.WebViewType.DEFAULT_FAQ
@@ -23,8 +23,8 @@ class WebViewActivity : BaseActivity(R.layout.activity_web_view) {
         }
 
         if (webViewTypeIntent == null) {
-            web_view_title.visibility = GONE
-            web_view_back.visibility = GONE
+            web_view_title.isVisible = false
+            web_view_back.isVisible = false
         }
 
         web_view_back.setOnClickListener { onBackPressed() }
@@ -32,12 +32,12 @@ class WebViewActivity : BaseActivity(R.layout.activity_web_view) {
 
         when (webViewTypeIntent) {
                 DEFAULT_FAQ -> {
-                    ok_button.visibility = GONE
+                    ok_button.isVisible = false
                     webView.loadUrl(getString(R.string.faq_link))
                 }
                 PRIVACY_POLICY -> {
-                    ok_button.visibility = GONE
-                    web_view_title.visibility = GONE
+                    ok_button.isVisible = false
+                    web_view_title.isVisible = false
                     web_view_title.text = getString(R.string.settings_privacy_policy)
                     webView.loadUrl(getString(R.string.privacy_policy_link))
                 }

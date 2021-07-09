@@ -9,10 +9,10 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
 import android.os.ParcelFileDescriptor
-import android.view.View.VISIBLE
 import androidx.activity.viewModels
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import com.artamonov.look4.R
 import com.artamonov.look4.base.BaseActivity
 import com.artamonov.look4.data.database.User
@@ -201,14 +201,14 @@ class LookActivity : BaseActivity(R.layout.activity_look) {
             is LookState.SucceededDiscoverIsFoundState<*> -> {
                 firebaseCrashlytics.log("State: SucceededDiscoverIsFoundState")
                 populateSucceedView()
-                searchingInProgressText.visibility = VISIBLE
+                searchingInProgressText.isVisible = true
                 searchingInProgressText.text = lookViewModel.discovererName
                 profile_image.setImageDrawable(Drawable.createFromPath(lookViewModel.discovererFilePath))
             }
             is LookState.PendingState -> {
                 firebaseCrashlytics.log("State: PendingState")
                 populatePendingView()
-                searchingInProgressText.visibility = VISIBLE
+                searchingInProgressText.isVisible = true
                 searchingInProgressText.text = getString(R.string.look_pending)
             }
         }

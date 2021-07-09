@@ -1,9 +1,8 @@
 package com.artamonov.look4.contacts
 
 import android.os.Bundle
-import android.view.View.GONE
-import android.view.View.VISIBLE
 import androidx.activity.viewModels
+import androidx.core.view.isVisible
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -79,6 +78,6 @@ class ContactsActivity : BaseActivity(R.layout.activity_contacts) {
     }
 
     private fun setNoContactsViewVisibility(state: Boolean) {
-        contacts_placeholder.visibility = if (state) VISIBLE else GONE
+        contacts_placeholder.isVisible = state
     }
 }
