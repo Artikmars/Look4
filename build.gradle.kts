@@ -1,26 +1,20 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
-    ext {
-        versions = [
-                'kotlin' : '1.5.10',
-                'hilt'   : '2.37',
-                'compose': '1.0.0-rc01'
-        ]
-    }
+    val hiltVersion = "2.36"
+    val kotlinVersion = "1.5.10"
+
     repositories {
         google()
-        jcenter()
-
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.0.0-beta05'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${versions.kotlin}"
-        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.7.1'
-        classpath 'com.google.gms:google-services:4.3.8'
+        classpath("com.android.tools.build:gradle:7.0.0-beta05")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
+        classpath("com.google.firebase:firebase-crashlytics-gradle:2.7.1")
+        classpath("com.google.gms:google-services:4.3.8")
 
         // Hilt
-        classpath "com.google.dagger:hilt-android-gradle-plugin:${versions.hilt}"
+        classpath("com.google.dagger:hilt-android-gradle-plugin:${hiltVersion}")
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
@@ -28,22 +22,18 @@ buildscript {
 }
 
 plugins {
-    id "com.diffplug.gradle.spotless" version "4.2.1"
+    id("com.diffplug.gradle.spotless") version "4.2.1"
 }
 
 allprojects {
     repositories {
         google()
         mavenCentral()
-        jcenter()
-        maven { url "https://jitpack.io" }
+        maven {
+            url = uri("https://jitpack.io")
+        }
     }
 }
-
-// Spotless needs the Java plugin. This line can be removed once we
-// port to Kotlin DSL:
-apply plugin: 'java'
-apply plugin: 'groovy'
 
 spotless {
     format("misc") {

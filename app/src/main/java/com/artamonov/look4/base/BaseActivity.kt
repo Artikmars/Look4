@@ -19,9 +19,12 @@ abstract class BaseActivity : AppCompatActivity() {
 
     private var contactState: ContactUnseenState = ContactUnseenState.DisabledState
 
-    @Inject lateinit var prefs: PreferenceHelper
-    @Inject lateinit var connectionClient: ConnectionsClient
-    @Inject lateinit var firebaseCrashlytics: FirebaseCrashlytics
+    @Inject
+    lateinit var prefs: PreferenceHelper
+    @Inject
+    lateinit var connectionClient: ConnectionsClient
+    @Inject
+    lateinit var firebaseCrashlytics: FirebaseCrashlytics
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

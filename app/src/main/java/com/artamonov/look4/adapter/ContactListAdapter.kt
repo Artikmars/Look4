@@ -39,7 +39,7 @@ class ContactListAdapter(
 
     inner class ViewHolder(v: View) : RecyclerView.ViewHolder(v) {
 
-        val binding = ContactItemBinding.bind(v)
+        private val binding = ContactItemBinding.bind(v)
         private var contactItem: User? = null
 
         fun bindItem(item: User?) {
