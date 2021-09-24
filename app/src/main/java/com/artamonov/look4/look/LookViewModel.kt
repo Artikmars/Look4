@@ -2,6 +2,7 @@ package com.artamonov.look4.look
 
 import android.content.Intent
 import android.util.Log
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.artamonov.look4.base.BaseViewModel
@@ -60,8 +61,11 @@ class LookViewModel @Inject constructor(
     var newFile: File? = null
     private var notificationHandler: NotificationHandler? = null
     val state = MutableLiveData<LookState>().default(initialValue = LookState.DefaultState)
+    val _state: LiveData<LookState> = state
     val action = MutableLiveData<LookAction>()
+    val _action: LiveData<LookAction> = action
     val user: MutableLiveData<User> = MutableLiveData()
+    val _user: LiveData<User> = user
 
     init {
         loadUserFromDB()

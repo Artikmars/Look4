@@ -9,6 +9,7 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
 import android.os.ParcelFileDescriptor
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -73,13 +74,25 @@ class LookActivity : BaseActivity() {
     private val lookViewModel: LookViewModel by viewModels()
     var job: Job? = null
 
+    private var requestPermissions = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+        val granted = permissions.entries.all { it.value == true }
+        if (granted) {
+            lookViewModel.handleNewIntent(intent)
+            if (!lookViewModel.isIntentValid()) { lookViewModel.startDiscovering() }
+        } else {
+            finish()
+            showSnackbarError(R.string.error_permissions_are_not_granted_for_discovering)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityLookBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        lookViewModel.state.observe(this, { bindViewState(it) })
-        lookViewModel.action.observe(this, { bindViewAction(it) })
-        lookViewModel.user.observe(this, { user = it })
+
+        lookViewModel._state.observe(this, { bindViewState(it) })
+        lookViewModel._action.observe(this, { bindViewAction(it) })
+        lookViewModel._user.observe(this, { user = it })
 
         binding.searchBtn.setOnClickListener { startClient() }
         binding.lookBack.setOnClickListener { onBackPressed() }
@@ -229,8 +242,7 @@ class LookActivity : BaseActivity() {
     private fun checkForPermissions() {
         if (!hasPermissions(this, requiredPermissions)) {
             firebaseCrashlytics.log("Permission is missing in checkForPermissions(): $ACCESS_COARSE_LOCATION")
-            ActivityCompat.requestPermissions(this, requiredPermissions,
-                REQUEST_CODE_REQUIRED_PERMISSIONS)
+            requestPermissions.launch(requiredPermissions)
         } else {
             firebaseCrashlytics.log("Permission is given in checkForPermissions(): $ACCESS_COARSE_LOCATION")
             lookViewModel.handleNewIntent(intent)
@@ -238,36 +250,7 @@ class LookActivity : BaseActivity() {
         }
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
-        when (requestCode) {
-            REQUEST_CODE_REQUIRED_PERMISSIONS -> {
-                // If request is cancelled, the result arrays are empty.
-                if ((grantResults.isNotEmpty() && grantResults[0] == PERMISSION_GRANTED) &&
-                    grantResults[1] == PERMISSION_GRANTED && grantResults[2] == PERMISSION_GRANTED) {
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
-                    lookViewModel.handleNewIntent(intent)
-                    if (!lookViewModel.isIntentValid()) { lookViewModel.startDiscovering() }
-                } else {
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-                    finish()
-                    showSnackbarError(R.string.error_permissions_are_not_granted_for_discovering)
-                }
-                return
-            }
 
-            // Add other 'when' lines to check for other
-            // permissions this app might request.
-            else -> {
-                // Ignore all other requests.
-            }
-        }
-    }
 
     /** Returns true if the app was granted all the permissions. Otherwise, returns false.  */
     private fun hasPermissions(context: Context, permissions: Array<String>): Boolean {

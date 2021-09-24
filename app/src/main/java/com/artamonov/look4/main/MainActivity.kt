@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -47,6 +48,14 @@ class MainActivity : BaseActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels()
+    private val requestPermissions = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+        val granted = permissions.entries.all { it.value == true }
+        if (granted) {
+            viewModel.obtainEvent(MainEvent.ChangeStatus)
+        } else {
+            showSnackbarError(R.string.error_permissions_are_not_granted_for_discovering)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -141,44 +150,13 @@ class MainActivity : BaseActivity() {
     private fun checkForPermissions() {
         if (!hasPermissions(this, requiredPermissions)) {
             firebaseCrashlytics.log("Permission is missing in checkForPermissions(): ${Manifest.permission.ACCESS_COARSE_LOCATION}")
-            ActivityCompat.requestPermissions(this, requiredPermissions,
-                REQUEST_CODE_REQUIRED_PERMISSIONS
-            )
+            requestPermissions.launch(requiredPermissions)
         } else {
             firebaseCrashlytics.log("Permission is given in checkForPermissions(): ${Manifest.permission.ACCESS_COARSE_LOCATION}")
             viewModel.obtainEvent(MainEvent.ChangeStatus)
         }
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
-        when (requestCode) {
-            REQUEST_CODE_REQUIRED_PERMISSIONS -> {
-                // If request is cancelled, the result arrays are empty.
-                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) &&
-                    grantResults[1] == PackageManager.PERMISSION_GRANTED && grantResults[2] == PackageManager.PERMISSION_GRANTED
-                ) {
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
-                    viewModel.obtainEvent(MainEvent.ChangeStatus)
-                } else {
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-                    showSnackbarError(R.string.error_permissions_are_not_granted_for_discovering)
-                }
-                return
-            }
-
-            // Add other 'when' lines to check for other
-            // permissions this app might request.
-            else -> {
-                // Ignore all other requests.
-            }
-        }
-    }
 
     /** Returns true if the app was granted all the permissions. Otherwise, returns false.  */
     private fun hasPermissions(context: Context, permissions: Array<String>): Boolean {
