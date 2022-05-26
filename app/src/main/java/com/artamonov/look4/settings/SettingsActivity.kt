@@ -174,7 +174,7 @@ class SettingsActivity : AppCompatActivity() {
         ClickableText(
             AnnotatedString(
                 stringResource(id = itemName.id)
-                    .toUpperCase(Locale.getDefault())
+                    .uppercase(Locale.getDefault())
             ),
             style = style,
             onClick = {

@@ -8,19 +8,19 @@ plugins {
     kotlin("kapt")
 }
 
-val composeVersion = "1.0.2"
-val hiltVersion = "2.36"
+val composeVersion = "1.2.0-beta02"
+val hiltVersion = "2.42"
 
 
 android {
-    compileSdk = 30
+    compileSdk = 31
 
     defaultConfig {
         applicationId = "com.artamonov.look4"
         minSdk = 23
         targetSdk = 30
-        versionCode = 10008
-        versionName = "1.04.5"
+        versionCode = 10009
+        versionName = "1.04.6"
         multiDexEnabled = true
         vectorDrawables.useSupportLibrary = true
 
@@ -63,38 +63,36 @@ dependencies {
     implementation("android.arch.lifecycle:extensions:1.1.1")
 
     // Android X
-    implementation("androidx.appcompat:appcompat:1.3.1")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.0")
-    implementation("androidx.core:core-ktx:1.6.0")
-    implementation("androidx.fragment:fragment-ktx:1.3.6")
+    implementation("androidx.appcompat:appcompat:1.4.1")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("androidx.core:core-ktx:1.7.0")
+    implementation("androidx.fragment:fragment-ktx:1.4.1")
     implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.1")
-    implementation("androidx.preference:preference-ktx:1.1.1")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.4.1")
+    implementation("androidx.preference:preference-ktx:1.2.0")
 
     implementation("com.github.bumptech.glide:glide:4.9.0")
     implementation("com.github.dhaval2404:imagepicker:1.7.1")
-    implementation("com.google.android.material:material:1.1.0")
-    implementation("com.google.android.gms:play-services-nearby:18.0.0")
-    implementation("com.google.code.gson:gson:2.8.6")
+    implementation("com.google.android.material:material:1.6.0")
+    implementation("com.google.android.gms:play-services-nearby:18.2.0")
+    implementation("com.google.code.gson:gson:2.8.9")
 
     implementation("com.github.chnouman:AwesomeDialog:1.0.4")
 
-    //Firebase Crashlytics SDK
-    implementation("com.google.firebase:firebase-analytics-ktx:19.0.1")
-    implementation("com.google.firebase:firebase-crashlytics:18.2.1")
+    // Firebase Crashlytics SDK
+    implementation("com.google.firebase:firebase-analytics-ktx:21.0.0")
+    implementation("com.google.firebase:firebase-crashlytics:18.2.10")
 
     implementation("de.hdodenhof:circleimageview:3.0.0")
 
     // Hilt
     implementation("com.google.dagger:hilt-android:${hiltVersion}")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.3.1")
     kapt("com.google.dagger:hilt-android-compiler:${hiltVersion}")
-    implementation("androidx.hilt:hilt-lifecycle-viewmodel:1.0.0-alpha03")
-    kapt("androidx.hilt:hilt-compiler:1.0.0")
 
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0")
+    // Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
 
     // Leak Canary
     debugImplementation("com.squareup.leakcanary:leakcanary-android:2.4")
@@ -111,20 +109,20 @@ dependencies {
     implementation("androidx.compose.material:material-icons-core:${composeVersion}")
     implementation("androidx.compose.material:material-icons-extended:${composeVersion}")
     // Integration with activities
-    implementation("androidx.activity:activity-compose:1.3.1")
+    implementation("androidx.activity:activity-compose:1.4.0")
     // Integration with ViewModels
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:1.0.0-alpha07")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.5.0-rc01")
     // Integration with observables
     implementation("androidx.compose.runtime:runtime-livedata:${composeVersion}")
     implementation("androidx.compose.runtime:runtime-rxjava2:${composeVersion}")
 
-    implementation("androidx.constraintlayout:constraintlayout-compose:1.0.0-beta02")
+    implementation("androidx.constraintlayout:constraintlayout-compose:1.0.1")
 
 
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:${composeVersion}")
-    testImplementation("junit:junit:4.12")
+    testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.3")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")
     annotationProcessor("com.github.bumptech.glide:compiler:4.11.0")
-    implementation("com.google.android.gms:play-services-ads:20.4.0")
+    implementation("com.google.android.gms:play-services-ads:21.0.0")
 }

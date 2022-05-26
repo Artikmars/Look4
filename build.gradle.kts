@@ -1,16 +1,16 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
-    val hiltVersion = "2.36"
-    val kotlinVersion = "1.5.21"
+    val hiltVersion = "2.42"
+    val kotlinVersion = "1.6.21"
 
     repositories {
         google()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:7.0.2")
+        classpath("com.android.tools.build:gradle:7.2.1")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
-        classpath("com.google.firebase:firebase-crashlytics-gradle:2.7.1")
+        classpath("com.google.firebase:firebase-crashlytics-gradle:2.8.1")
         classpath("com.google.gms:google-services:4.3.10")
 
         // Hilt

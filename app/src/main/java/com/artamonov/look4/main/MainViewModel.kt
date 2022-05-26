@@ -1,6 +1,5 @@
 package com.artamonov.look4.main
 
-import androidx.hilt.lifecycle.ViewModelInject
 import com.artamonov.look4.base.BaseVM
 import com.artamonov.look4.data.database.ContactRequest
 import com.artamonov.look4.data.prefs.PreferenceHelper
