@@ -28,7 +28,7 @@ abstract class BaseActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        contactDiscovererUnseenState.observe(this, { state ->
+        contactDiscovererUnseenState.observe(this) { state ->
             contactState = state
             when (state) {
                 ContactUnseenState.EnabledState -> {
@@ -36,7 +36,7 @@ abstract class BaseActivity : AppCompatActivity() {
                     contactDiscovererUnseenState.set(newValue = ContactUnseenState.DisabledState)
                 }
             }
-        })
+        }
     }
 
     override fun onResume() {

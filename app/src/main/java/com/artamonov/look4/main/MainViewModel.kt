@@ -8,6 +8,7 @@ import com.artamonov.look4.main.models.MainAction
 import com.artamonov.look4.main.models.MainEvent
 import com.artamonov.look4.main.models.MainViewState
 import com.artamonov.look4.service.ForegroundService
+import com.artamonov.look4.utils.PermissionChecker
 import com.artamonov.look4.utils.UserGender.Companion.ALL
 import com.artamonov.look4.utils.UserGender.Companion.FEMALE
 import com.artamonov.look4.utils.UserGender.Companion.MALE
@@ -16,7 +17,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val prefs: PreferenceHelper
+    private val prefs: PreferenceHelper,
+    private val permissionChecker: PermissionChecker
 ) : BaseVM<MainViewState, MainAction, MainEvent>() {
 
     override fun obtainEvent(viewEvent: MainEvent) {
@@ -89,5 +91,9 @@ class MainViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    fun hasPermissionsGranted(permissions: Array<String>): Boolean {
+        return permissionChecker.hasPermissionsGranted(permissions)
     }
 }

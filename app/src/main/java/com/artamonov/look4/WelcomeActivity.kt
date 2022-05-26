@@ -1,29 +1,40 @@
 package com.artamonov.look4
 
 import android.app.Activity
-import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import com.artamonov.look4.base.BaseActivity
 import com.artamonov.look4.databinding.ActivityWelcomeBinding
-import com.artamonov.look4.utils.PostTextChangeWatcher
-import com.artamonov.look4.utils.UserGender
+import com.artamonov.look4.utils.*
 import com.artamonov.look4.utils.UserGender.Companion.FEMALE
 import com.artamonov.look4.utils.UserGender.Companion.MALE
-import com.artamonov.look4.utils.isValidPhoneNumber
-import com.artamonov.look4.utils.showSnackbarError
-import com.artamonov.look4.utils.startMainActivity
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.github.dhaval2404.imagepicker.ImagePicker
 
-const val PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 5545
-var selectedImage: Uri? = null
-var enteredPhoneNumber: String? = null
-
 class WelcomeActivity : BaseActivity() {
 
     private lateinit var binding: ActivityWelcomeBinding
+    private var selectedImage: Uri? = null
+    private var enteredPhoneNumber: String? = null
+    private val takePhotoForResult =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+            when (result.resultCode) {
+                Activity.RESULT_OK -> {
+                    selectedImage = result.data?.data
+                    Glide.with(this).load(selectedImage).apply(RequestOptions.circleCropTransform())
+                        .into(binding.welcomeAddImage)
+                }
+                ImagePicker.RESULT_ERROR -> {
+                    showSnackbarError(getString(R.string.welcome_processinng_image_error))
+                }
+                else -> {
+                    //   Toast.makeText(this, "Task Cancelled", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,8 +48,7 @@ class WelcomeActivity : BaseActivity() {
             if (fieldsAreValid()) {
                 val isSaved = prefs.createUserProfile(
                     name = binding.etName.text.toString(),
-                    phoneNumber =
-                    binding.etPhoneNumber.text.toString(),
+                    phoneNumber = binding.etPhoneNumber.text.toString(),
                     imagePath = selectedImage.toString(),
                     gender = getChosenGender()
                 )
@@ -99,24 +109,7 @@ class WelcomeActivity : BaseActivity() {
             .cropSquare()
             .compress(1024)
             .maxResultSize(300, 300)
-            .start()
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        when (resultCode) {
-            Activity.RESULT_OK -> {
-                selectedImage = data?.data
-                Glide.with(this).load(selectedImage).apply(RequestOptions.circleCropTransform())
-                    .into(binding.welcomeAddImage)
-            }
-            ImagePicker.RESULT_ERROR -> {
-                showSnackbarError(getString(R.string.welcome_processinng_image_error))
-            }
-            else -> {
-                //   Toast.makeText(this, "Task Cancelled", Toast.LENGTH_SHORT).show()
-            }
-        }
+            .createIntent { takePhotoForResult.launch(it) }
     }
 
     private fun fieldsAreValid(): Boolean {

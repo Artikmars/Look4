@@ -10,6 +10,7 @@ import com.artamonov.look4.userprofiledit.models.FetchStatus
 import com.artamonov.look4.userprofiledit.models.ProfileEditAction
 import com.artamonov.look4.userprofiledit.models.ProfileEditEvent
 import com.artamonov.look4.userprofiledit.models.ProfileEditViewState
+import com.artamonov.look4.utils.PermissionChecker
 import com.artamonov.look4.utils.UserGender
 import com.artamonov.look4.utils.UserGender.Companion.FEMALE
 import com.artamonov.look4.utils.UserGender.Companion.MALE
@@ -19,7 +20,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class UserProfileEditViewModel @Inject constructor(
-    private val prefs: PreferenceHelper
+    private val prefs: PreferenceHelper,
+    private val permissionChecker: PermissionChecker
 ) : BaseVM<ProfileEditViewState, ProfileEditAction, ProfileEditEvent>() {
     var phoneNumberLayoutErrorLiveData: MutableLiveData<Boolean> = MutableLiveData()
     private var newPhoneNumber: String? = null
@@ -41,9 +43,16 @@ class UserProfileEditViewModel @Inject constructor(
             }
             ProfileEditEvent.SaveClicked ->
                 if (shouldUpdate()) submitProfile(
-                User(name = newName ?: viewState.data?.name, phoneNumber = newPhoneNumber
-                    ?: viewState.data?.name, imagePath = if (newImageUri != null) newImageUri.toString()
-                else viewState.data?.imagePath)) else { viewState.copy(fetchStatus = FetchStatus.SucceededState) }
+                    User(
+                        name = newName ?: viewState.data?.name,
+                        phoneNumber = newPhoneNumber
+                            ?: viewState.data?.name,
+                        imagePath = if (newImageUri != null) newImageUri.toString()
+                        else viewState.data?.imagePath
+                    )
+                ) else {
+                    viewState.copy(fetchStatus = FetchStatus.SucceededState)
+                }
             ProfileEditEvent.CurrentProfileDataLoaded -> viewAction = ProfileEditAction
                 .PopulateCurrentProfileData(
                     name = viewState.data?.name, phoneNumber =
@@ -63,9 +72,12 @@ class UserProfileEditViewModel @Inject constructor(
             viewState = viewState.copy(fetchStatus = FetchStatus.PhoneValidationErrorState)
             return
         }
-        val isUpdated = prefs.updateUserProfile(user.copy(gender = getChosenGender(checkedRadioButtonId)))
-        viewState = if (isUpdated) viewState.copy(fetchStatus = FetchStatus.SucceededState,
-        data = prefs.getUserProfile())
+        val isUpdated =
+            prefs.updateUserProfile(user.copy(gender = getChosenGender(checkedRadioButtonId)))
+        viewState = if (isUpdated) viewState.copy(
+            fetchStatus = FetchStatus.SucceededState,
+            data = prefs.getUserProfile()
+        )
         else viewState.copy(fetchStatus = FetchStatus.ProfileWasNotUpdatedErrorState)
     }
 
@@ -104,5 +116,9 @@ class UserProfileEditViewModel @Inject constructor(
 
     private fun shouldUpdate(): Boolean {
         return newName != null || newImageUri != null || newPhoneNumber != null
+    }
+
+    fun hasPermissionsGranted(permissions: Array<String>): Boolean {
+        return permissionChecker.hasPermissionsGranted(permissions)
     }
 }

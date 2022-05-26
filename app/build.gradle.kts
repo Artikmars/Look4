@@ -19,8 +19,8 @@ android {
         applicationId = "com.artamonov.look4"
         minSdk = 23
         targetSdk = 30
-        versionCode = 10009
-        versionName = "1.04.6"
+        versionCode = 10010
+        versionName = "1.04.7"
         multiDexEnabled = true
         vectorDrawables.useSupportLibrary = true
 
@@ -72,7 +72,7 @@ dependencies {
     implementation("androidx.preference:preference-ktx:1.2.0")
 
     implementation("com.github.bumptech.glide:glide:4.9.0")
-    implementation("com.github.dhaval2404:imagepicker:1.7.1")
+    implementation("com.github.dhaval2404:imagepicker:2.1")
     implementation("com.google.android.material:material:1.6.0")
     implementation("com.google.android.gms:play-services-nearby:18.2.0")
     implementation("com.google.code.gson:gson:2.8.9")

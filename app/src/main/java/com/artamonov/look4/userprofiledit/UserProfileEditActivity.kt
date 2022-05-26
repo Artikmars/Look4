@@ -2,18 +2,14 @@ package com.artamonov.look4.userprofiledit
 
 import android.Manifest
 import android.app.Activity
-import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.widget.Toast
+import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
-import com.artamonov.look4.PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE
 import com.artamonov.look4.R
 import com.artamonov.look4.base.BaseActivity
 import com.artamonov.look4.databinding.ActivityUserProfileEditBinding
@@ -32,6 +28,31 @@ class UserProfileEditActivity : BaseActivity() {
 
     private lateinit var binding: ActivityUserProfileEditBinding
     private lateinit var viewModel: UserProfileEditViewModel
+    private val takePhotoForResult =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+            when (result.resultCode) {
+                Activity.RESULT_OK -> {
+                    viewModel.setImagePath(result.data?.data)
+                    viewModel.obtainEvent(ProfileEditEvent.ProfilePhotoClicked)
+                }
+                ImagePicker.RESULT_ERROR -> {
+                    Toast.makeText(this, ImagePicker.getError(result.data), Toast.LENGTH_SHORT)
+                        .show()
+                }
+                else -> {
+                    //   Toast.makeText(this, "Task Cancelled", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    private val requestPermissions =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            val granted = permissions.entries.all { it.value }
+            if (granted) {
+                viewModel.obtainEvent(ProfileEditEvent.CurrentProfileDataLoaded)
+            } else {
+                showSnackbarError(R.string.error_permissions_are_not_granted_for_setting_new_picture)
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,8 +61,8 @@ class UserProfileEditActivity : BaseActivity() {
 
         viewModel = ViewModelProvider(this).get(UserProfileEditViewModel::class.java)
 
-        viewModel.viewStates().observe(this, { bindViewState(it) })
-        viewModel.viewEffects().observe(this, { bindViewActions(it) })
+        viewModel.viewStates().observe(this) { bindViewState(it) }
+        viewModel.viewEffects().observe(this) { bindViewActions(it) }
 
         viewModel.obtainEvent(ProfileEditEvent.ScreenShown)
         checkForPermissions()
@@ -68,7 +89,7 @@ class UserProfileEditActivity : BaseActivity() {
             dispatchTakePictureIntent()
         }
 
-        viewModel.phoneNumberLayoutErrorLiveData.observe(this, { state ->
+        viewModel.phoneNumberLayoutErrorLiveData.observe(this) { state ->
             binding.userEditPhoneNumberLayout.apply {
                 error = if (state == true) {
                     resources.getString(R.string.welcome_phone_number_warning)
@@ -76,7 +97,7 @@ class UserProfileEditActivity : BaseActivity() {
                     null
                 }
             }
-        })
+        }
     }
 
     private fun bindViewState(viewState: ProfileEditViewState) {
@@ -132,22 +153,6 @@ class UserProfileEditActivity : BaseActivity() {
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        when (resultCode) {
-            Activity.RESULT_OK -> {
-                viewModel.setImagePath(data?.data)
-                viewModel.obtainEvent(ProfileEditEvent.ProfilePhotoClicked)
-            }
-            ImagePicker.RESULT_ERROR -> {
-                Toast.makeText(this, ImagePicker.getError(data), Toast.LENGTH_SHORT).show()
-            }
-            else -> {
-                //   Toast.makeText(this, "Task Cancelled", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
     private fun updateImage(uri: Uri) {
         Glide.with(this).load(uri).apply(RequestOptions.circleCropTransform())
             .into(binding.userEditAddImage)
@@ -158,49 +163,21 @@ class UserProfileEditActivity : BaseActivity() {
             .cropSquare()
             .compress(1024)
             .maxResultSize(300, 300)
-            .start()
+            .createIntent { takePhotoForResult.launch(it) }
     }
 
     private fun checkForPermissions() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
-                PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE
-            )
-        } else {
+        if (viewModel.hasPermissionsGranted(readExternalPermission)) {
             viewModel.obtainEvent(ProfileEditEvent.CurrentProfileDataLoaded)
+        } else {
+            requestPermissions.launch(readExternalPermission)
+
         }
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
-        when (requestCode) {
-            PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE -> {
-                // If request is cancelled, the result arrays are empty.
-                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
-                    viewModel.obtainEvent(ProfileEditEvent.CurrentProfileDataLoaded)
-                } else {
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-                    finish()
-                    showSnackbarError(R.string.error_permissions_are_not_granted_for_setting_new_picture)
-                }
-                return
-            }
-
-            // Add other 'when' lines to check for other
-            // permissions this app might request.
-            else -> {
-                // Ignore all other requests.
-            }
-        }
+    companion object {
+        val readExternalPermission = arrayOf(
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+        )
     }
 }

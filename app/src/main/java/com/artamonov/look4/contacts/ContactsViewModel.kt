@@ -18,7 +18,7 @@ class ContactsViewModel @Inject constructor(
     private val contacts: MutableLiveData<List<User>> = MutableLiveData()
 
     fun initList() {
-        if (getContactList().isNullOrEmpty()) {
+        if (getContactList().isEmpty()) {
             contactListState.set(newValue = ContactsState.NoContactsState)
         } else {
             contacts.set(newValue = getContactList())
@@ -27,7 +27,7 @@ class ContactsViewModel @Inject constructor(
     }
 
     fun updateList() {
-        if (getContactList().isNullOrEmpty()) {
+        if (getContactList().isEmpty()) {
             contactListState.set(newValue = ContactsState.NoContactsState)
         } else {
             contacts.set(newValue = getContactList())

@@ -9,19 +9,12 @@ import com.artamonov.look4.base.BaseViewModel
 import com.artamonov.look4.data.database.ContactRequest
 import com.artamonov.look4.data.database.User
 import com.artamonov.look4.data.prefs.PreferenceHelper
-import com.artamonov.look4.utils.ContactUnseenState
-import com.artamonov.look4.utils.ContactsState
+import com.artamonov.look4.utils.*
 import com.artamonov.look4.utils.LiveDataContactListState.contactListState
 import com.artamonov.look4.utils.LiveDataContactUnseenState.contactDiscovererUnseenState
-import com.artamonov.look4.utils.NotificationHandler
-import com.artamonov.look4.utils.UserGender
 import com.artamonov.look4.utils.UserGender.Companion.ALL
 import com.artamonov.look4.utils.UserGender.Companion.FEMALE
 import com.artamonov.look4.utils.UserGender.Companion.MALE
-import com.artamonov.look4.utils.UserRole
-import com.artamonov.look4.utils.default
-import com.artamonov.look4.utils.isValidPhoneNumber
-import com.artamonov.look4.utils.set
 import com.google.android.gms.nearby.connection.Payload
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.io.File
@@ -47,7 +40,8 @@ sealed class LookAction {
 
 @HiltViewModel
 class LookViewModel @Inject constructor(
-    private val prefs: PreferenceHelper
+    private val prefs: PreferenceHelper,
+    private val permissionChecker: PermissionChecker
 ) : BaseViewModel() {
 
     var isGenderValid: Boolean = true
@@ -211,5 +205,9 @@ class LookViewModel @Inject constructor(
             return true
         }
         return false
+    }
+
+    fun hasPermissionsGranted(permissions: Array<String>): Boolean {
+        return permissionChecker.hasPermissionsGranted(permissions)
     }
 }

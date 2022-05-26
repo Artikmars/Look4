@@ -49,7 +49,7 @@ class MainActivity : BaseActivity() {
     private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels()
     private val requestPermissions = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-        val granted = permissions.entries.all { it.value == true }
+        val granted = permissions.entries.all { it.value }
         if (granted) {
             viewModel.obtainEvent(MainEvent.ChangeStatus)
         } else {
@@ -132,14 +132,14 @@ class MainActivity : BaseActivity() {
 
     override fun onResume() {
         super.onResume()
-        contactAdvertiserUnseenState.observe(this, { state ->
+        contactAdvertiserUnseenState.observe(this) { state ->
             when (state) {
                 ContactUnseenState.EnabledState -> {
                     showSnackbarWithAction()
                     contactAdvertiserUnseenState.default(ContactUnseenState.DisabledState)
                 }
             }
-        })
+        }
     }
 
     override fun onDestroy() {
@@ -148,26 +148,13 @@ class MainActivity : BaseActivity() {
     }
 
     private fun checkForPermissions() {
-        if (!hasPermissions(this, requiredPermissions)) {
-            firebaseCrashlytics.log("Permission is missing in checkForPermissions(): ${Manifest.permission.ACCESS_COARSE_LOCATION}")
-            requestPermissions.launch(requiredPermissions)
-        } else {
+        if (viewModel.hasPermissionsGranted(requiredPermissions)) {
             firebaseCrashlytics.log("Permission is given in checkForPermissions(): ${Manifest.permission.ACCESS_COARSE_LOCATION}")
             viewModel.obtainEvent(MainEvent.ChangeStatus)
+        } else {
+            firebaseCrashlytics.log("Permission is missing in checkForPermissions(): ${Manifest.permission.ACCESS_COARSE_LOCATION}")
+            requestPermissions.launch(requiredPermissions)
         }
-    }
-
-
-    /** Returns true if the app was granted all the permissions. Otherwise, returns false.  */
-    private fun hasPermissions(context: Context, permissions: Array<String>): Boolean {
-        for (permission in permissions) {
-            if (ContextCompat.checkSelfPermission(context, permission) != PERMISSION_GRANTED
-            ) {
-                firebaseCrashlytics.log("Permission is missing: $permission")
-                return false
-            }
-        }
-        return true
     }
 
     private val mMessageReceiver: BroadcastReceiver = object : BroadcastReceiver() {

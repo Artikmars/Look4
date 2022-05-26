@@ -1,69 +1,37 @@
 package com.artamonov.look4.look
 
-import android.Manifest.permission.ACCESS_COARSE_LOCATION
-import android.Manifest.permission.ACCESS_FINE_LOCATION
-import android.Manifest.permission.READ_EXTERNAL_STORAGE
-import android.content.Context
-import android.content.pm.PackageManager.PERMISSION_GRANTED
+import android.Manifest.permission.*
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
 import android.os.ParcelFileDescriptor
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import com.artamonov.look4.R
 import com.artamonov.look4.base.BaseActivity
 import com.artamonov.look4.data.database.User
 import com.artamonov.look4.databinding.ActivityLookBinding
-import com.artamonov.look4.utils.ContactUnseenState
+import com.artamonov.look4.utils.*
 import com.artamonov.look4.utils.LiveDataContactUnseenState.contactAdvertiserUnseenState
 import com.artamonov.look4.utils.UserRole.Companion.ADVERTISER
 import com.artamonov.look4.utils.UserRole.Companion.DISCOVERER
-import com.artamonov.look4.utils.disconnectFromEndpoint
-import com.artamonov.look4.utils.keepScreenOn
-import com.artamonov.look4.utils.set
-import com.artamonov.look4.utils.setSafeOnClickListener
-import com.artamonov.look4.utils.showSnackbarError
-import com.artamonov.look4.utils.showSnackbarWithAction
-import com.artamonov.look4.utils.startMainActivity
-import com.artamonov.look4.utils.unKeepScreenOn
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.example.awesomedialog.AwesomeDialog
-import com.example.awesomedialog.body
-import com.example.awesomedialog.onNegative
-import com.example.awesomedialog.onPositive
-import com.example.awesomedialog.title
-import com.google.android.gms.nearby.connection.ConnectionInfo
-import com.google.android.gms.nearby.connection.ConnectionLifecycleCallback
-import com.google.android.gms.nearby.connection.ConnectionResolution
-import com.google.android.gms.nearby.connection.ConnectionsStatusCodes
-import com.google.android.gms.nearby.connection.DiscoveredEndpointInfo
-import com.google.android.gms.nearby.connection.DiscoveryOptions
-import com.google.android.gms.nearby.connection.EndpointDiscoveryCallback
-import com.google.android.gms.nearby.connection.Payload
-import com.google.android.gms.nearby.connection.PayloadCallback
-import com.google.android.gms.nearby.connection.PayloadTransferUpdate
+import com.example.awesomedialog.*
+import com.google.android.gms.nearby.connection.*
 import com.google.android.gms.nearby.connection.Strategy.P2P_STAR
+import kotlinx.coroutines.*
 import java.util.concurrent.TimeUnit
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 class LookActivity : BaseActivity() {
 
     companion object {
         const val LOG_TAG = "Look4"
-        const val REQUEST_CODE_REQUIRED_PERMISSIONS = 1
         val requiredPermissions = arrayOf(
-        ACCESS_COARSE_LOCATION,
-        ACCESS_FINE_LOCATION,
-        READ_EXTERNAL_STORAGE
+            ACCESS_COARSE_LOCATION,
+            ACCESS_FINE_LOCATION,
+            READ_EXTERNAL_STORAGE
         )
     }
 
@@ -74,25 +42,28 @@ class LookActivity : BaseActivity() {
     private val lookViewModel: LookViewModel by viewModels()
     var job: Job? = null
 
-    private var requestPermissions = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-        val granted = permissions.entries.all { it.value == true }
-        if (granted) {
-            lookViewModel.handleNewIntent(intent)
-            if (!lookViewModel.isIntentValid()) { lookViewModel.startDiscovering() }
-        } else {
-            finish()
-            showSnackbarError(R.string.error_permissions_are_not_granted_for_discovering)
+    private var requestPermissions =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            val granted = permissions.entries.all { it.value == true }
+            if (granted) {
+                lookViewModel.handleNewIntent(intent)
+                if (!lookViewModel.isIntentValid()) {
+                    lookViewModel.startDiscovering()
+                }
+            } else {
+                finish()
+                showSnackbarError(R.string.error_permissions_are_not_granted_for_discovering)
+            }
         }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityLookBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        lookViewModel._state.observe(this, { bindViewState(it) })
-        lookViewModel._action.observe(this, { bindViewAction(it) })
-        lookViewModel._user.observe(this, { user = it })
+        lookViewModel._state.observe(this) { bindViewState(it) }
+        lookViewModel._action.observe(this) { bindViewAction(it) }
+        lookViewModel._user.observe(this) { user = it }
 
         binding.searchBtn.setOnClickListener { startClient() }
         binding.lookBack.setOnClickListener { onBackPressed() }
@@ -187,7 +158,9 @@ class LookActivity : BaseActivity() {
     }
 
     override fun onBackPressed() {
-        if (lookViewModel.showWarningIfPending()) { return }
+        if (lookViewModel.showWarningIfPending()) {
+            return
+        }
         super.onBackPressed()
     }
 
@@ -235,33 +208,21 @@ class LookActivity : BaseActivity() {
         finish()
     }
 
-    private fun getUserProfile(): User? {
+    private fun getUserProfile(): User {
         return prefs.getUserProfile()
     }
 
     private fun checkForPermissions() {
-        if (!hasPermissions(this, requiredPermissions)) {
-            firebaseCrashlytics.log("Permission is missing in checkForPermissions(): $ACCESS_COARSE_LOCATION")
-            requestPermissions.launch(requiredPermissions)
-        } else {
+        if (lookViewModel.hasPermissionsGranted(requiredPermissions)) {
             firebaseCrashlytics.log("Permission is given in checkForPermissions(): $ACCESS_COARSE_LOCATION")
             lookViewModel.handleNewIntent(intent)
-            if (!lookViewModel.isIntentValid()) { lookViewModel.startDiscovering() }
-        }
-    }
-
-
-
-    /** Returns true if the app was granted all the permissions. Otherwise, returns false.  */
-    private fun hasPermissions(context: Context, permissions: Array<String>): Boolean {
-        for (permission in permissions) {
-            if (ContextCompat.checkSelfPermission(context, permission) != PERMISSION_GRANTED
-            ) {
-                firebaseCrashlytics.log("Permission is missing: $permission")
-                return false
+            if (!lookViewModel.isIntentValid()) {
+                lookViewModel.startDiscovering()
             }
+        } else {
+            firebaseCrashlytics.log("Permission is missing in checkForPermissions(): $ACCESS_COARSE_LOCATION")
+            requestPermissions.launch(requiredPermissions)
         }
-        return true
     }
 
     private fun startClient() {
@@ -310,7 +271,11 @@ class LookActivity : BaseActivity() {
         object : EndpointDiscoveryCallback() {
             override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
                 if (user?.name != null && connectionLifecycleCallback != null) {
-                    connectionClient.requestConnection(user?.name!!, endpointId, connectionLifecycleCallback!!)
+                    connectionClient.requestConnection(
+                        user?.name!!,
+                        endpointId,
+                        connectionLifecycleCallback!!
+                    )
                         .addOnFailureListener { e ->
                             handleFailedResponse(e)
                             showSnackbarError(getString(R.string.look_error_connection_is_lost_try_again))
