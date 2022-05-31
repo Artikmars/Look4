@@ -6,17 +6,20 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.components.ViewModelComponent
 import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
-@InstallIn(ViewModelComponent::class)
+@InstallIn(SingletonComponent::class)
 @Module
 class PermissionsCheckerModule {
 
     @Singleton
     @Provides
-    fun bindPermissionsCheckerInstance(@ApplicationContext context: Context, firebaseCrashlytics: FirebaseCrashlytics): PermissionChecker {
+    fun bindPermissionsCheckerInstance(
+        @ApplicationContext context: Context,
+        firebaseCrashlytics: FirebaseCrashlytics
+    ): PermissionChecker {
         return PermissionChecker(context, firebaseCrashlytics)
     }
 }
