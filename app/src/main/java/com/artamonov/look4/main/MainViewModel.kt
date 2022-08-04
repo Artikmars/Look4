@@ -47,6 +47,9 @@ class MainViewModel @Inject constructor(
             MainEvent.SendEmail -> {
                 viewAction = MainAction.SendEmail
             }
+            else -> {
+                // nothing
+            }
         }
     }
 

@@ -147,6 +147,9 @@ class LookActivity : BaseActivity() {
                     .onPositive(getString(R.string.look_yes)) { closeActivity() }
                     .onNegative(getString(R.string.look_no))
             }
+            else -> {
+                // null
+            }
         }
     }
 
@@ -199,6 +202,9 @@ class LookActivity : BaseActivity() {
                 binding.populatePendingView()
                 binding.searchingInProgressText.isVisible = true
                 binding.searchingInProgressText.text = getString(R.string.look_pending)
+            }
+            else -> {
+                // null
             }
         }
     }

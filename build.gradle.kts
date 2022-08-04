@@ -2,16 +2,16 @@
 
 buildscript {
     val hiltVersion = "2.42"
-    val kotlinVersion = "1.6.21"
+    val kotlinVersion = "1.7.0"
 
     repositories {
         google()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:7.2.1")
+        classpath("com.android.tools.build:gradle:7.2.2")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
-        classpath("com.google.firebase:firebase-crashlytics-gradle:2.8.1")
-        classpath("com.google.gms:google-services:4.3.10")
+        classpath("com.google.firebase:firebase-crashlytics-gradle:2.9.1")
+        classpath("com.google.gms:google-services:4.3.13")
 
         // Hilt
         classpath("com.google.dagger:hilt-android-gradle-plugin:${hiltVersion}")

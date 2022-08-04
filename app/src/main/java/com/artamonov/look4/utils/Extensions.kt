@@ -26,6 +26,7 @@ import com.artamonov.look4.R
 import com.artamonov.look4.WebViewActivity
 import com.artamonov.look4.WelcomeActivity
 import com.artamonov.look4.contacts.ContactsActivity
+import com.artamonov.look4.databinding.ActivityMainBinding
 import com.artamonov.look4.look.LookActivity
 import com.artamonov.look4.main.MainActivity
 import com.artamonov.look4.service.ForegroundService
@@ -40,7 +41,6 @@ import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.google.android.material.snackbar.BaseTransientBottomBar.LENGTH_LONG
 import com.google.android.material.snackbar.Snackbar
 import java.util.regex.Pattern
-import kotlinx.android.synthetic.main.activity_main.*
 
 private val PHONE_NUMBER = Pattern.compile("""^\+?(?:[0-9] ?){6,14}[0-9]${'$'}""")
 const val FAQ_TYPE = "FAQ_TYPE"
@@ -97,41 +97,34 @@ fun Activity.startMainActivity() =
     startActivity(Intent(this, MainActivity::class.java),
         ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
 
-fun AppCompatActivity.blockInput() {
+fun AppCompatActivity.blockInput(binding: ActivityMainBinding) {
     window.setFlags(FLAG_NOT_TOUCHABLE, FLAG_NOT_TOUCHABLE)
-    colourMainButtonsToGrey()
+    colourMainButtons(binding, R.color.lightGrey)
 }
 
-fun AppCompatActivity.colourMainButtonsToGrey() {
-    offline_text.setTextColor(ContextCompat.getColor(this, R.color.lightGrey))
-    contacts_text.setTextColor(ContextCompat.getColor(this, R.color.lightGrey))
-    settings_text.setTextColor(ContextCompat.getColor(this, R.color.lightGrey))
-    main_look_gender_text.setTextColor(ContextCompat.getColor(this, R.color.lightGrey))
+fun AppCompatActivity.colourMainButtons(binding: ActivityMainBinding, color: Int) {
+    binding.offlineText.setTextColor(ContextCompat.getColor(this, color))
+    binding.contactsText.setTextColor(ContextCompat.getColor(this, color))
+    binding.settingsText.setTextColor(ContextCompat.getColor(this, color))
+    binding.mainLookGenderText.setTextColor(ContextCompat.getColor(this, color))
 }
 
-fun AppCompatActivity.colourMainButtonsToNormal() {
-    offline_text.setTextColor(ContextCompat.getColor(this, R.color.black))
-    contacts_text.setTextColor(ContextCompat.getColor(this, R.color.black))
-    settings_text.setTextColor(ContextCompat.getColor(this, R.color.black))
-    main_look_gender_text.setTextColor(ContextCompat.getColor(this, R.color.black))
-}
-
-fun AppCompatActivity.unblockInput() {
+fun AppCompatActivity.unblockInput(binding: ActivityMainBinding) {
     window.clearFlags(FLAG_NOT_TOUCHABLE)
-    colourMainButtonsToNormal()
+    colourMainButtons(binding, R.color.black)
 }
 
-fun AppCompatActivity.updateMainUIState() {
-    unblockInput()
-    colourMainButtonsToNormal()
+fun AppCompatActivity.updateMainUIState(binding: ActivityMainBinding) {
+    unblockInput(binding)
+    colourMainButtons(binding, R.color.black)
     if (ForegroundService.isForegroundServiceRunning) {
-        offline_text.text = getString(R.string.main_online_mode)
+        binding.offlineText.text = getString(R.string.main_online_mode)
     } else {
-        offline_text.text = getString(R.string.main_offline_mode)
+        binding.offlineText.text = getString(R.string.main_offline_mode)
     }
 }
 
-fun AppCompatActivity.setAdView() = adView.loadAd(AdRequest.Builder().build())
+fun ActivityMainBinding.setAdView() = this.adView.loadAd(AdRequest.Builder().build())
 
 fun ImageView.animateDot(context: Context) {
     this.startAnimation(LookRotateAnimation(context).init())
@@ -141,24 +134,24 @@ fun AppCompatActivity.keepScreenOn() = window.addFlags(WindowManager.LayoutParam
 
 fun AppCompatActivity.unKeepScreenOn() = window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
-fun AppCompatActivity.blockInputForTask(task: () -> Unit) {
-    blockInput()
+fun AppCompatActivity.blockInputForTask(task: () -> Unit,  binding: ActivityMainBinding) {
+    blockInput(binding)
     task.invoke()
-    unblockInput()
+    unblockInput(binding)
 }
 
-fun AppCompatActivity.startService() {
+fun AppCompatActivity.startService(binding: ActivityMainBinding) {
     if (ForegroundService.isForegroundServiceRunning) { return }
     val serviceIntent = Intent(this, ForegroundService::class.java)
     serviceIntent.putExtra("inputExtra", getString(R.string.main_advertising_title))
     ContextCompat.startForegroundService(this, serviceIntent)
-    blockInput()
+    blockInput(binding)
 }
 
-fun AppCompatActivity.stopService() {
+fun AppCompatActivity.stopService(binding: ActivityMainBinding) {
     if (!ForegroundService.isForegroundServiceRunning) { return }
     stopService(Intent(this, ForegroundService::class.java))
-    blockInput()
+    blockInput(binding)
 }
 
 fun AppCompatActivity.showSnackbarError(resourceId: Int) {

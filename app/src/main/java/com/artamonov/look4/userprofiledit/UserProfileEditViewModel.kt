@@ -59,6 +59,9 @@ class UserProfileEditViewModel @Inject constructor(
                     viewState.data?.phoneNumber, imagePath = viewState.data?.imagePath, gender =
                     viewState.data?.gender
                 )
+            else -> {
+                // nothing
+            }
         }
     }
 

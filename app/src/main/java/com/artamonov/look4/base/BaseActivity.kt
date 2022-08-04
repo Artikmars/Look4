@@ -35,6 +35,9 @@ abstract class BaseActivity : AppCompatActivity() {
                     showSnackbarError(R.string.look_you_received_phone_number)
                     contactDiscovererUnseenState.set(newValue = ContactUnseenState.DisabledState)
                 }
+                else -> {
+                    // nothing
+                }
             }
         }
     }

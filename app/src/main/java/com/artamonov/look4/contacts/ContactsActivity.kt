@@ -45,6 +45,9 @@ class ContactsActivity : BaseActivity() {
                 ContactsState.NoContactsState -> {
                     setNoContactsViewVisibility(true)
                 }
+                else -> {
+                    // nothing
+                }
             }
         })
 

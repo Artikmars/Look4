@@ -116,6 +116,9 @@ class UserProfileEditActivity : BaseActivity() {
                 binding.userEditProgressBar.isVisible = false
                 showSnackbarError(R.string.error_general)
             }
+            else -> {
+                // nothing
+            }
         }
     }
 

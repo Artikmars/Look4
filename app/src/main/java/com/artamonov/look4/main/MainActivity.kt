@@ -47,9 +47,9 @@ class MainActivity : BaseActivity() {
 
         registerBroadcastReceiver(mMessageReceiver)
         handleIntentIfExist(intent)
-        setAdView()
+        binding.setAdView()
 
-        viewModel.viewStates().observe(this, { bindViewState(it) })
+        viewModel.viewStates().observe(this) { bindViewState(it) }
 
         Glide.with(this).load(R.drawable.ic_black_o).into(binding.letter01)
 
@@ -71,7 +71,7 @@ class MainActivity : BaseActivity() {
                 setLookGenderText(viewState.data?.lookGender)
             }
             is FetchMainStatus.OnLookClickedState -> {
-                stopService()
+                stopService(binding)
                 startLookActivity()
             }
             is FetchMainStatus.LoadingState -> {}
@@ -82,22 +82,22 @@ class MainActivity : BaseActivity() {
                 startSettingsActivity()
             }
             is FetchMainStatus.EnablingOfflineState -> {
-                stopService()
+                stopService(binding)
             }
             is FetchMainStatus.EnablingOnlineState -> {
-                startService()
+                startService(binding)
             }
             is FetchMainStatus.OnlineEnabledState -> {
                 binding.offlineText.text = getString(R.string.main_online_mode)
                 binding.letter01.animateDot(this)
-                unblockInput()
+                unblockInput(binding)
                 showSnackbarError(R.string.main_advertising_has_started)
             }
             is FetchMainStatus.OfflineEnabledState -> {
                 connectionClient.stopAllEndpoints()
                 binding.offlineText.text = getString(R.string.main_offline_mode)
                 binding.letter01.clearAnimation()
-                unblockInput()
+                unblockInput(binding)
                 showSnackbarError(R.string.main_advertising_has_stopped)
             }
             is FetchMainStatus.LookGenderManState -> {
@@ -108,6 +108,9 @@ class MainActivity : BaseActivity() {
             }
             is FetchMainStatus.LookGenderAllState -> {
                 binding.mainLookGenderText.text = getString(R.string.main_all)
+            }
+            else -> {
+                // nothing
             }
         }
     }
@@ -129,6 +132,9 @@ class MainActivity : BaseActivity() {
                 ContactUnseenState.EnabledState -> {
                     showSnackbarWithAction()
                     contactAdvertiserUnseenState.default(ContactUnseenState.DisabledState)
+                }
+                else -> {
+                    // nothing
                 }
             }
         }
